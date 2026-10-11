@@ -1,9 +1,20 @@
 # Test strategy
 
-Phase 0 has no business features to test. Its validation uses the environment
-repository check, lint, strict TypeScript, production build, dependency audit,
-and local HTTP smoke checks. `npm run check` performs the repeatable foundation
-checks; `npm run audit:dependencies` separately checks current advisories.
+Phase 0 has no business features to test. It does have security boundaries for
+configuration and Git-visible environment files. Run `npm test` on Node.js 24 to
+check those boundaries with synthetic values and disposable local Git fixtures.
+Tests make no network requests, use no real keys, and clean up their fixtures.
+
+The tests cover missing/blank server values, lazy reads, unsupported variable
+names, frozen public configuration, empty templates, force-added private files,
+unexpected public keys, missing ignore rules, duplicate or missing placeholders,
+and error-output privacy. The server-module tests use Node's `react-server`
+package condition so the Next.js `server-only` marker can load in a server test
+process. The application's Client Component boundary remains unchanged.
+
+`npm run check` includes these tests, the environment repository check, lint,
+strict types, and production build. `npm run audit:dependencies` separately checks
+published advisories. Local HTTP smoke checks verify the minimal runtime.
 
 Do not add tests that merely repeat the placeholder's JSX or assert that a folder
 exists. Add meaningful feature tests alongside the feature in an approved phase.

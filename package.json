@@ -2,6 +2,7 @@
   "name": "ecommerce-website",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "engines": {
     "node": "24.x"
   },
@@ -11,9 +12,10 @@
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --conditions=react-server --test tests/environment.test.ts tests/repository-env.test.ts",
     "check:env": "node scripts/check-env.mjs",
     "audit:dependencies": "npm audit --audit-level=moderate",
-    "check": "npm run check:env && npm run lint && npm run typecheck && npm run build"
+    "check": "npm run check:env && npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "next": "16.4.0",

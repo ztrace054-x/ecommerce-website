@@ -27,7 +27,7 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Check environment, lint, types, and build
+      - name: Check environment, lint, types, tests, and build
         run: npm run check
       - name: Audit dependencies
         run: npm run audit:dependencies
