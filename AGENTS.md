@@ -1,3 +1,11 @@
+# Repository guidance
+
+Read `README.md` and `PLAN.md` before changes. `PLAN.md` is the project source of
+truth. Follow the phase explicitly authorized by the owner; this foundation task
+authorizes Phase 0 only. Do not start later phases, merge into `main`, deploy, or
+configure live services without instructions. Never commit real secrets, request
+customer passwords, or add payment/authentication shortcuts. Report actual checks.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

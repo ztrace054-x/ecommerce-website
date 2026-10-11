@@ -54,7 +54,7 @@ starting the production server, because both use port 3000 by default.
 | `src/lib/security/` | Security requirements for later input and bot checks. |
 | `scripts/` | Checks for safe environment configuration in Git. |
 | `docs/` | Architecture, local development, and security notes. |
-| `tests/` | Test strategy; feature tests will arrive with their features. |
+| `tests/` | Repeatable configuration/security tests; business tests arrive with their features. |
 | `.github/workflows/` | GitHub checks for installation, environment safety, types, lint, build, and dependencies. |
 
 Folders reserved for later phases contain explanatory README files. Those files
@@ -73,7 +73,9 @@ keep the folders in Git without adding unused application code.
 Read [docs/security.md](docs/security.md) before adding integrations and
 [docs/local-development.md](docs/local-development.md) for command explanations.
 See [docs/architecture.md](docs/architecture.md) for the planned boundaries and
-[tests/README.md](tests/README.md) for the validation strategy.
+[tests/README.md](tests/README.md) for the validation strategy. Run `npm test` for
+the configuration security tests; `npm run check` includes them. The evidence is
+recorded in [docs/phase-0-verification.md](docs/phase-0-verification.md).
 
 ## Budget and hosting
 

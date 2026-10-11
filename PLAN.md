@@ -244,7 +244,9 @@ catalog data, order APIs, payment logic, login routes, or a working voucher stor
 ### Foundation checks
 
 Run environment-repository checks, ESLint, TypeScript route/type generation, and
-the production build. Start local development and production servers and check
+the production build. Run the repeatable `npm test` configuration security suite
+as part of `npm run check`; use synthetic inputs and disposable Git fixtures.
+Start local development and production servers and check
 that `/` loads the placeholder. Confirm planned payment and admin routes return
 404 rather than exposing unfinished endpoints. Verify basic response headers.
 

@@ -63,6 +63,21 @@ References:
 
 ## Controls still required before real use
 
+### Upcoming upstream security update
+
+The Next.js maintainers announced on 8 October 2026 that a security update is
+planned for **14 October 2026**, covering two Critical and one High severity
+vulnerabilities in upstream dependencies. The notice does not yet give full
+affected-version or impact details. Do not infer this minimal app's precise
+exposure or production safety from a clean npm audit.
+
+Review the released advisories, apply the appropriate patch when available, and
+rerun checks before any deployment. Local Phase 0 work does not authorize launch.
+
+Source: [Official Next.js notice](https://nextjs.org/blog/upcoming-nextjs-security-update-october-2026).
+
+### Future application controls
+
 Authentication, administrator authorization, CSRF protection, durable rate
 limiting, Turnstile verification, database access policies, payment-claim
 validation, voucher encryption, private delivery access, and service-specific

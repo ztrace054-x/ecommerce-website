@@ -8,11 +8,13 @@ Date: 2026-10-11. Checked locally with Node.js 24.19.0 and npm 11.9.0.
 | `npm run check:env` | Passed; blank template, ignore rules, and Git-visible files checked. |
 | `npm run lint` | Passed with zero warnings. |
 | `npm run typecheck` | Passed; generated Next.js route types and strict TypeScript. |
+| `npm test` | Eleven repeatable configuration security tests passed; no failures or skipped tests. |
+| `npm run check` | Passed; includes environment checks, lint, types, security tests, and build. |
 | `npm run build` | Passed; only `/` and the framework not-found page are generated. |
 | `npm run audit:dependencies` | Passed; zero known vulnerabilities reported. |
 | Local development HTTP checks | Passed; `/` returns 200 with the placeholder. |
 | Local production HTTP checks | Passed; `/` returns 200 with the placeholder. |
-| `/api/orders`, `/api/payments`, `/admin` | All returned 404 in development and production. |
+| `/api/orders`, `/api/payments`, `/api/auth/login`, `/admin` | GET and POST returned 404 in development and production. |
 | Basic response headers | Passed; `nosniff`, frame denial, referrer and permission policies present. |
 | Framework response header | `X-Powered-By` absent. |
 | Server configuration checks | Missing, blank, and unsupported names rejected; synthetic values read only in the server context. |
@@ -31,10 +33,27 @@ customer data, payments, vouchers, or WhatsApp messages were used.
 The environment failure checks ran in disposable Git fixtures with clearly
 synthetic values. They did not create a real `.env` in the project.
 
+The repeatable test suite now also covers duplicate and missing template entries,
+frozen public configuration, runtime name restrictions, and lazy reads without
+fallbacks. Both local modes rendered **Project foundation is ready.** with no
+customer forms. A fresh production build was used after reconciling the source,
+so the runtime verification did not rely on an earlier branch's generated cache.
+
+The `phase-0` branch received three foundation commits while this continuation
+was paused. Those commits were reviewed and retained as the base; the continuation
+adds configuration security regression tests and updated guidance rather than
+replacing the existing structure or rewriting the shared history.
+
 The optional Next.js lint plugin was removed because its current glob dependency
 has an unpatched high-severity advisory. General JavaScript/TypeScript linting,
 Next.js type generation, and the production build remain enabled. This is
 documented in security.md; no audit bypass or forced downgrade was used.
+
+The Next.js maintainers have also announced an upstream security update planned
+for 14 October 2026. Review the released affected-version guidance, apply the
+appropriate patch, and rerun checks before any deployment. Today's clean audit
+does not establish that unpublished vulnerabilities are absent. See security.md
+for the official source and remaining controls.
 
 The secret-pattern review and bundle inspection are limited checks, not proof
 that every possible secret or future vulnerability can be detected. Payment,

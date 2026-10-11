@@ -44,10 +44,11 @@ form. These commands run the application on your computer only.
 | `npm ci` | Install exactly the packages recorded in the lockfile. |
 | `npm run dev` | Start the local development server with automatic rebuilding. |
 | `npm run check:env` | Check environment templates and Git-visible environment files. |
-| `npm run lint` | Catch coding mistakes and framework rule violations. |
+| `npm run lint` | Catch JavaScript and TypeScript coding mistakes. |
 | `npm run typecheck` | Generate route types and check strict TypeScript without emitting code. |
 | `npm run build` | Produce a local production build; no deployment. |
-| `npm run check` | Run the environment, lint, type, and build checks together. |
+| `npm test` | Run configuration security tests with synthetic values and temporary Git fixtures. |
+| `npm run check` | Run the environment, lint, type, test, and build checks together. |
 | `npm run audit:dependencies` | Ask the package registry about known dependency advisories. |
 | `npm start` | Run the completed production build locally. |
 
