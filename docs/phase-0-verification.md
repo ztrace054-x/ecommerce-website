@@ -1,0 +1,47 @@
+# Phase 0 verification record
+
+Date: 2026-10-11. Checked locally with Node.js 24.19.0 and npm 11.9.0.
+
+| Check | Result |
+| --- | --- |
+| Fresh `npm ci` with the final lockfile | Passed; no real service configuration needed. |
+| `npm run check:env` | Passed; blank template, ignore rules, and Git-visible files checked. |
+| `npm run lint` | Passed with zero warnings. |
+| `npm run typecheck` | Passed; generated Next.js route types and strict TypeScript. |
+| `npm run build` | Passed; only `/` and the framework not-found page are generated. |
+| `npm run audit:dependencies` | Passed; zero known vulnerabilities reported. |
+| Local development HTTP checks | Passed; `/` returns 200 with the placeholder. |
+| Local production HTTP checks | Passed; `/` returns 200 with the placeholder. |
+| `/api/orders`, `/api/payments`, `/admin` | All returned 404 in development and production. |
+| Basic response headers | Passed; `nosniff`, frame denial, referrer and permission policies present. |
+| Framework response header | `X-Powered-By` absent. |
+| Server configuration checks | Missing, blank, and unsupported names rejected; synthetic values read only in the server context. |
+| Public configuration | Only the future Turnstile site key is exposed; object is frozen. |
+| Environment-check failure cases | Filled template, force-added `.env`, unexpected public variable, and missing ignore rules all rejected. |
+| Error-output privacy | Synthetic configuration values were not echoed by environment-check failures. |
+| Common secret-pattern review | No database credentials, private keys, or common GitHub/OpenAI/Resend token patterns found in Git-visible source files. |
+| Browser production bundles | No server environment-variable names found in generated JavaScript. |
+| Dependency peers | No invalid peer dependency versions in the final install. |
+| Whitespace review | `git diff --check` and staged diff review passed. |
+
+All local servers used for these checks were stopped. No live Supabase,
+Turnstile, Resend, bKash, or AI-platform accounts were connected. No real secrets,
+customer data, payments, vouchers, or WhatsApp messages were used.
+
+The environment failure checks ran in disposable Git fixtures with clearly
+synthetic values. They did not create a real `.env` in the project.
+
+The optional Next.js lint plugin was removed because its current glob dependency
+has an unpatched high-severity advisory. General JavaScript/TypeScript linting,
+Next.js type generation, and the production build remain enabled. This is
+documented in security.md; no audit bypass or forced downgrade was used.
+
+The secret-pattern review and bundle inspection are limited checks, not proof
+that every possible secret or future vulnerability can be detected. Payment,
+authentication, database, bot-verification, and delivery security are future
+work. No feature-test suite is claimed for features that do not yet exist.
+
+GitHub runs the same foundation and dependency checks when `phase-0` is pushed.
+Review the latest GitHub run before merging; no merge or deployment is part of
+Phase 0. Mobile/desktop visual review is also listed for the owner in the local
+development guide.

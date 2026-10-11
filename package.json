@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "check:env": "node scripts/check-env.mjs",
+    "audit:dependencies": "npm audit --audit-level=moderate",
+    "check": "npm run check:env && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "next": "16.4.0",
