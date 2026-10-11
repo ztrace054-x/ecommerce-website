@@ -1,0 +1,28 @@
+# Environment files are private. Only the root template may be committed.
+.env*
+!/.env.example
+
+# Dependencies and generated Next.js files
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Test output, local logs, and deployment metadata
+coverage/
+playwright-report/
+test-results/
+*.log
+.vercel/
+
+# Credentials, keys, database copies, and editor/OS files
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+*.dump
+.DS_Store
+Thumbs.db
+.idea/
