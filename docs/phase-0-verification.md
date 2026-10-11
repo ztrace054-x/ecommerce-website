@@ -64,3 +64,24 @@ GitHub runs the same foundation and dependency checks when `phase-0` is pushed.
 Review the latest GitHub run before merging; no merge or deployment is part of
 Phase 0. Mobile/desktop visual review is also listed for the owner in the local
 development guide.
+
+## Phase 0 completion update
+
+The owner's whole-project working rules are now recorded in `PLAN.md` and
+`AGENTS.md`. `PLAN.md` has a maintained **Progress** section with **Done**,
+**Next**, and **Known issues**. Routine technical decisions can be made within
+the approved MVP scope; questions are reserved for true blockers. The next
+phase still requires the owner's approval.
+
+After these documentation updates, `npm run check` and the dependency audit were
+rerun successfully. All eleven tests passed; the audit reported zero known
+vulnerabilities. `npm run dev` was started without extra arguments on default
+port 3000, and the placeholder returned HTTP 200 with the expected headers and
+no application errors. The local production server was also checked on port
+3000. In both modes, GET and POST requests to unfinished order, payment, login,
+and administrator paths returned 404. Both servers were stopped afterward.
+
+Git-visible source was reviewed again for common credential/private-key
+patterns and unintended environment files. Only the blank template is tracked.
+No customer pages, payments, live services, deployment, or merge were added by
+this completion update.

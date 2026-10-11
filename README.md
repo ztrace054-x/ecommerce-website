@@ -3,6 +3,8 @@
 A Bangladesh-focused project for ordering permitted AI products and services,
 paying through bKash, and receiving delivery after an administrator manually
 checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
+Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
+its [Progress section](PLAN.md#progress) records done, next, and known issues.
 
 ## Current stage: Phase 0
 

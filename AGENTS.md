@@ -6,6 +6,23 @@ authorizes Phase 0 only. Do not start later phases, merge into `main`, deploy, o
 configure live services without instructions. Never commit real secrets, request
 customer passwords, or add payment/authentication shortcuts. Report actual checks.
 
+## Working rules for every phase
+
+- Complete the whole authorized phase before reporting back. Small phases are
+  boundaries for scope, not permission to leave partially working features.
+- Do not ask whether to continue in the middle of a phase. Ask only when a true
+  blocker needs the owner's input, account, key, or business permission.
+- Make sensible, simple MVP implementation decisions within the approved scope
+  and record them in the final report. Do not add unrequested features or weaken
+  security to avoid a blocker.
+- Finish with a working `npm run dev`, appropriate passing checks, small commits,
+  and a pushed phase branch. Do not merge or deploy without authorization.
+- Keep the `Progress` section in `PLAN.md` current with **Done**, **Next**, and
+  **Known issues** at every phase boundary. If a context/time limit prevents
+  completion, record the exact checkpoint, commit and push safe progress, and
+  clearly report the incomplete work; never call a checkpoint a finished phase.
+- Wait for approval for the next phase after the completed phase's final report.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

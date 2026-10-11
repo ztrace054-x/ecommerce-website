@@ -4,8 +4,32 @@ Last updated: 2026-10-11. Current scope: **Phase 0 only**.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
-controls. Questions marked **decision required** must be answered before their
-dependent features are built. Do not add business features by assumption.
+controls. Design decisions must be settled before their dependent features are
+built. Choose simple, safe defaults for routine technical decisions within the
+approved scope and record them. Ask the owner only for a true blocker; do not
+invent business offerings, credentials, or platform permissions.
+
+## Working rules for every phase
+
+1. Work in small, approved phases, and finish each phase completely: working
+   locally, checked, committed, and pushed. A partially completed phase is not
+   a finished phase.
+2. Do not pause within an authorized phase to ask whether to continue. Ask only
+   when a true blocker needs the owner's input, account, key, or business
+   permission. Continue independent work while a blocked part is clarified.
+3. Build the simplest working MVP that meets the stated requirements. Make and
+   report sensible implementation decisions; avoid extra features and complex
+   architecture. Required security controls must still work.
+4. Verify `npm run dev` starts and serves the application without errors at the
+   end of every phase. Run the other checks appropriate to that phase.
+5. Make small commits and push the phase branch after each phase. Check the
+   remote result. Never merge, deploy, or connect real services automatically.
+6. Update **Progress** with **Done**, **Next**, and **Known issues** at every
+   phase boundary. If context or time forces a checkpoint, record completed
+   work, exact next steps, and failures; commit and push safe progress and tell
+   the owner that the phase is incomplete.
+7. Give the final report only after completing the authorized phase, then wait
+   for the owner's approval before starting the next phase.
 
 ## 1. Project purpose
 
@@ -68,10 +92,11 @@ claim may instead be rejected. Refund eligibility and other transitions require
 an explicit policy before implementation. The server will enforce the approved
 transition rules rather than accept arbitrary status values from a browser.
 
-**Decision required:** an order code and price must exist before the TrxID is
-submitted, but no pre-submission state was specified. Confirm how unpaid order
-records should be represented before building the schema. Do not silently add
-`pending`, `draft`, or another sixth status.
+**Phase 1 design decision:** an order code and price must exist before the TrxID is
+submitted, but no pre-submission state was specified. Resolve how unpaid order
+records should be represented before building the schema. Choose and document
+the simplest safe representation that preserves the five requested statuses.
+Do not silently add `pending`, `draft`, or another sixth customer-facing status.
 
 ## 4. Delivery rules
 
@@ -162,11 +187,14 @@ will run on the server through Drizzle with parameterized queries.
 - Store ciphertext, nonce, authentication tag, and key version where vouchers
   require them. Key storage, rotation, and redemption safeguards are later work.
 
-**Decisions required before dependent work:** pre-submission order representation;
+**Decisions to resolve before dependent work:** pre-submission order representation;
 administrator authentication provider; customer access to their private order
 details; confirmed bKash TrxID rules and recipient account/payment method;
 duplicate-claim correction policy; refund eligibility; product offerings and
-official delivery permissions. Do not invent values for any of these.
+official delivery permissions. Make and document routine technical choices under
+the working rules above. Request owner input only where a true blocker remains,
+such as unavailable account details or permission to offer a specific product.
+Do not invent credentials, recipient details, or platform permissions.
 
 ## 8. Security requirements
 
@@ -274,3 +302,44 @@ configuration is rejected without revealing supplied values.
 Never use real payments, real customer details, real vouchers, or production
 credentials in development tests. Record proof of actual checks and limitations;
 a successful build or a clean dependency audit is not a complete security review.
+
+## Progress
+
+Updated: 2026-10-11. Status: **Phase 0 complete**. Authorized phase: **Phase 0 only**.
+
+### Done
+
+- Reviewed the repository, README, plan, structure, and existing `phase-0`
+  history. Retained the existing foundation commits.
+- Created the minimal Next.js App Router and strict TypeScript foundation with
+  clear application, component, database, API, authentication, and security
+  boundaries. No customer pages or payment logic were added.
+- Added blank environment placeholders, private-file ignore rules, separated
+  server/public configuration, dependency locking and audits, and basic headers.
+- Added architecture, local-development, security, and verification guidance,
+  eleven repeatable configuration security tests, and GitHub checks.
+- The foundation is committed and pushed on `phase-0`; `main` is unchanged.
+- Recorded the owner's whole-project working rules in this plan and `AGENTS.md`.
+- Completion checks passed: environment safeguards, lint, strict types, all
+  eleven security configuration tests, and a production build. The dependency
+  audit reported zero known vulnerabilities.
+- `npm run dev` and `npm start` both served the placeholder on default port 3000
+  without application errors. Security headers were verified, and unfinished
+  order/payment/login/admin paths returned 404 for GET and POST. Servers were
+  stopped after testing. See `docs/phase-0-verification.md` for the evidence.
+- GitHub's foundation checks passed for the pushed foundation. The workflow
+  repeats those same checks on every `phase-0` push.
+
+### Next
+
+- Wait for the owner's Phase 1 approval. Phase 1 is local Drizzle/PostgreSQL
+  data design and migrations, beginning with the required schema decisions.
+
+### Known issues
+
+- No unresolved Phase 0 functional errors were found in the completed checks.
+- Review the announced Next.js security update planned for 14 October 2026 and
+  apply the appropriate patch before deployment; see `docs/security.md`.
+- Authentication, payments, database access, bot verification, and voucher
+  encryption are intentionally future work. This is not a production release.
+- A zero-cost commercial hosting option still needs review before any launch.
