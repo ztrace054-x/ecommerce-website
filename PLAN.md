@@ -274,8 +274,10 @@ approval for Phase 2. Do not merge Phase 1 into `main` automatically.
 
 ### Phase 1 implementation decisions
 
-- Use one Next.js application and plain CSS; no UI framework, external fonts,
+- Use one Next.js application and plain CSS; no UI framework, external font requests,
   cart, customer registration, search, or extra sales features.
+- Bundle the free Noto Sans Bengali variable font locally for readable Bangla
+  on every device. Include its license; keep Latin text on system fallbacks.
 - Keep mock products in `src/data/mock-products.ts`. Use examples of setup,
   prompt training, chatbot building, and website building only. All prices are
   clearly samples, stored as integer poisha and formatted in Bangla.
@@ -299,7 +301,7 @@ Run environment-repository checks, ESLint, TypeScript route/type generation, and
 the production build. Run the repeatable `npm test` configuration security suite
 as part of `npm run check`; use synthetic inputs and disposable Git fixtures.
 Start local development and production servers and check
-that `/` loads the placeholder. Confirm planned payment and admin routes return
+that `/` loads the current approved interface. Confirm planned payment and admin routes return
 404 rather than exposing unfinished endpoints. Verify basic response headers.
 
 Check that `.env` and `.env.local` are ignored and `.env.example` is tracked with
@@ -307,6 +309,17 @@ blank values. Review staged files for secrets. Audit production and development
 dependencies; record any unresolved advisory rather than call the project safe.
 Test the environment guard with non-secret synthetic values to confirm blank
 configuration is rejected without revealing supplied values.
+
+### Phase 1 frontend checks
+
+Verify Home, catalog, every mock product detail, checkout selection/empty state,
+policies, Contact, FAQ, and not-found routes in development and production.
+Check mobile/tablet/desktop layouts, visible focus, associated field labels, one
+main landmark and descriptive titles, and keyboard-operated FAQ sections.
+Use synthetic checkout input to confirm local validity feedback and clearing
+on reload/product change, without requests, URL leakage, or browser storage.
+Reject unknown/repeated product selectors; ignore query-supplied prices. The
+floating icon must reach Contact until a real WhatsApp number is supplied.
 
 ### Tests added with later features
 
@@ -329,7 +342,7 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-11. Status: **Phase 1 in progress**.
+Updated: 2026-10-11. Status: **Phase 1 complete**. Phase 2 is not authorized.
 
 ### Done
 
@@ -353,20 +366,40 @@ Updated: 2026-10-11. Status: **Phase 1 in progress**.
   order/payment/login/admin paths returned 404 for GET and POST. Servers were
   stopped after testing. See `docs/phase-0-verification.md` for the evidence.
 - GitHub's foundation checks passed for the pushed foundation. The workflow
-  repeats those same checks on every `phase-0` push.
+  now runs on `main` and all `phase-*` branches, with the same read-only checks.
 - Corrected the roadmap to the owner's phase order: frontend in Phase 1 and
   database in Phase 2. Recorded the UI-only scope and mock/contact decisions.
+- Built the Bangla Home, catalog, four Product/Plan pages, UI-only Checkout,
+  Refund/Privacy/Terms/Contact pages, FAQ, and floating WhatsApp icon. Added one
+  mock product file, shared components, and a locally served licensed font.
+- Lint, strict types, all eleven tests, build, and dependency audit passed.
+  Development and fresh production browser checks passed across all thirteen
+  main customer route instances at 320, 375, 768, and 1280 pixels.
+- Verified navigation, matching mock prices, unknown/repeated product rejection,
+  keyboard/FAQ controls, optional WhatsApp, reload/product-change resets, and
+  no submission/storage of synthetic input, including with JavaScript disabled.
+- Visually reviewed mobile/desktop Home and Checkout. No horizontal overflow,
+  unexpected external requests, or application browser/server errors remained.
+  Future API/admin/tracking routes still returned 404 for GET and POST.
+- Updated README, local instructions, architecture/security notes, boundary
+  README files, and `docs/phase-1-verification.md`. No application dependency
+  changes, real credentials, payment logic, deployment, or Phase 1 merge added.
 
 ### Next
 
-- Complete the Phase 1 Bangla customer pages, verify local runtime and responsive
-  interaction, update this checkpoint, commit/push `phase-1`, and check GitHub.
-- Then wait for Phase 2 approval before database schema, migrations, or seeds.
+- Wait for the owner's Phase 2 approval before database schema, migrations, or
+  seed data. Start from `phase-1`'s verified source and resolve the Phase 2 data
+  design decisions. Do not merge Phase 1 or connect live services automatically.
 
 ### Known issues
 
 - No unresolved Phase 0 functional errors were found in the completed checks.
-- Phase 1 UI and verification are in progress; no completion is claimed yet.
+- No unresolved Phase 1 functional errors were found in the completed checks.
+  An older generated production page was resolved by a clean rebuild; the
+  complete production browser review passed afterward.
+- Products/prices remain samples. Policies remain drafts; no real WhatsApp
+  number or support email is configured. These are documented Phase 1 boundaries,
+  not a working payment, database, or support-service integration.
 - Review the announced Next.js security update planned for 14 October 2026 and
   apply the appropriate patch before deployment; see `docs/security.md`.
 - Authentication, payments, database access, bot verification, and voucher

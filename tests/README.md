@@ -1,6 +1,6 @@
 # Test strategy
 
-Phase 0 has no business features to test. It does have security boundaries for
+Phase 1 has UI-only customer pages and the foundation's security boundaries for
 configuration and Git-visible environment files. Run `npm test` on Node.js 24 to
 check those boundaries with synthetic values and disposable local Git fixtures.
 Tests make no network requests, use no real keys, and clean up their fixtures.
@@ -38,4 +38,11 @@ repeated delivery requests, voucher exposure, and unavailable external services.
 
 Before a release, review the actual routes and data paths as well as test output.
 A green build and audit do not establish that a payment or authentication flow
-is safe. Phase 0 never claims to have implemented those protections.
+is safe. Phase 1 never claims to have implemented those protections.
+
+Phase 1 verification also checks routes, navigation, native FAQ interaction,
+responsive widths, and the checkout's no-submission/no-storage boundary with
+synthetic data. See `docs/phase-1-verification.md` for actual evidence and
+`docs/local-development.md` for owner checks. Browser tooling used for local
+review is separate from application dependencies; `npm test` still contains
+eleven configuration security tests, not a claimed payment feature suite.

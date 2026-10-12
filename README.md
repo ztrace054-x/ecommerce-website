@@ -6,21 +6,34 @@ checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
 Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
 its [Progress section](PLAN.md#progress) records done, next, and known issues.
 
-## Current stage: Phase 0
+## Current stage: Phase 1 — customer frontend
 
-The repository contains a working Next.js App Router and TypeScript foundation.
-The home route is a development placeholder. It is not a customer storefront.
-Database, authentication, payment, delivery, and email integrations are not
-implemented or connected. There are no real credentials or customer records.
+Phase 0 is approved and merged into `main`. The `phase-1` branch adds the Bangla
+customer interface: Home, service list, Product/Plan, Checkout preview, Refund,
+Privacy, Terms, Contact, FAQ, and a floating WhatsApp icon. The roadmap has been
+corrected: database work is Phase 2, as requested by the owner.
+The mobile-first design uses plain CSS and a locally served, licensed Bangla
+font. It does not request fonts from Google or add a UI framework.
 
-Work stops here until the owner approves Phase 1. Nothing has been deployed.
+All four sample services and prices come from `src/data/mock-products.ts`.
+Prices are visibly labelled as samples. The checkout has local demo feedback
+only: it creates no orders, submits no personal information, takes no payments,
+and does not store input. Only synthetic details should be used in the preview.
+
+The policy pages are drafts, without invented refund promises. No WhatsApp
+number or support email has been supplied, so the floating icon opens the
+Contact page. Real `wa.me` order links belong to Phase 6.
+
+Database, authentication, payment, delivery, and email integrations remain
+unimplemented and unconnected. No real credentials or customer records exist.
+Nothing has been deployed. Phase 2 needs the owner's approval.
 
 ## Run locally
 
 Install **Node.js 24 LTS**, npm, and Git. In the repository folder:
 
 ```bash
-git switch phase-0
+git switch phase-1
 npm ci
 npm run dev
 ```
@@ -29,7 +42,7 @@ Open <http://localhost:3000>. `npm ci` uses the committed lockfile so everyone
 gets the same package versions. `npm run dev` starts a local development server;
 it does not publish the website. The server binds to the local computer only.
 
-No `.env` file or service account is needed for Phase 0. `.env.example` contains
+No `.env` file or service account is needed for Phase 1. `.env.example` contains
 empty placeholders for future work. Keep them empty at this stage.
 
 To check the foundation and start a production build locally:
@@ -47,10 +60,12 @@ starting the production server, because both use port 3000 by default.
 
 | Path | Purpose |
 | --- | --- |
-| `src/app/` | Next.js layouts, pages, and their styles. |
+| `src/app/` | Bangla customer routes, shared layout, and mobile-first plain CSS. |
 | `src/app/api/` | Reserved for future server route handlers; no endpoints yet. |
-| `src/components/` | Reserved for reusable interface components. |
-| `src/db/` | Database schema and migrations will be added after approval. |
+| `src/components/` | Shared header, footer, cards, policy layout, icons, and local checkout preview. |
+| `src/data/mock-products.ts` | The only source of mock products and prices; presentation only. |
+| `public/fonts/` | Self-hosted Bangla font, license, and source attribution. |
+| `src/db/` | Database schema and migrations are reserved for Phase 2. |
 | `src/lib/env/` | Explicit separation of public configuration and server secrets. |
 | `src/lib/auth/` | Authentication requirements; no login or bypass code. |
 | `src/lib/security/` | Security requirements for later input and bot checks. |
@@ -59,8 +74,24 @@ starting the production server, because both use port 3000 by default.
 | `tests/` | Repeatable configuration/security tests; business tests arrive with their features. |
 | `.github/workflows/` | GitHub checks for installation, environment safety, types, lint, build, and dependencies. |
 
-Folders reserved for later phases contain explanatory README files. Those files
-keep the folders in Git without adding unused application code.
+Folders reserved for later phases contain explanatory README files. They keep
+the intended boundaries visible without unused database/authentication code.
+
+## Customer routes
+
+| Route | What to try |
+| --- | --- |
+| `/` | Home and sample service cards. |
+| `/products` | All four sample plans. |
+| `/products/ai-setup` | Example details; each known slug has its own page. |
+| `/checkout?product=ai-setup` | Sample checkout; a query-supplied price is ignored. |
+| `/checkout` | Guidance to choose a plan first. |
+| `/refund`, `/privacy`, `/terms` | Draft policy pages. |
+| `/contact` | Contact information is not configured yet. |
+| `/faq` | Keyboard-accessible questions using native expandable sections. |
+
+Unknown products display a Bangla not-found page. There is no cart, login,
+tracking page, payment endpoint, or API-backed order submission in Phase 1.
 
 ## Safety rules
 
@@ -78,10 +109,12 @@ See [docs/architecture.md](docs/architecture.md) for the planned boundaries and
 [tests/README.md](tests/README.md) for the validation strategy. Run `npm test` for
 the configuration security tests; `npm run check` includes them. The evidence is
 recorded in [docs/phase-0-verification.md](docs/phase-0-verification.md).
+Phase 1 runtime and interaction evidence is recorded in
+[docs/phase-1-verification.md](docs/phase-1-verification.md).
 
 ## Budget and hosting
 
-Phase 0 runs locally without paid services. Future Supabase and Resend usage must
+Phase 1 runs locally without paid services. Future Supabase and Resend usage must
 stay within their permitted free-tier limits. No billing accounts are connected.
 
 Vercel compatibility is a technical requirement, not a promise of free business

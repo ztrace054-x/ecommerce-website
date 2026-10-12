@@ -34,7 +34,7 @@ token, a plaintext voucher placed in another file, or a previously leaked secret
 in Git history. Review every staged change. `.gitignore` cannot remove a file
 that has already been committed.
 
-Never create or store real credentials for Phase 0. Later approved secrets belong
+Never create or store real credentials for Phase 1. Later approved secrets belong
 only in ignored local configuration or the agreed server secret store. Keep
 database access keys, Turnstile secrets, Resend keys, encryption keys, and any
 future session-signing secret out of public configuration and Git.
@@ -73,6 +73,23 @@ exposure or production safety from a clean npm audit.
 
 Review the released advisories, apply the appropriate patch when available, and
 rerun checks before any deployment. Local Phase 0 work does not authorize launch.
+
+### Phase 1 frontend boundaries
+
+The customer pages use labelled sample services/prices only. Checkout has no
+HTML form, input names, submit control, network call, order code, transaction
+claim, recipient number, or storage. Its one button checks inputs locally only.
+The optional phone field and native validity feedback are not server security
+controls; reviewed server validation belongs to Phase 3.
+
+Only known mock slugs can select a product. Price query parameters are ignored,
+and untrusted query values are never rendered as HTML. React escapes displayed
+text; no raw HTML injection or remote content rendering is used.
+
+Policy pages are drafts for owner review, not guarantees about legal compliance,
+refund deadlines, or business eligibility. No actual WhatsApp destination or
+support email is configured. The floating icon navigates to Contact, and real
+order links are deferred. Do not add guessed contact or payment details.
 
 Source: [Official Next.js notice](https://nextjs.org/blog/upcoming-nextjs-security-update-october-2026).
 

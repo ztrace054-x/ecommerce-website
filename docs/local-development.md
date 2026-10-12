@@ -17,7 +17,7 @@ If you already have a clone, open its folder and run:
 
 ```bash
 git fetch origin
-git switch phase-0
+git switch phase-1
 npm ci
 npm run dev
 ```
@@ -28,14 +28,15 @@ Desktop setup. Do not put a personal access token into a URL or commit it:
 ```bash
 git clone https://github.com/ztrace054-x/ecommerce-website.git
 cd ecommerce-website
-git switch phase-0
+git switch phase-1
 npm ci
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see **Project foundation is ready.**
-The page is a development placeholder, so it contains no products or payment
-form. These commands run the application on your computer only.
+Open <http://localhost:3000>. You should see the Bangla Home page headed
+**AI সেবা নিন, সহজভাবে।** Follow a sample plan to its details and checkout.
+These commands run the application on your computer only; the mock checkout
+cannot create an order or take a payment.
 
 ## What the commands mean
 
@@ -58,7 +59,7 @@ Do not run `npm audit fix --force` without reviewing major-version changes.
 
 ## Environment files
 
-No `.env` is required to run Phase 0. The empty `.env.example` file documents
+No `.env` is required to run Phase 1. The empty `.env.example` file documents
 future names; it does not contain credentials. Do not fill it with real values.
 
 After a later phase explicitly permits local configuration, copy the template
@@ -71,16 +72,29 @@ Database URLs, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `ADMIN_SECRET`, and
 `ENCRYPTION_KEY` must stay server-only. Do not rename secrets with `NEXT_PUBLIC_`
 and do not place them in the `env` option of `next.config.ts`.
 
-## Manual Phase 0 checks
+## Manual Phase 1 checks
 
-1. Open `/` and confirm the development placeholder loads.
-2. Check it on a narrow mobile-sized window and a desktop-sized window.
-3. Confirm `/api/orders`, `/api/payments`, and `/admin` return 404.
-4. Run `npm run check` and `npm run audit:dependencies`; confirm success.
-5. Use `git check-ignore .env .env.local` to confirm those paths are ignored.
-6. Open `.env.example`; every configuration assignment should be empty.
-7. Stop the development server with Ctrl+C; run `npm start` after a successful
-   build and repeat the placeholder check. Stop it again when finished.
+1. Open Home, the service list, each product detail, and its checkout. Confirm
+   sample prices match across those pages and labels say ordering is not open.
+2. Check narrow mobile, tablet, and desktop widths. Confirm no horizontal
+   scrolling or clipped text; use Tab to reach links, fields, and buttons.
+3. In checkout, click the demo button with missing/invalid data, then fill only
+   synthetic values: `Demo Student`, `demo@example.com`, and `01700000000`.
+   WhatsApp is optional. Confirm local feedback appears but no order is created.
+4. Watch the browser Network panel. Typed values must not enter requests or the
+   URL, and no POST/payment call should occur. Reload and confirm fields reset.
+   Switching to another product must also reset the preview.
+5. Try `/checkout?product=ai-setup&price=1`: the displayed sample amount stays
+   unchanged. Unknown product slugs must show the not-found page.
+6. Open every policy page and expand FAQ questions with mouse and keyboard.
+   Click the floating WhatsApp icon: it opens `/contact#whatsapp`; there is no
+   invented phone number, email, or active payment destination.
+7. Confirm `/api/orders`, `/api/payments`, `/api/auth/login`, and `/admin` return
+   404. Run `npm run check` and `npm run audit:dependencies`; confirm success.
+8. Use `git check-ignore .env .env.local` to confirm those paths are ignored.
+   Every `.env.example` configuration assignment must remain empty.
+9. Stop the development server with Ctrl+C; run `npm start` after a successful
+   build and repeat the route/navigation checks. Stop it again when finished.
 
-Approve Phase 1 only after reviewing the foundation. Phase 1 begins with the
-schema-blocking questions in PLAN.md, not with real customer data or services.
+Phase 2 is database schema, migrations, and seed data. Wait for its approval;
+do not connect real customer data, service credentials, or payment systems.
