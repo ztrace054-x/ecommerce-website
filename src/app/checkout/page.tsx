@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckoutPreview } from "@/components/checkout-preview";
-import { ServiceIcon } from "@/components/icons";
+import { ArrowIcon, ServiceIcon } from "@/components/icons";
 import { getMockProduct } from "@/data/mock-products";
 import { formatTaka } from "@/lib/format";
 
@@ -29,7 +29,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
 
   return (
     <div className="container page-space checkout-page">
-      <Link className="back-link" href={`/products/${product.slug}`}>← প্ল্যানে ফিরুন</Link>
+      <Link className="back-link" href={`/products/${product.slug}`}><ArrowIcon /> প্ল্যানে ফিরুন</Link>
       <div className="page-heading"><p className="eyebrow">অর্ডার ফর্মের নমুনা</p><h1>চেকআউট</h1><p className="page-intro">সেবাটি দেখে ফর্মের নমুনা পূরণ করুন। এখন অর্ডার তৈরি বা পেমেন্ট করা যাবে না।</p></div>
       <div className="checkout-grid">
         <CheckoutPreview key={product.slug} />

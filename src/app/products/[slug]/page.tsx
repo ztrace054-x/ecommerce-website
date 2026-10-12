@@ -24,7 +24,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div className="container page-space">
-      <Link href="/products" className="back-link">← সব সেবায় ফিরুন</Link>
+      <Link href="/products" className="back-link"><ArrowIcon /> সব সেবায় ফিরুন</Link>
       <div className="detail-grid">
         <section className="product-detail">
           <span className="service-icon service-icon-large"><ServiceIcon kind={product.icon} /></span>

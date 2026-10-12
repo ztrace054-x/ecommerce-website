@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArrowIcon } from "@/components/icons";
 
 export function PolicyPage({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
   return (
     <article className="container prose-page">
-      <Link className="back-link" href="/">← হোমে ফিরুন</Link>
+      <Link className="back-link" href="/"><ArrowIcon /> হোমে ফিরুন</Link>
       <p className="eyebrow">নীতি ও সহায়তা</p>
       <h1>{title}</h1>
       <p className="page-intro">{intro}</p>
