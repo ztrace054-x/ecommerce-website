@@ -7,7 +7,8 @@ records the current checkpoint. Never request customer account passwords.
 
 ## Current stage: Phase 2 — database layer
 
-Phase 1 is approved and merged. Phase 2 adds PostgreSQL, Drizzle, migrations,
+Phase 1 is approved and merged. Phase 2 is complete and merged after local and
+native PostgreSQL 17 Compose CI checks. Phase 2 adds PostgreSQL, Drizzle, migrations,
 validated server data access, authenticated encryption, synthetic product seeds,
 interactive administrator provisioning, and database-backed customer pages.
 
@@ -143,6 +144,11 @@ for troubleshooting and [docs/database.md](docs/database.md) for every table.
 
 Invalid/inactive product selectors are rejected. Query prices are ignored.
 The floating WhatsApp icon opens Contact until a real number is authorized.
+
+Verification: **44 tests, lint, typecheck, build, migrations, audit and development
+smoke passed**, with native PostgreSQL in CI. See
+[Phase 2 evidence](docs/phase-2-verification.md) and
+[passing native database checks](https://github.com/ztrace054-x/ecommerce-website/actions/runs/38215812387).
 
 ## What remains
 

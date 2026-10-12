@@ -2,7 +2,9 @@
 
 Date: 2026-10-12. Phase 1 was approved and merged after the existing lint/types/
 11 tests/build/audit and default-port development browser checks passed.
-Phase 2 final native Compose/GitHub publication verification is still pending.
+Phase 2 native Compose checks passed in [GitHub Actions run 38215812387](https://github.com/ztrace054-x/ecommerce-website/actions/runs/38215812387)
+for d3121a2f4bbac2a29513edf95c032c68497181d6. Completion documentation follows
+without application changes; the phase branch is checked before its main merge.
 
 ## Local automated checks — passed
 
@@ -65,8 +67,11 @@ backend does not prove native multi-process locking or Docker initialization.
 
 The committed CI starts **native PostgreSQL 17 with docker-compose.yml**, including
 its fresh volume/init script/health check, and runs all tests/build/audit plus
-migration/seed/dev-page checks. Its result must pass before Phase 2 is merged;
-record the actual run/result here once retrieved. Do not silently skip this gate.
+migration/seed/dev-page checks. The retrieved run and every required step concluded **success**. Logs confirm
+container health, 29+15 tests with zero failures/skips, successful migrations,
+four seeded products, zero known advisories, and the DB-backed dev smoke.
+All 88 tracked source files matched the pushed GitHub tree. Final completion
+source is pushed and fast-forwarded to main only after the same checks pass.
 
 Terminal automation is Linux/WSL2 (util-linux script). No remote Supabase/TLS
 endpoint, Turnstile, Resend, real bKash account or production delivery was tested
@@ -77,3 +82,16 @@ The 10-character TrxID storage format is conservative, not a confirmed contract
 for the owner's payment method. Confirm it before accepting real claims. Auth/
 2FA, rate limits, bot verification, private tracking and authorized status
 transitions are required in their later phases. This is not a public release.
+
+## Acceptance checklist
+
+- [x] Fresh native PostgreSQL migrations run cleanly and rerun safely.
+- [x] Seed and actual hidden-terminal admin provisioning work.
+- [x] Canonical TrxID UNIQUE and retained-ID guard are enforced by the database.
+- [x] No string-built runtime SQL; reviewed migration DDL is static.
+- [x] Authenticated encryption/key/context/tamper tests pass.
+- [x] All 44 tests, lint, typecheck, build and dependency audit pass.
+- [x] npm run dev serves existing customer pages using database products.
+- [x] No real secrets, payment API, admin session or live service added.
+- [x] README/PLAN Progress/database docs updated; phase commits pushed and checked
+      source merged into main. No deployment or Phase 3 work.

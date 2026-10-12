@@ -2,7 +2,8 @@
 
 Read `README.md` and `PLAN.md` before changes. `PLAN.md` is the project source of
 truth. Follow the phase explicitly authorized by the owner. Phases 0 and 1 are
-approved and merged; the current task authorizes Phase 2 database work.
+approved and merged. Phase 2 database work is complete, with its checked merge
+authorized. Wait for the owner to approve Phase 3 before any Order API work.
 Do not start later phases, deploy, or configure live services without instructions.
 The owner requires each completed phase to be merged into `main` after checks.
 Never commit real secrets, request

@@ -357,7 +357,7 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-12. Status: **Phase 2 implementation complete; final verification/publication in progress**.
+Updated: 2026-10-12. Status: **Phase 2 complete and merged into main after passing checks**.
 
 ### Done
 
@@ -383,9 +383,15 @@ Updated: 2026-10-12. Status: **Phase 2 implementation complete; final verificati
   development browser reviews passed across 11 customer route instances at
   320/375/768/1280px: navigation, headers, DB prices, inactive/invalid selectors,
   preview feedback/reset/no-JS, keyboard/FAQ and no input transmission/storage.
-- Added automated critical-rule tests and a CI job using the same native PostgreSQL
-  Compose setup. Local unit/DB/terminal tests pass; final count/check evidence is
-  recorded in docs/phase-2-verification.md after the final review.
+- All 44 tests passed with zero skipped: 29 unit/configuration and 15 database/
+  terminal tests. Lint, strict types, build, migration checks and audit passed.
+- Native PostgreSQL 17 Docker Compose CI passed the documented fresh startup,
+  migrations, seed/admin tests, concurrent constraints, RLS, all checks, and
+  default-port DB-backed dev smoke. Evidence: GitHub Actions run 38215812387,
+  code/docs commit d3121a2f4bbac2a29513edf95c032c68497181d6.
+- Verified all 88 tracked files match the tested/pushed GitHub tree. Phase 2 uses
+  small commits on phase-2 and a checked fast-forward merge into main. No force
+  push, history rewrite, deployment, real credentials or live integrations.
 - Fixed the migration-tool esbuild advisory with a compatible patched dependency
   override; migration generation/checking and audit pass (zero known advisories).
 - Updated README, database/local/architecture/security docs and boundary guidance.
@@ -393,17 +399,20 @@ Updated: 2026-10-12. Status: **Phase 2 implementation complete; final verificati
 
 ### Next
 
-- Finish final local checks, native PostgreSQL/Compose CI, commit/push verification
-  and checked merge into main. Do not call publication complete before remote proof.
-- After the Phase 2 report, wait for approval before Phase 3 (Order API). No real
-  secrets are requested; the owner fills private configuration on their computer.
+- Wait for the owner's approval before Phase 3: complete server Order API with
+  request validation, authoritative quotes, atomic durable rate limits, real
+  fail-closed Turnstile verification and immutable canonical TrxID submission.
+- Confirm the supported bKash method/TrxID format before accepting real claims.
+  Resolve private tracking and correction/refund policy before dependent phases.
+  Never request real secrets; the owner fills private configuration locally.
 
 ### Known issues
 
-- This managed workspace cannot run Docker/native PostgreSQL as an unprivileged
-  process. Local engine/browser checks use PostgreSQL via PGlite over pg protocol,
-  which does not prove native multi-process locking. Native PostgreSQL 17 Compose
-  CI must pass before merge; its evidence will be recorded here.
+- No unresolved Phase 2 functional/check failures remain. Local browser/engine
+  testing used PGlite because this workspace cannot run native Docker/PostgreSQL.
+  Native PostgreSQL 17 Compose CI separately passed; do not confuse the two.
+- No real remote Supabase/certificate/pooler, payment, Turnstile or Resend endpoint
+  was connected or tested. These require their authorized integration checks.
 - Full terminal automation uses Linux util-linux script; use Linux/WSL2 locally.
 - Products remain examples and policies drafts; no contact/payment details or
   exact A/B platform permissions have been supplied. Conservative 10-character
