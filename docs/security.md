@@ -63,16 +63,19 @@ References:
 
 ## Controls still required before real use
 
-### Upcoming upstream security update
+### Upstream security review
 
-The Next.js maintainers announced on 8 October 2026 that a security update is
-planned for **14 October 2026**, covering two Critical and one High severity
-vulnerabilities in upstream dependencies. The notice does not yet give full
-affected-version or impact details. Do not infer this minimal app's precise
-exposure or production safety from a clean npm audit.
+The earlier Phase 0 record cited a notice about a security update planned for
+14 October 2026. On 12 October, the notice could not be retrieved and its details
+could not be independently reverified from current primary sources. Do not
+treat its date or severity details as currently confirmed findings or a release
+guarantee. The historical verification record is retained with this limitation.
 
-Review the released advisories, apply the appropriate patch when available, and
-rerun checks before any deployment. Local Phase 0 work does not authorize launch.
+Before deployment, review [official Next.js security advisories](https://github.com/vercel/next.js/security/advisories),
+apply patches required for the installed versions, and rerun checks. The final
+Phase 1 npm audit reported zero known vulnerabilities on 12 October, but that
+does not establish the absence of unpublished vulnerabilities. Local frontend
+work does not authorize a public launch.
 
 ### Phase 1 frontend boundaries
 
@@ -90,8 +93,6 @@ Policy pages are drafts for owner review, not guarantees about legal compliance,
 refund deadlines, or business eligibility. No actual WhatsApp destination or
 support email is configured. The floating icon navigates to Contact, and real
 order links are deferred. Do not add guessed contact or payment details.
-
-Source: [Official Next.js notice](https://nextjs.org/blog/upcoming-nextjs-security-update-october-2026).
 
 ### Future application controls
 

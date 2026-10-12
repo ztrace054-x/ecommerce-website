@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-11. Current scope: **Phase 1 — customer frontend only**.
+Last updated: 2026-10-12. Current scope: **Phase 1 — customer frontend only**.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -342,15 +342,15 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-11. Status: **Phase 1 complete**. Phase 2 is not authorized.
+Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
 
 ### Done
 
 - Reviewed the repository, README, plan, structure, and existing `phase-0`
   history. Retained the existing foundation commits.
-- Created the minimal Next.js App Router and strict TypeScript foundation with
+- In Phase 0, created the minimal Next.js App Router and strict TypeScript foundation with
   clear application, component, database, API, authentication, and security
-  boundaries. No customer pages or payment logic were added.
+  boundaries. That foundation phase added no customer pages or payment logic.
 - Added blank environment placeholders, private-file ignore rules, separated
   server/public configuration, dependency locking and audits, and basic headers.
 - Added architecture, local-development, security, and verification guidance,
@@ -384,6 +384,9 @@ Updated: 2026-10-11. Status: **Phase 1 complete**. Phase 2 is not authorized.
 - Updated README, local instructions, architecture/security notes, boundary
   README files, and `docs/phase-1-verification.md`. No application dependency
   changes, real credentials, payment logic, deployment, or Phase 1 merge added.
+- Resumed on 2026-10-12 and rechecked the final SVG navigation polish from a
+  clean build. Both production and development browser reviews passed again;
+  lint, types, all eleven tests, and the current dependency audit also passed.
 
 ### Next
 
@@ -400,8 +403,9 @@ Updated: 2026-10-11. Status: **Phase 1 complete**. Phase 2 is not authorized.
 - Products/prices remain samples. Policies remain drafts; no real WhatsApp
   number or support email is configured. These are documented Phase 1 boundaries,
   not a working payment, database, or support-service integration.
-- Review the announced Next.js security update planned for 14 October 2026 and
-  apply the appropriate patch before deployment; see `docs/security.md`.
+- Recheck official Next.js advisories and apply any required patches before
+  deployment. The earlier dated notice could not be independently reverified
+  on 2026-10-12; see `docs/security.md`. A clean audit is not proof of safety.
 - Authentication, payments, database access, bot verification, and voucher
   encryption are intentionally future work. This is not a production release.
 - A zero-cost commercial hosting option still needs review before any launch.

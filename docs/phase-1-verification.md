@@ -1,6 +1,7 @@
 # Phase 1 verification record
 
-Date: 2026-10-11. Runtime: Node.js 24.19.0, npm 11.9.0.
+Initial review: 2026-10-11. Final recheck: 2026-10-12.
+Runtime: Node.js 24.19.0, npm 11.9.0.
 Local browser review: Chromium 153.0.8010.0 with Playwright.
 
 ## Scope and source control
@@ -58,6 +59,13 @@ build's HTML had the new Bangla layout. Generated `.next` files were removed and
 rebuilt; the full production browser checks then passed against the final UI.
 No production runtime failure remains from that check. Generated files are not
 committed. The development checks also served the final source successfully.
+Back navigation uses the same accessible SVG icon as other links rather than
+depending on an arrow glyph in a system fallback font.
+After the final SVG and skip-link polish, a clean build and the entire browser
+review were repeated on 2026-10-12. Production was checked first, followed by
+development; both passed all route, width, interaction, and privacy checks.
+The eleven configuration tests, lint, strict types, and dependency audit also
+passed again. The audit reported zero known vulnerabilities on that date.
 
 Browser review tooling was used outside the application and was not added to
 `package.json`. GitHub runs the repository's environment/lint/type/test/build
@@ -76,7 +84,9 @@ WhatsApp number and support email are absent by design; real `wa.me` links are
 Phase 6. Database, authentication/2FA, encryption, private order access, and
 other production security controls are future work under the corrected plan.
 
-Review the announced Next.js security update planned for 14 October 2026 before
-any deployment; the current audit cannot cover unpublished vulnerabilities.
+Review current official Next.js advisories before any deployment; the current
+audit cannot cover unpublished vulnerabilities. The earlier Phase 0 dated
+notice could not be independently reverified during the final recheck, so its
+date and severity details are not treated as currently confirmed findings.
 Commercial hosting eligibility also remains unresolved. No merge of Phase 1,
 deployment, billing account, or live service connection is authorized here.

@@ -85,3 +85,11 @@ Git-visible source was reviewed again for common credential/private-key
 patterns and unintended environment files. Only the blank template is tracked.
 No customer pages, payments, live services, deployment, or merge were added by
 this completion update.
+
+## Later verification note
+
+This is the historical Phase 0 record. During Phase 1's final recheck on
+2026-10-12, the previously cited dated security notice could not be independently
+reverified. Do not treat that date or severity as current confirmation; see
+`docs/security.md` for the updated advisory-review requirement. Phase 0 was
+subsequently approved and merged into `main` by the owner's instruction.
