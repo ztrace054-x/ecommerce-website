@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Noto Sans Bengali";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/noto-sans-bengali.woff2") format("woff2");
+}
+
 :root {
   color-scheme: light;
   --ink: #17382e;
@@ -195,6 +203,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .footer-bottom { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 20px; font-size: 0.72rem; color: var(--muted); }
 .whatsapp-float { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 12px 16px; border-radius: 99px; background: var(--green); color: white; box-shadow: 0 4px 16px #17382e24; z-index: 10; font-size: 0.8rem; }
 .whatsapp-float svg { width: 24px; height: 24px; }
+.whatsapp-float span { display: none; }
 .whatsapp-float:hover { background: var(--green-dark); }
 
 @media (min-width: 560px) {
@@ -203,6 +212,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .header-inner { justify-content: space-between; padding-block: 16px; }
   .main-nav { width: auto; gap: 16px; }
   .safety-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .whatsapp-float span { display: inline; }
 }
 
 @media (min-width: 900px) {
