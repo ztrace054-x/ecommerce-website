@@ -1,8 +1,11 @@
 # Administrator authentication preparation
 
-An authentication provider and session design have not been selected. Ask the
-owner before implementing them. No login page, middleware guard, public admin
-route, or session implementation exists in Phase 0.
+An authentication provider and session design have not been selected.
+Administrator login, 2FA, and order management belong to Phase 5 under the
+corrected roadmap. Choose a reviewed, simple design in that authorized phase;
+ask only when a true blocker needs the owner's account, key, or business input.
+No login page, middleware guard, public admin route, or session implementation
+exists in Phase 1.
 
 Use a reviewed authentication system. Authorize every protected server action and
 route handler against the authenticated administrator's role. Plan session

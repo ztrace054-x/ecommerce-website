@@ -1,0 +1,48 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { CheckoutPreview } from "@/components/checkout-preview";
+import { ServiceIcon } from "@/components/icons";
+import { getMockProduct } from "@/data/mock-products";
+import { formatTaka } from "@/lib/format";
+
+export const metadata: Metadata = { title: "চেকআউটের নমুনা" };
+
+type Props = { searchParams: Promise<{ product?: string | string[] }> };
+
+export default async function CheckoutPage({ searchParams }: Props) {
+  const slug = (await searchParams).product;
+  if (slug === undefined) {
+    return (
+      <section className="container empty-page">
+        <p className="eyebrow">চেকআউট</p>
+        <h1>আগে একটি সেবা বেছে নিন</h1>
+        <p>প্ল্যানের বিস্তারিত দেখে তার চেকআউটের নমুনা খুলতে পারবেন।</p>
+        <Link className="button button-primary" href="/products">সেবা ও প্ল্যান দেখুন</Link>
+      </section>
+    );
+  }
+
+  // Only a known slug selects the sample. Any query-supplied price is ignored.
+  const product = typeof slug === "string" ? getMockProduct(slug) : undefined;
+  if (!product) notFound();
+
+  return (
+    <div className="container page-space checkout-page">
+      <Link className="back-link" href={`/products/${product.slug}`}>← প্ল্যানে ফিরুন</Link>
+      <div className="page-heading"><p className="eyebrow">অর্ডার ফর্মের নমুনা</p><h1>চেকআউট</h1><p className="page-intro">সেবাটি দেখে ফর্মের নমুনা পূরণ করুন। এখন অর্ডার তৈরি বা পেমেন্ট করা যাবে না।</p></div>
+      <div className="checkout-grid">
+        <CheckoutPreview key={product.slug} />
+        <aside className="summary-card checkout-summary" aria-labelledby="summary-heading">
+          <h2 id="summary-heading">নির্বাচিত প্ল্যান</h2>
+          <div className="selected-product"><span className="service-icon"><ServiceIcon kind={product.icon} /></span><div><h3>{product.name}</h3><p>{product.unit}</p></div></div>
+          <div className="summary-divider" />
+          <div className="price-row"><span>নমুনা মূল্য</span><strong>{formatTaka(product.pricePoisha)}</strong></div>
+          <div className="notice">এই মূল্য চূড়ান্ত নয়। এখন কোনো নম্বরে টাকা পাঠাবেন না।</div>
+          <p className="summary-note">অর্ডার চালু হলে নিশ্চিত মূল্য, bKash প্রাপকের নম্বর ও অর্ডার কোড দেখানো হবে।</p>
+          <Link href="/refund" className="text-link">অর্থ ফেরত নীতির খসড়া দেখুন</Link>
+        </aside>
+      </div>
+    </div>
+  );
+}
