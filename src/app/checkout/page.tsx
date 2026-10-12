@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckoutPreview } from "@/components/checkout-preview";
 import { ArrowIcon, ServiceIcon } from "@/components/icons";
-import { getMockProduct } from "@/data/mock-products";
+import { findActiveProduct } from "@/server/catalog";
+import { productPresentation } from "@/lib/product-presentation";
 import { formatTaka } from "@/lib/format";
 
 export const metadata: Metadata = { title: "চেকআউটের নমুনা" };
@@ -23,21 +24,22 @@ export default async function CheckoutPage({ searchParams }: Props) {
     );
   }
 
-  // Only a known slug selects the sample. Any query-supplied price is ignored.
-  const product = typeof slug === "string" ? getMockProduct(slug) : undefined;
+  // Only a validated, active database ID selects a product. Query prices are ignored.
+  const product = typeof slug === "string" ? await findActiveProduct(slug) : undefined;
   if (!product) notFound();
+  const presentation = productPresentation(product);
 
   return (
     <div className="container page-space checkout-page">
-      <Link className="back-link" href={`/products/${product.slug}`}><ArrowIcon /> প্ল্যানে ফিরুন</Link>
+      <Link className="back-link" href={`/products/${product.id}`}><ArrowIcon /> প্ল্যানে ফিরুন</Link>
       <div className="page-heading"><p className="eyebrow">অর্ডার ফর্মের নমুনা</p><h1>চেকআউট</h1><p className="page-intro">সেবাটি দেখে ফর্মের নমুনা পূরণ করুন। এখন অর্ডার তৈরি বা পেমেন্ট করা যাবে না।</p></div>
       <div className="checkout-grid">
-        <CheckoutPreview key={product.slug} />
+        <CheckoutPreview key={product.id} />
         <aside className="summary-card checkout-summary" aria-labelledby="summary-heading">
           <h2 id="summary-heading">নির্বাচিত প্ল্যান</h2>
-          <div className="selected-product"><span className="service-icon"><ServiceIcon kind={product.icon} /></span><div><h3>{product.name}</h3><p>{product.unit}</p></div></div>
+          <div className="selected-product"><span className="service-icon"><ServiceIcon kind={presentation.icon} /></span><div><h3>{product.name}</h3><p>{presentation.unit}</p></div></div>
           <div className="summary-divider" />
-          <div className="price-row"><span>নমুনা মূল্য</span><strong>{formatTaka(product.pricePoisha)}</strong></div>
+          <div className="price-row"><span>নমুনা মূল্য</span><strong>{formatTaka(product.priceBdt)}</strong></div>
           <div className="notice">এই মূল্য চূড়ান্ত নয়। এখন কোনো নম্বরে টাকা পাঠাবেন না।</div>
           <p className="summary-note">অর্ডার চালু হলে নিশ্চিত মূল্য, bKash প্রাপকের নম্বর ও অর্ডার কোড দেখানো হবে।</p>
           <Link href="/refund" className="text-link">অর্থ ফেরত নীতির খসড়া দেখুন</Link>

@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { ArrowIcon, CheckIcon, ServiceIcon } from "@/components/icons";
 import { ProductCard } from "@/components/product-card";
-import { mockProducts } from "@/data/mock-products";
+import { listActiveProducts } from "@/server/catalog";
 
 const steps = [
   { number: "০১", title: "সেবা বেছে নিন", text: "কী পাবেন ও কত লাগবে, আগে দেখে নিন।" },
@@ -9,7 +10,9 @@ const steps = [
   { number: "০৩", title: "সেবা গ্রহণ করুন", text: "যাচাইয়ের পরে নির্বাচিত সেবা দেওয়া হবে।" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  await connection();
+  const products = await listActiveProducts();
   return (
     <>
       <section className="hero">
@@ -47,7 +50,8 @@ export default function HomePage() {
           <div><p className="eyebrow">আপনার প্রয়োজন অনুযায়ী</p><h2 id="services-heading">সেবা ও প্ল্যান</h2></div>
           <span className="sample-pill">নমুনা সেবা · নমুনা মূল্য</span>
         </div>
-        <div className="product-grid">{mockProducts.map((product) => <ProductCard key={product.slug} product={product} />)}</div>
+        <div className="product-grid">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+        {products.length === 0 && <p className="notice">এখন কোনো সেবা দেখানো হচ্ছে না। পরে আবার দেখুন।</p>}
       </section>
 
       <section className="container safety-strip" aria-label="নিরাপদ সেবার নিয়ম">
