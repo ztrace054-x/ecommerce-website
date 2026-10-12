@@ -1,8 +1,8 @@
-name: Foundation checks
+name: Project checks
 
 on:
   push:
-    branches: [phase-0]
+    branches: [main, 'phase-*']
   pull_request:
     branches: [main]
 

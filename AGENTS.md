@@ -1,9 +1,11 @@
 # Repository guidance
 
 Read `README.md` and `PLAN.md` before changes. `PLAN.md` is the project source of
-truth. Follow the phase explicitly authorized by the owner; this foundation task
-authorizes Phase 0 only. Do not start later phases, merge into `main`, deploy, or
-configure live services without instructions. Never commit real secrets, request
+truth. Follow the phase explicitly authorized by the owner. Phase 0 is approved
+and merged; the current task authorizes Phase 1 customer frontend pages only.
+The owner's corrected roadmap places database work in Phase 2. Do not start
+later phases, merge Phase 1 into `main`, deploy, or configure live services
+without instructions. Never commit real secrets, request
 customer passwords, or add payment/authentication shortcuts. Report actual checks.
 
 ## Working rules for every phase
@@ -22,6 +24,17 @@ customer passwords, or add payment/authentication shortcuts. Report actual check
   completion, record the exact checkpoint, commit and push safe progress, and
   clearly report the incomplete work; never call a checkpoint a finished phase.
 - Wait for approval for the next phase after the completed phase's final report.
+
+## Phase 1 boundaries
+
+- Use one mock product file for the Home, Product/Plan, and Checkout pages.
+- Use simple Bangla, a mobile-first layout, and the requested policy/FAQ pages.
+- Checkout is UI only: no orders, payments, transaction IDs, credentials, or
+  personal-data submissions. Do not persist form values in browser storage.
+- Display that products/prices are samples and ordering is not open. Do not
+  invent subscriptions, approved platform resale rights, or contact details.
+- The floating WhatsApp icon may link to Contact while the real number is absent.
+  Real `wa.me` order links and email templates belong to Phase 6.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

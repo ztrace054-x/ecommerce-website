@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-11. Current scope: **Phase 0 only**.
+Last updated: 2026-10-11. Current scope: **Phase 1 — customer frontend only**.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -92,7 +92,7 @@ claim may instead be rejected. Refund eligibility and other transitions require
 an explicit policy before implementation. The server will enforce the approved
 transition rules rather than accept arbitrary status values from a browser.
 
-**Phase 1 design decision:** an order code and price must exist before the TrxID is
+**Phase 2 design decision:** an order code and price must exist before the TrxID is
 submitted, but no pre-submission state was specified. Resolve how unpaid order
 records should be represented before building the schema. Choose and document
 the simplest safe representation that preserves the five requested statuses.
@@ -129,8 +129,10 @@ building, and website building. Record actual delivery completion manually.
 | Setup and prompt training | Requesting passwords to customers' third-party accounts |
 | Chatbot and website building | Features that evade platform restrictions or violate terms |
 
-Product approval must check the exact offering before publication. No example
-product inventory or subscription promises are created in Phase 0.
+Product approval must check the exact offering before publication. Phase 1 uses
+clearly labelled mock examples of the four allowed service categories only.
+Those sample prices and descriptions are not live offers or approved inventory.
+No subscription resale promises or invented contact details are permitted.
 
 ## 6. Technology stack
 
@@ -142,7 +144,7 @@ product inventory or subscription promises are created in Phase 0.
 | ORM | Drizzle, selected from the owner's permitted alternatives |
 | Bot protection | Cloudflare Turnstile; browser site key and server secret stay separate |
 | Email | Resend free tier; integration is deferred |
-| Source control | Connected GitHub repository; isolated `phase-0` branch |
+| Source control | Connected GitHub repository; one branch for each authorized phase |
 | Hosting preparation | Standard Next.js build compatible with Vercel; no deployment |
 | Local runtime | Node.js 24 LTS with npm and a committed lockfile |
 
@@ -255,17 +257,39 @@ handle real customers, payments, vouchers, or administrator sessions.
 | Phase | Scope | Exit requirements |
 | --- | --- | --- |
 | 0 — Foundation | Minimal local Next.js app, folder boundaries, documentation, empty environment template, repository checks | Types, lint, build, local smoke checks, dependency audit, small commits on `phase-0`; no real integrations |
-| 1 — Data design | Resolve schema-blocking questions, define Drizzle schema/migrations and safe local fixtures | Review constraints, price precision, concurrency, data privacy, and state design; no live Supabase connection |
-| 2 — Administrator access | Agree on and prepare a reviewed identity/session system with isolated local tests | Authentication, authorization, session and CSRF checks pass; no secret-based login shortcut |
-| 3 — Catalog and order creation | Approved products, requested contact form, server prices, order code and payment instructions | Tampered prices rejected, inputs limited, private customer access agreed and tested |
-| 4 — TrxID submission | Confirmed format, duplicate constraints, durable rate limits, Turnstile boundary, WhatsApp link | Concurrent duplicates, replay, rate limits, missing configuration, and bot-check failures tested |
-| 5 — Manual verification | Authenticated administrator view and permitted verified/rejected transitions | Manual bKash check required, transition rules enforced, actor and actions recorded |
-| 6 — Delivery and refunds | Permitted invites/services, encrypted voucher delivery where approved, Resend preparation, approved manual refund states | No credentials shared, delivery access private, encryption and repeated-action tests pass |
-| 7 — Final review and preparation | Full mocked/local flow, security review, runbooks and hosting eligibility | Reviewable release candidate only; separate explicit permission needed for any live connection or deployment |
+| 1 — Frontend customer pages | Home, Product/Plan, Checkout UI, Refund/Privacy/Terms/Contact pages, FAQ, floating WhatsApp icon; one mock product file | Mobile-first Bangla UI, navigation works, sample prices clearly labelled, no payment or personal-data submission; committed and pushed on `phase-1` |
+| 2 — Database | Drizzle/PostgreSQL schema, reviewed migrations, and safe seed data | Resolve state design; verify constraints, price precision, privacy, and safe local fixtures; no live Supabase connection without authorization |
+| 3 — Order API | Server validation, server prices, rate limiting, Turnstile, secure order codes, payment-claim/TrxID submission boundary | Test tampered prices, duplicate claims, replay, atomic limits, invalid input, and unavailable services; no automatic payment approval |
+| 4 — Order Track page | Private customer access to the agreed order status/details | Order-code guessing must not expose personal data or delivery secrets; authorization and privacy checks pass |
+| 5 — Admin panel | Reviewed login, 2FA, order management, audit log, manual verification and permitted delivery/refund records | Authentication, authorization, session/CSRF, 2FA, and state transitions tested; manual bKash verification required; safe encrypted vouchers where used |
+| 6 — Email and WhatsApp | Requested email templates and configured `wa.me` links | Redacted/escaped content, correct recipient, and approved link destination; mocked tests; no automatic WhatsApp messages |
+| 7 — Security hardening and self-review | Review every implemented boundary, headers, access policy, encryption, anti-abuse, dependency advisories, and failure handling | Resolve findings before real use; no unreviewed authentication or payment shortcut |
+| 8 — Tests and documentation | Complete feature/integration/end-to-end tests, README, and deployment guide | Synthetic data only, full flow verified, beginner instructions reproducible, hosting eligibility reviewed; a guide does not authorize deployment |
+| 9 — Final cleanup and push | Remove dead code/placeholders, final checks, final documentation and source review | Working local application, clean commits, pushed release candidate; live services/deployment require separate explicit authorization |
 
-Stop at the end of each phase and report what changed and what passed. Phase 1
-requires a new explicit approval. Phase 0 must not create customer pages,
-catalog data, order APIs, payment logic, login routes, or a working voucher store.
+The owner approved Phase 0, authorized its merge after passing checks, and
+corrected the phase order above on 2026-10-11. Phase 1 is now authorized in full.
+Finish the authorized phase, report what changed and what passed, then wait for
+approval for Phase 2. Do not merge Phase 1 into `main` automatically.
+
+### Phase 1 implementation decisions
+
+- Use one Next.js application and plain CSS; no UI framework, external fonts,
+  cart, customer registration, search, or extra sales features.
+- Keep mock products in `src/data/mock-products.ts`. Use examples of setup,
+  prompt training, chatbot building, and website building only. All prices are
+  clearly samples, stored as integer poisha and formatted in Bangla.
+- Home links to `/products`; product details live at `/products/[slug]`, and
+  `/checkout?product=<slug>` selects a known mock product. Query prices are
+  ignored. These are presentation values, not authoritative payment amounts.
+- Checkout has labelled fields for name, email, bKash sender number, and optional
+  WhatsApp number. It may check native input validity locally but must not send
+  or store input, create an order, generate a code, ask for a TrxID, or show a
+  bKash recipient. Use synthetic input during testing.
+- Policy pages are clearly draft content for review before real use. Do not
+  invent refund deadlines, fees, legal guarantees, or business contact details.
+- With no WhatsApp number supplied, the floating icon links to the Contact
+  page's WhatsApp section. A real destination is deferred to Phase 6.
 
 ## 10. Testing strategy
 
@@ -305,7 +329,7 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-11. Status: **Phase 0 complete**. Authorized phase: **Phase 0 only**.
+Updated: 2026-10-11. Status: **Phase 1 in progress**.
 
 ### Done
 
@@ -318,7 +342,8 @@ Updated: 2026-10-11. Status: **Phase 0 complete**. Authorized phase: **Phase 0 o
   server/public configuration, dependency locking and audits, and basic headers.
 - Added architecture, local-development, security, and verification guidance,
   eleven repeatable configuration security tests, and GitHub checks.
-- The foundation is committed and pushed on `phase-0`; `main` is unchanged.
+- Phase 0 is committed, pushed, approved, and merged into `main` by a fast-forward
+  after its latest GitHub checks passed. `phase-1` branches from that foundation.
 - Recorded the owner's whole-project working rules in this plan and `AGENTS.md`.
 - Completion checks passed: environment safeguards, lint, strict types, all
   eleven security configuration tests, and a production build. The dependency
@@ -329,15 +354,19 @@ Updated: 2026-10-11. Status: **Phase 0 complete**. Authorized phase: **Phase 0 o
   stopped after testing. See `docs/phase-0-verification.md` for the evidence.
 - GitHub's foundation checks passed for the pushed foundation. The workflow
   repeats those same checks on every `phase-0` push.
+- Corrected the roadmap to the owner's phase order: frontend in Phase 1 and
+  database in Phase 2. Recorded the UI-only scope and mock/contact decisions.
 
 ### Next
 
-- Wait for the owner's Phase 1 approval. Phase 1 is local Drizzle/PostgreSQL
-  data design and migrations, beginning with the required schema decisions.
+- Complete the Phase 1 Bangla customer pages, verify local runtime and responsive
+  interaction, update this checkpoint, commit/push `phase-1`, and check GitHub.
+- Then wait for Phase 2 approval before database schema, migrations, or seeds.
 
 ### Known issues
 
 - No unresolved Phase 0 functional errors were found in the completed checks.
+- Phase 1 UI and verification are in progress; no completion is claimed yet.
 - Review the announced Next.js security update planned for 14 October 2026 and
   apply the appropriate patch before deployment; see `docs/security.md`.
 - Authentication, payments, database access, bot verification, and voucher
