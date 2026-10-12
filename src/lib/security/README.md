@@ -1,18 +1,12 @@
-# Security utilities preparation
+# Security utilities
 
-Phase 0 prepares the server/public environment boundary and basic response
-headers. Input validation, rate limiting, Turnstile verification, and voucher
-encryption will be implemented only with their approved features.
+Phase 2 implementations live in src/server/security/: crypto-secure order codes
+with database collision retry, AES-256-GCM with fresh IV/tag and record context,
+and salted scrypt password hashing. Strict Zod validators are in src/server.
+They are tested; no real keys, passwords or voucher codes are seeded.
 
-Requirements for later utilities:
-
-- Validate inputs on the server with clear size/format limits.
-- Use durable, atomic rate limits suitable for multiple application instances.
-- Verify Turnstile server-side and reject failure, replay, or missing configuration.
-- Confirm bKash format rules before writing TrxID validation.
-- Prevent duplicate use with database constraints and transactions.
-- Use reviewed authenticated encryption; never invent an encryption scheme.
-- Return generic errors and redact secrets, contact details, and voucher codes.
-
-Do not add always-successful checks, process-local production rate limits, or
-plaintext voucher helpers as temporary shortcuts. See docs/security.md and PLAN.md.
+Phase 3 must implement durable atomic limits and real server Turnstile verification
+before exposing order/TrxID submission. Phase 5 must implement real auth/2FA and
+authorized state changes before verification/delivery. No always-successful
+security checks or process-local production limit shortcuts are permitted.
+See PLAN.md and docs/security.md for future requirements and tested boundaries.

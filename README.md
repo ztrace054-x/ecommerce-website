@@ -1,123 +1,160 @@
 # AI services e-commerce project
 
-A Bangladesh-focused project for ordering permitted AI products and services,
-paying through bKash, and receiving delivery after an administrator manually
-checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
-Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
-its [Progress section](PLAN.md#progress) records done, next, and known issues.
+A Bangladesh-focused website for permitted AI services, official invitations,
+and authorized vouchers. Future bKash payments require manual administrator
+verification. [PLAN.md](PLAN.md) is the source of truth and its Progress section
+records the current checkpoint. Never request customer account passwords.
 
-## Current stage: Phase 1 — customer frontend
+## Current stage: Phase 2 — database layer
 
-Phase 0 is approved and merged into `main`. The `phase-1` branch adds the Bangla
-customer interface: Home, service list, Product/Plan, Checkout preview, Refund,
-Privacy, Terms, Contact, FAQ, and a floating WhatsApp icon. The roadmap has been
-corrected: database work is Phase 2, as requested by the owner.
-The mobile-first design uses plain CSS and a locally served, licensed Bangla
-font. It does not request fonts from Google or add a UI framework.
+Phase 1 is approved and merged. Phase 2 adds PostgreSQL, Drizzle, migrations,
+validated server data access, authenticated encryption, synthetic product seeds,
+interactive administrator provisioning, and database-backed customer pages.
 
-All four sample services and prices come from `src/data/mock-products.ts`.
-Prices are visibly labelled as samples. The checkout has local demo feedback
-only: it creates no orders, submits no personal information, takes no payments,
-and does not store input. Only synthetic details should be used in the preview.
+There are five tables: products, orders, delivery codes, administrator identities,
+and audit logs. Orders begin as `pending` without a TrxID. Prices use positive
+whole BDT integers; a locked database price becomes an immutable order quote.
+TrxIDs are canonical uppercase values with a database UNIQUE constraint. Once
+assigned, they cannot be changed to free the original ID for reuse.
 
-The policy pages are drafts, without invented refund promises. No WhatsApp
-number or support email has been supplied, so the floating icon opens the
-Contact page. Real `wa.me` order links belong to Phase 6.
+Home, Product/Plan, and Checkout now read active products from PostgreSQL.
+Product URLs use their database UUID; old mock slugs are removed. The seed adds
+four examples: two active services (C) and inactive invitation/voucher examples
+(A/B). These are samples, not approved live offers. Policy pages remain drafts.
 
-Database, authentication, payment, delivery, and email integrations remain
-unimplemented and unconnected. No real credentials or customer records exist.
-Nothing has been deployed. Phase 2 needs the owner's approval.
+**Checkout is still UI only.** It sends/stores no customer input and creates no
+orders or payment claims. No bKash recipient, Order API, admin login/session,
+2FA enrollment, tracking, delivery, email, or live WhatsApp integration exists.
+The provisioning script creates an identity only; it cannot grant a session.
+No real secrets or services are configured. Nothing is deployed.
 
 ## Run locally
 
-Install **Node.js 24 LTS**, npm, and Git. In the repository folder:
+Install Node.js **24 LTS**, npm, Git, and Docker with **Compose v2**. Start Docker.
+The full automated terminal tests require Linux's `script` utility (util-linux);
+on Windows use Ubuntu/WSL2. GitHub CI runs the same setup on Ubuntu.
 
 ```bash
-git switch phase-1
+git switch main
 npm ci
+cp .env.example .env
+```
+
+Edit your private `.env` on your computer. Fill these three values yourself:
+
+| Variable | Local value to supply |
+| --- | --- |
+| `POSTGRES_PASSWORD` | A local development password, never reused from another account. |
+| `DATABASE_URL` | `postgresql://ecommerce:<URL_ENCODED_LOCAL_PASSWORD>@127.0.0.1:5432/ecommerce` |
+| `TEST_DATABASE_URL` | `postgresql://ecommerce:<URL_ENCODED_LOCAL_PASSWORD>@127.0.0.1:5432/ecommerce_test` |
+
+Replace the angle-bracket placeholder. URL-encode special password characters;
+the URL password must match POSTGRES_PASSWORD. Never put values in `.env.example`,
+Git, screenshots, chat, or public configuration. The other placeholders may stay
+blank for the catalog. Then run:
+
+```bash
+npm run db:start
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
-Open <http://localhost:3000>. `npm ci` uses the committed lockfile so everyone
-gets the same package versions. `npm run dev` starts a local development server;
-it does not publish the website. The server binds to the local computer only.
+Open <http://localhost:3000>. `db:start` waits for PostgreSQL health; migrations
+create the schema; seed inserts missing sample products without overwriting edits.
+The database and Next.js server bind only to localhost. No paid service is needed.
+Stop Next.js with Ctrl+C. `npm run db:stop` stops PostgreSQL while preserving data.
 
-No `.env` file or service account is needed for Phase 1. `.env.example` contains
-empty placeholders for future work. Keep them empty at this stage.
+## Environment variables
 
-To check the foundation and start a production build locally:
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Server-only application PostgreSQL URL; required to load products. |
+| `MIGRATION_DATABASE_URL` | Optional direct/session connection for migrations; otherwise uses DATABASE_URL. |
+| `TEST_DATABASE_URL` | Separate disposable localhost database ending in `_test`; never falls back to the app database. |
+| `POSTGRES_PASSWORD` | Local Compose database password; not an application login. |
+| `ENCRYPTION_KEY` | Canonical base64 of exactly 32 random bytes; required for voucher/TOTP encryption, not catalog/provisioning. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Future public bot-check key, Phase 3. |
+| `TURNSTILE_SECRET_KEY` | Future server bot-check secret, Phase 3. |
+| `RESEND_API_KEY` | Future email integration, Phase 6. |
+| `ADMIN_SECRET` | Reserved for reviewed future server use; never a shared admin password or bypass. |
+
+Node scripts read root `.env`; Next.js also supports its normal private environment
+files. Keep a single root `.env` for this local setup. All template values remain
+blank. Missing database configuration produces a generic catalog error, never a
+mock-data or unsafe connection fallback. Builds do not need a running database.
+
+## Checks and administrator provisioning
+
+Stop a running development server before the smoke check, which needs port 3000.
 
 ```bash
+npm run db:check
 npm run check
 npm run audit:dependencies
-npm start
+npm run smoke:dev
 ```
 
-Stop a running server with **Ctrl+C**. Stop the development server before
-starting the production server, because both use port 3000 by default.
+`check` runs environment checks, lint, typecheck, all unit/database/terminal tests,
+and build. **Database tests delete fixtures from the five tables in the disposable
+TEST_DATABASE_URL database. Never point it at data you want to keep.** Tests do not
+skip when it is missing. `npm run test:unit` runs without a database; `npm test`
+runs the complete suite. CI starts a fresh PostgreSQL 17 Compose volume, runs the
+same checks, migrates/seeds the app database, verifies dev pages, and removes only
+its disposable CI database afterward.
 
-## Where files belong
+Optional local administrator creation:
+
+```bash
+npm run admin:create
+```
+
+The terminal asks for email and a hidden password plus confirmation. Use 15–128
+characters. Never pass passwords as arguments/environment variables. Only a salted,
+memory-hard scrypt hash is stored. Duplicate email does not reset a password.
+There is no seeded admin and no login yet; real 2FA is required in Phase 5.
+
+For a local production build, use `npm run build`, then `npm start` after stopping
+dev. Neither command deploys the site. See [docs/local-development.md](docs/local-development.md)
+for troubleshooting and [docs/database.md](docs/database.md) for every table.
+
+## Folder structure
 
 | Path | Purpose |
 | --- | --- |
-| `src/app/` | Bangla customer routes, shared layout, and mobile-first plain CSS. |
-| `src/app/api/` | Reserved for future server route handlers; no endpoints yet. |
-| `src/components/` | Shared header, footer, cards, policy layout, icons, and local checkout preview. |
-| `src/data/mock-products.ts` | The only source of mock products and prices; presentation only. |
-| `public/fonts/` | Self-hosted Bangla font, license, and source attribution. |
-| `src/db/` | Database schema and migrations are reserved for Phase 2. |
-| `src/lib/env/` | Explicit separation of public configuration and server secrets. |
-| `src/lib/auth/` | Authentication requirements; no login or bypass code. |
-| `src/lib/security/` | Security requirements for later input and bot checks. |
-| `scripts/` | Checks for safe environment configuration in Git. |
-| `docs/` | Architecture, local development, and security notes. |
-| `tests/` | Repeatable configuration/security tests; business tests arrive with their features. |
-| `.github/workflows/` | GitHub checks for installation, environment safety, types, lint, build, and dependencies. |
-
-Folders reserved for later phases contain explanatory README files. They keep
-the intended boundaries visible without unused database/authentication code.
+| `src/app/` | Bangla customer pages; API folder has no endpoints yet. |
+| `src/components/` | Shared interface and checkout preview; no database writes. |
+| `src/db/schema.ts`, `src/db/migrations/` | Typed tables, constraints, enums, committed SQL migrations and snapshots. |
+| `src/server/` | Validated data access, database connection, demo seed, admin provisioning and security utilities. |
+| `src/lib/` | Environment boundary, BDT formatting, delivery-rule presentation. |
+| `scripts/` | Migrations, seed, hidden terminal provisioning, environment checks and dev smoke. |
+| `docker-compose.yml` | Local PostgreSQL 17 with a persistent volume and health check. |
+| `tests/` | Configuration, crypto, validation, real database and terminal tests. |
+| `docs/` | Beginner instructions, architecture, security and verification records. |
+| `public/fonts/` | Licensed, locally served Bangla font; no external font requests. |
 
 ## Customer routes
 
-| Route | What to try |
-| --- | --- |
-| `/` | Home and sample service cards. |
-| `/products` | All four sample plans. |
-| `/products/ai-setup` | Example details; each known slug has its own page. |
-| `/checkout?product=ai-setup` | Sample checkout; a query-supplied price is ignored. |
-| `/checkout` | Guidance to choose a plan first. |
-| `/refund`, `/privacy`, `/terms` | Draft policy pages. |
-| `/contact` | Contact information is not configured yet. |
-| `/faq` | Keyboard-accessible questions using native expandable sections. |
+- `/`, `/products`: active DB products.
+- `/products/10000000-0000-4000-8000-000000000001`: seeded setup service.
+- `/checkout?product=10000000-0000-4000-8000-000000000001`: UI preview with DB price.
+- `/checkout`: choose a product first.
+- `/refund`, `/privacy`, `/terms`, `/contact`, `/faq`: existing Bangla pages.
 
-Unknown products display a Bangla not-found page. There is no cart, login,
-tracking page, payment endpoint, or API-backed order submission in Phase 1.
+Invalid/inactive product selectors are rejected. Query prices are ignored.
+The floating WhatsApp icon opens Contact until a real number is authorized.
 
-## Safety rules
+## What remains
 
-- Never collect passwords for customers' third-party AI accounts.
-- Never sell pre-made accounts, shared logins, or stolen accounts.
-- Use only official, permitted invites/gifts, authorized vouchers, and services.
-- Keep secrets on the server. Never add them to `NEXT_PUBLIC_*` configuration.
-- Prices must come from the database when order handling is implemented.
-- A TrxID submission or WhatsApp message never proves payment by itself.
-- Never treat the example `ADMIN_SECRET` variable as a login password or API key.
+Phase 3: protected Order API, request limits, Turnstile and TrxID submission.
+Phase 4: private order tracking. Phase 5: login, 2FA, authorized state changes,
+manual verification/delivery/refunds and audit writing. Phase 6: email/wa.me.
+Phases 7–9: hardening, complete end-to-end tests, deployment guide and cleanup.
+Wait for the owner's approval before each next phase.
 
-Read [docs/security.md](docs/security.md) before adding integrations and
-[docs/local-development.md](docs/local-development.md) for command explanations.
-See [docs/architecture.md](docs/architecture.md) for the planned boundaries and
-[tests/README.md](tests/README.md) for the validation strategy. Run `npm test` for
-the configuration security tests; `npm run check` includes them. The evidence is
-recorded in [docs/phase-0-verification.md](docs/phase-0-verification.md).
-Phase 1 runtime and interaction evidence is recorded in
-[docs/phase-1-verification.md](docs/phase-1-verification.md).
-
-## Budget and hosting
-
-Phase 1 runs locally without paid services. Future Supabase and Resend usage must
-stay within their permitted free-tier limits. No billing accounts are connected.
-
-Vercel compatibility is a technical requirement, not a promise of free business
-hosting. [Vercel's Hobby plan](https://vercel.com/docs/plans/hobby) currently limits
-usage to personal, non-commercial projects. Agree on an eligible hosting option
-before a future commercial launch. Do not deploy this foundation.
+Before any real use, confirm bKash method/TrxID rules, product permissions, refund
+policy, contact details, runtime DB privileges, private tracking, key recovery,
+retention/backups and eligible commercial hosting. RLS denies public table access;
+it does not protect a leaked server database credential. See [docs/security.md](docs/security.md).
+Supabase is prepared through DATABASE_URL with verified TLS, but unconnected.
+Vercel compatibility does not guarantee free commercial hosting. Do not deploy.

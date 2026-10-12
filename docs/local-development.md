@@ -1,100 +1,78 @@
-# Local development for a beginner
+# Local development, step by step
 
-## Prerequisites
+Use Node.js 24 LTS, npm, Git, and Docker with Compose v2. The full terminal test
+suite uses util-linux script on Linux; Windows users can use Ubuntu/WSL2.
+Keep real payments/customers/vouchers out of this development project.
 
-Install Node.js 24 LTS, which includes npm, and install Git. The `.nvmrc` file
-also requests Node 24 if you use a Node version manager. Check your installation:
+1. Switch to the completed source on main and run npm ci.
+2. Copy .env.example to .env. Fill only POSTGRES_PASSWORD, DATABASE_URL and
+   TEST_DATABASE_URL using README's private local instructions. Leave future
+   service placeholders blank. Do not reuse a password from a real account.
+3. Start Docker, run npm run db:start, then npm run db:migrate and npm run db:seed.
+4. Run npm run dev and open http://localhost:3000. Stop with Ctrl+C.
 
-```bash
-node --version
-npm --version
-git --version
-```
+## Commands explained
 
-## Open the branch
-
-If you already have a clone, open its folder and run:
-
-```bash
-git fetch origin
-git switch phase-1
-npm ci
-npm run dev
-```
-
-If you need a new clone, authenticate to GitHub through your normal Git/GitHub
-Desktop setup. Do not put a personal access token into a URL or commit it:
-
-```bash
-git clone https://github.com/ztrace054-x/ecommerce-website.git
-cd ecommerce-website
-git switch phase-1
-npm ci
-npm run dev
-```
-
-Open <http://localhost:3000>. You should see the Bangla Home page headed
-**AI সেবা নিন, সহজভাবে।** Follow a sample plan to its details and checkout.
-These commands run the application on your computer only; the mock checkout
-cannot create an order or take a payment.
-
-## What the commands mean
-
-| Command | Purpose |
+| Command | What it does |
 | --- | --- |
-| `npm ci` | Install exactly the packages recorded in the lockfile. |
-| `npm run dev` | Start the local development server with automatic rebuilding. |
-| `npm run check:env` | Check environment templates and Git-visible environment files. |
-| `npm run lint` | Catch JavaScript and TypeScript coding mistakes. |
-| `npm run typecheck` | Generate route types and check strict TypeScript without emitting code. |
-| `npm run build` | Produce a local production build; no deployment. |
-| `npm test` | Run configuration security tests with synthetic values and temporary Git fixtures. |
-| `npm run check` | Run the environment, lint, type, test, and build checks together. |
-| `npm run audit:dependencies` | Ask the package registry about known dependency advisories. |
-| `npm start` | Run the completed production build locally. |
+| npm ci | Installs the exact lockfile. |
+| npm run db:start | Starts local PostgreSQL 17 via Compose and waits for health. |
+| npm run db:stop | Stops PostgreSQL, preserving its volume. |
+| npm run db:migrate | Applies committed migrations using a private URL. |
+| npm run db:seed | Inserts four missing demo products, without overwriting edits. |
+| npm run admin:create | Interactive identity creation with hidden password/confirmation; no login/session. |
+| npm run db:generate | Generates schema migrations for review; does not connect a live database. |
+| npm run db:check | Checks migration history consistency. |
+| npm run check | Environment safeguards, lint, types, all tests and production build. |
+| npm run test:unit | Configuration/validation/crypto/code tests without a database. |
+| npm run test:db | Tests and cleans fixtures in the explicitly disposable local _test database. |
+| npm run audit:dependencies | Fails on moderate-or-higher advisories, including development dependencies. |
+| npm run smoke:dev | Starts/stops dev on port 3000 and checks DB-backed pages; stop your other server first. |
+| npm run build / npm start | Local production build/server; no deployment. |
 
-`npm run audit:dependencies` needs network access to the package registry. If
-the registry is unavailable, the audit is incomplete; do not report it passed.
-Do not run `npm audit fix --force` without reviewing major-version changes.
+## What to check by hand
 
-## Environment files
+- Home and /products show two seeded service examples and BDT 500/750.
+- Open a product and checkout through the links. Enter synthetic contact details;
+  local feedback works but no order/payment/request/storage is created.
+- Add &price=1 to the checkout URL: displayed DB price must remain unchanged.
+- Inactive A/B UUIDs and invalid/repeated selectors must not show checkout fields.
+- Try the FAQ by keyboard, mobile widths, policies and Contact. WhatsApp still
+  opens Contact because no number has been supplied.
+- Rerun db:migrate and db:seed; neither should duplicate records or reset edits.
+- Optionally run admin:create in a real terminal; passwords must stay hidden.
+  There is no admin login yet. Never enter a customer's account password.
+- Stop/restart the database; its product data should persist in the local volume.
 
-No `.env` is required to run Phase 1. The empty `.env.example` file documents
-future names; it does not contain credentials. Do not fill it with real values.
+## Common problems
 
-After a later phase explicitly permits local configuration, copy the template
-to `.env.local` using your file manager or `cp .env.example .env.local` on
-macOS/Linux. Keep private values only in ignored local files or the approved
-server secret store. Never paste them into commits, chat, screenshots, or logs.
+Missing Docker: install/launch Docker with Compose v2 on your computer; no Supabase
+account is required. Port 5432 is occupied: stop the other local PostgreSQL service
+or choose a different local Compose port and update both private URLs consistently.
+Port 3000 is occupied: stop the existing Next.js server before smoke/dev/start.
 
-`NEXT_PUBLIC_TURNSTILE_SITE_KEY` will be visible in a browser by design.
-Database URLs, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `ADMIN_SECRET`, and
-`ENCRYPTION_KEY` must stay server-only. Do not rename secrets with `NEXT_PUBLIC_`
-and do not place them in the `env` option of `next.config.ts`.
+Cannot load products: check Docker health, private URL spelling/encoded password,
+then migrations and seed. Error pages deliberately do not print connection details
+or fall back to mocks. DATABASE_URL is not a public environment variable.
 
-## Manual Phase 1 checks
+Missing ecommerce_test after reusing an older volume: Docker init scripts run
+only for fresh volumes. Create the separate disposable DB explicitly:
 
-1. Open Home, the service list, each product detail, and its checkout. Confirm
-   sample prices match across those pages and labels say ordering is not open.
-2. Check narrow mobile, tablet, and desktop widths. Confirm no horizontal
-   scrolling or clipped text; use Tab to reach links, fields, and buttons.
-3. In checkout, click the demo button with missing/invalid data, then fill only
-   synthetic values: `Demo Student`, `demo@example.com`, and `01700000000`.
-   WhatsApp is optional. Confirm local feedback appears but no order is created.
-4. Watch the browser Network panel. Typed values must not enter requests or the
-   URL, and no POST/payment call should occur. Reload and confirm fields reset.
-   Switching to another product must also reset the preview.
-5. Try `/checkout?product=ai-setup&price=1`: the displayed sample amount stays
-   unchanged. Unknown product slugs must show the not-found page.
-6. Open every policy page and expand FAQ questions with mouse and keyboard.
-   Click the floating WhatsApp icon: it opens `/contact#whatsapp`; there is no
-   invented phone number, email, or active payment destination.
-7. Confirm `/api/orders`, `/api/payments`, `/api/auth/login`, and `/admin` return
-   404. Run `npm run check` and `npm run audit:dependencies`; confirm success.
-8. Use `git check-ignore .env .env.local` to confirm those paths are ignored.
-   Every `.env.example` configuration assignment must remain empty.
-9. Stop the development server with Ctrl+C; run `npm start` after a successful
-   build and repeat the route/navigation checks. Stop it again when finished.
+```bash
+docker compose exec db createdb -U ecommerce ecommerce_test
+```
 
-Phase 2 is database schema, migrations, and seed data. Wait for its approval;
-do not connect real customer data, service credentials, or payment systems.
+Do not delete a data volume to fix an ordinary configuration error. Changing
+POSTGRES_PASSWORD does not change an existing volume's database password; retain
+its matching local password or deliberately reset only disposable data after review.
+
+Tests refuse to run: TEST_DATABASE_URL must be a separate loopback _test database.
+Tests delete their table fixtures. Never bypass this guard or use a live URL.
+For terminal tests, ensure Linux's script utility is installed (util-linux).
+
+Remote TLS error: provide the correct trusted CA for the authorized future database;
+never disable server certificate verification. No remote service is required now.
+
+All root environment files stay private. Node scripts read .env; use that file for
+the shared local setup. No real encryption key is needed for catalog/seed/admin
+identity creation; automated encryption tests use explicitly public fixtures.

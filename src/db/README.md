@@ -1,14 +1,10 @@
-# Database preparation
+# Database
 
-PostgreSQL with Drizzle is the planned persistence layer. Supabase free-tier
-access is deferred until real-service connection is explicitly approved.
+Typed PostgreSQL schema is in schema.ts; generated snapshots and reviewed SQL
+are in migrations/. Use npm run db:migrate, not runtime string-built SQL.
+The tables use foreign keys, integer BDT prices, UNIQUE codes/TrxIDs, state checks
+and RLS with no public policies. Static triggers freeze quotes/assigned TrxIDs.
 
-Phase 2 will resolve the schema questions in PLAN.md, then add schema definitions,
-reviewed migrations, and synthetic local fixtures. No schema, database client,
-live connection, migrations, or real records exist in Phase 1. The single
-`src/data/mock-products.ts` file supplies sample presentation data only.
-
-Keep database access server-only, queries parameterized, access roles restricted,
-and duplicate/state constraints enforced in the database. Customer and voucher
-data must not be exposed by public Supabase access. An empty DATABASE_URL must
-never select a shared production database or an insecure fallback.
+Application data access belongs in src/server/. See docs/database.md for every
+table, commands, privacy boundaries and future Supabase connection preparation.
+No live Supabase database or real records are configured.
