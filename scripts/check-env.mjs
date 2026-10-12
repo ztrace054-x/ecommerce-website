@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const expectedNames = new Set([
   "DATABASE_URL",
+  "MIGRATION_DATABASE_URL",
+  "TEST_DATABASE_URL",
+  "POSTGRES_PASSWORD",
   "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
   "TURNSTILE_SECRET_KEY",
   "RESEND_API_KEY",

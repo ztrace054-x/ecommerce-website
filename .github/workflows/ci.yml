@@ -15,6 +15,10 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      # Disposable localhost Docker Compose CI container only, never a live service credential.
+      POSTGRES_PASSWORD: CI_SYNTHETIC_DISPOSABLE_ONLY
+      DATABASE_URL: postgresql://ecommerce:CI_SYNTHETIC_DISPOSABLE_ONLY@127.0.0.1:5432/ecommerce
+      TEST_DATABASE_URL: postgresql://ecommerce:CI_SYNTHETIC_DISPOSABLE_ONLY@127.0.0.1:5432/ecommerce_test
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -27,7 +31,18 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Start fresh local PostgreSQL using the documented Compose setup
+        run: docker compose config --quiet && npm run db:start
+      - name: Check migration history
+        run: npm run db:check
       - name: Check environment, lint, types, tests, and build
         run: npm run check
       - name: Audit dependencies
         run: npm run audit:dependencies
+      - name: Migrate and seed local application database
+        run: npm run db:migrate && npm run db:seed
+      - name: Check database-backed development pages
+        run: npm run smoke:dev
+      - name: Remove this disposable CI database
+        if: always()
+        run: docker compose down --volumes
