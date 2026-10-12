@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-12. Current scope: **Phase 1 — customer frontend only**.
+Last updated: 2026-10-12. Current scope: **Phase 2 — database layer**.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -11,25 +11,25 @@ invent business offerings, credentials, or platform permissions.
 
 ## Working rules for every phase
 
-1. Work in small, approved phases, and finish each phase completely: working
-   locally, checked, committed, and pushed. A partially completed phase is not
-   a finished phase.
-2. Do not pause within an authorized phase to ask whether to continue. Ask only
-   when a true blocker needs the owner's input, account, key, or business
-   permission. Continue independent work while a blocked part is clarified.
-3. Build the simplest working MVP that meets the stated requirements. Make and
-   report sensible implementation decisions; avoid extra features and complex
-   architecture. Required security controls must still work.
-4. Verify `npm run dev` starts and serves the application without errors at the
-   end of every phase. Run the other checks appropriate to that phase.
-5. Make small commits and push the phase branch after each phase. Check the
-   remote result. Never merge, deploy, or connect real services automatically.
-6. Update **Progress** with **Done**, **Next**, and **Known issues** at every
-   phase boundary. If context or time forces a checkpoint, record completed
-   work, exact next steps, and failures; commit and push safe progress and tell
-   the owner that the phase is incomplete.
-7. Give the final report only after completing the authorized phase, then wait
-   for the owner's approval before starting the next phase.
+1. Finish each approved phase completely: working locally, checked, committed,
+   pushed, and merged into `main` after the checks pass. Do not deploy or connect
+   live services. Wait for approval before the next phase.
+2. Do not ask whether to continue mid-phase. Ask only for a true blocker.
+   Make simple, safe MVP decisions and record them; do not add unrequested features.
+3. Use strict Zod validation for every server input. The database supplies prices.
+   Never accept a browser's price, status, verification decision, or admin role.
+4. Test every implemented critical rule, including TrxID normalization/uniqueness,
+   database prices, order-code collisions, and encryption. Test rate limits,
+   administrator authentication, and status transitions with their later phases.
+5. Review changes as an attacker and fix findings before reporting completion.
+   Security-critical code must not contain fake implementations or bypasses.
+6. End each phase with working `npm run dev`, passing lint, typecheck, build and
+   tests, small commits, a pushed branch, and a checked merge into `main`.
+7. Keep README setup, environment variables, commands, completed and remaining
+   work current. Update Progress with Done / Next / Known issues. A forced
+   checkpoint is incomplete work and must be reported as such.
+8. Never request or commit real secrets. Keep `.env.example` values blank;
+   the owner supplies local configuration privately.
 
 ## 1. Project purpose
 
@@ -59,8 +59,8 @@ who checks the actual payment may mark it verified.
 2. Customer supplies name, email, bKash sender number, and an optional WhatsApp
    number. Do not request third-party account passwords.
 3. Server loads the selected product and its current amount from the database.
-   It creates a unique order code, such as `ORD-4F7K2A`, and records a price
-   snapshot for that order. A client-supplied price must never set the amount.
+   It creates a unique order code, in format `ORD-XXXXXXXX`, and records a price
+   snapshot for that pending order. A client-supplied price must never set the amount.
 4. Server displays the configured bKash recipient number, exact BDT amount, and
    order code. Payment happens outside the website in bKash.
 5. Customer submits the TrxID for that order.
@@ -81,22 +81,19 @@ Allowed customer-facing statuses:
 
 | Status | Meaning |
 | --- | --- |
+| `pending` | Order and database price recorded; no TrxID submitted yet. |
 | `submitted` | Valid payment claim received; payment is not yet confirmed. |
 | `verified` | Administrator checked and confirmed the actual payment. |
 | `delivered` | The verified order's permitted delivery has been completed. |
 | `rejected` | Administrator rejected the payment claim and recorded a reason. |
 | `refunded` | Administrator confirmed completion of an actual manual refund. |
 
-Normal progression is `submitted` to `verified` to `delivered`; a submitted
-claim may instead be rejected. Refund eligibility and other transitions require
-an explicit policy before implementation. The server will enforce the approved
-transition rules rather than accept arbitrary status values from a browser.
-
-**Phase 2 design decision:** an order code and price must exist before the TrxID is
-submitted, but no pre-submission state was specified. Resolve how unpaid order
-records should be represented before building the schema. Choose and document
-the simplest safe representation that preserves the five requested statuses.
-Do not silently add `pending`, `draft`, or another sixth customer-facing status.
+Normal progression is `pending` → `submitted` → `verified` → `delivered`.
+The owner explicitly added `pending` in Phase 2, resolving the Phase 0 open
+question. Pending rows have a null TrxID and null payment timestamps. A submitted
+claim is not payment approval. Administrator rejection/refund transitions and
+customer access protection must be finalized and tested in their API/admin phases.
+No administrator transition endpoint is implemented in Phase 2.
 
 ## 4. Delivery rules
 
@@ -157,46 +154,61 @@ non-commercial personal use. Its technical compatibility does not establish a
 zero-cost commercial launch. Check current provider terms and quotas before
 selecting or connecting any live hosting service.
 
-## 7. Database plan — not a schema implementation
+## 7. Database design and resolved questions
 
-Keep schema definitions and reviewed migrations in `src/db/`. Database access
-will run on the server through Drizzle with parameterized queries.
+Drizzle is retained because its TypeScript schema keeps database/application
+fields aligned, its SQL migrations are reviewable in Git, and its PostgreSQL
+queries/transactions parameterize data without another service.
 
-| Planned data | Minimum responsibility |
+| Table | Responsibility |
 | --- | --- |
-| Products/plans | Name, delivery model, approved offering details, active flag, price and currency |
-| Orders | Internal identifier, unique display code, product reference, immutable price snapshot, minimum customer contact fields, approved state representation, timestamps |
-| Payment claims | Order reference, normalized TrxID, sender information, submission and manual verification/rejection records |
-| Deliveries | Order reference, permitted delivery model, completion record; encrypted voucher payload only when needed |
-| Administrator identity/session | Provider-backed identity and server-verified role; final design needs approval |
-| Audit events | Actor, action, affected order, timestamp, and minimal non-secret change details |
+| `products` | Product details, positive integer BDT price, A/B/C delivery type, active flag, timestamps. |
+| `orders` | Unique display code, product reference, immutable database price snapshot, minimal contact fields, nullable unique canonical TrxID, state and timestamps. |
+| `delivery_codes` | Encrypted official voucher inventory; each used code references one matching product/order. |
+| `admin_users` | Canonical unique email, salted scrypt password hash, encrypted TOTP secret after enrollment, failed-login/lockout fields. |
+| `audit_logs` | Administrator/action/order references, minimal IP and timestamp; no passwords, voucher plaintext, or payment payloads. |
 
-- Store BDT amounts as integer minor units (poisha) to avoid floating-point
-  rounding. Format them for display without trusting a browser calculation.
-- Use database unique constraints for order codes and the approved canonical
-  TrxID representation; application checks alone cannot prevent concurrent reuse.
-- Apply foreign keys, required fields, positive-amount constraints, and approved
-  state constraints. Use transactions for related changes.
-- Generate order codes securely and retry collisions under a unique constraint.
-  A short display code is not an authentication credential.
-- Protect customer records and voucher inventory from direct public database
-  access. Supabase policies and database roles need explicit review; do not rely
-  solely on hiding browser UI or turning off a button.
-- Give migration and application access only the privileges each needs. Review
-  connection pooling and migration connections before adding Supabase.
-- Define customer-record retention and recovery procedures before real data is
-  accepted. Do not add a file-upload or screenshot-storage feature by assumption.
-- Store ciphertext, nonce, authentication tag, and key version where vouchers
-  require them. Key storage, rotation, and redemption safeguards are later work.
+### Phase 2 decisions
 
-**Decisions to resolve before dependent work:** pre-submission order representation;
-administrator authentication provider; customer access to their private order
-details; confirmed bKash TrxID rules and recipient account/payment method;
-duplicate-claim correction policy; refund eligibility; product offerings and
-official delivery permissions. Make and document routine technical choices under
-the working rules above. Request owner input only where a true blocker remains,
-such as unavailable account details or permission to offer a specific product.
-Do not invent credentials, recipient details, or platform permissions.
+- **Pre-submission order:** use the owner's explicit sixth status `pending` with
+  no TrxID. Submission later atomically sets the canonical TrxID, submitted time,
+  and `submitted` state. No separate payment-claim table is needed for the MVP.
+- **Money:** follow the new `price_bdt` / `amount_expected` requirement: whole BDT
+  integers, not Phase 1 poisha. Positive PostgreSQL integers avoid floating point.
+  The creation transaction locks the active product row and copies its current
+  price. Reject client amount/status/code fields. Existing orders keep their price.
+- **Product URLs:** use the product UUID in the existing `[slug]` route and
+  checkout selector, avoiding extra schema/presentation columns. Product details
+  come from database descriptions; delivery guidance derives from A/B/C only.
+- **Order code:** exactly eight cryptographically random unambiguous characters
+  after `ORD-`; database UNIQUE is authoritative, with bounded conflict retries.
+  This display code is not a credential. Private tracking needs separate access
+  protection in Phase 4; a code alone must never expose private order data.
+- **TrxID:** trim/uppercase and validate a conservative 10-character ASCII
+  alphanumeric storage format. Enforce both canonical format and UNIQUE in
+  PostgreSQL. Confirm the actual supported bKash payment method/TrxID format
+  before Phase 3 accepts real claims; format never proves payment.
+- **Seed:** four synthetic examples: two active service examples (C), and
+  inactive A/B examples pending exact platform/region/authorization review.
+  No admins, voucher codes, credentials, or customer orders are seeded. Re-running
+  the seed inserts missing fixed IDs without overwriting edited products.
+- **Administrator provisioning:** terminal-only creation with hidden password
+  confirmation and a salted memory-hard scrypt hash. No shared ADMIN_SECRET login.
+  TOTP is nullable only before Phase 5 enrollment; an unenrolled row must never
+  receive an administrator session. Phase 2 has no login/auth endpoint.
+- **Encrypted storage:** versioned AES-256-GCM payload with a random 12-byte IV,
+  16-byte authentication tag, and authenticated record/purpose context. The
+  external ENCRYPTION_KEY must decode canonically to exactly 32 bytes. Missing,
+  malformed, wrong, or tampered keys/data fail closed without logging payloads.
+- **Privacy/roles:** enable RLS with no public policies for all five tables. Use
+  server-only database access. Review least-privilege runtime/migration roles,
+  Supabase TLS/pooling, retention, backups, and key rotation before live use.
+  Local development uses a localhost-only PostgreSQL Docker Compose service.
+
+Remaining business decisions before dependent features: exact recipient bKash
+account/payment method and TrxID rules; approved products/platform permissions;
+customer private tracking access; duplicate-claim correction/refund policy;
+retention and recovery procedures. No live credentials or permissions are invented.
 
 ## 8. Security requirements
 
@@ -268,9 +280,9 @@ handle real customers, payments, vouchers, or administrator sessions.
 | 9 — Final cleanup and push | Remove dead code/placeholders, final checks, final documentation and source review | Working local application, clean commits, pushed release candidate; live services/deployment require separate explicit authorization |
 
 The owner approved Phase 0, authorized its merge after passing checks, and
-corrected the phase order above on 2026-10-11. Phase 1 is now authorized in full.
-Finish the authorized phase, report what changed and what passed, then wait for
-approval for Phase 2. Do not merge Phase 1 into `main` automatically.
+corrected the phase order above on 2026-10-11. Phase 1 is approved and merged after lint, typecheck, tests, build, dependency
+audit, and development browser checks. Phase 2 is now authorized in full. Finish
+it, merge after passing checks, report the result, then wait for Phase 3 approval.
 
 ### Phase 1 implementation decisions
 
@@ -342,7 +354,7 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
+Updated: 2026-10-12. Status: **Phase 2 in progress**. Phase 1 approved and merged.
 
 ### Done
 
@@ -390,22 +402,17 @@ Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
 
 ### Next
 
-- Wait for the owner's Phase 2 approval before database schema, migrations, or
-  seed data. Start from `phase-1`'s verified source and resolve the Phase 2 data
-  design decisions. Do not merge Phase 1 or connect live services automatically.
+- Complete Phase 2 schema/migrations, server data access, crypto/validators,
+  seed/provisioning scripts, DB-backed catalog, tests, docs, and checked merge.
+- No Phase 3 order API, real payment submissions, or administrator login yet.
 
 ### Known issues
 
-- No unresolved Phase 0 functional errors were found in the completed checks.
-- No unresolved Phase 1 functional errors were found in the completed checks.
-  An older generated production page was resolved by a clean rebuild; the
-  complete production browser review passed afterward.
-- Products/prices remain samples. Policies remain drafts; no real WhatsApp
-  number or support email is configured. These are documented Phase 1 boundaries,
-  not a working payment, database, or support-service integration.
-- Recheck official Next.js advisories and apply any required patches before
-  deployment. The earlier dated notice could not be independently reverified
-  on 2026-10-12; see `docs/security.md`. A clean audit is not proof of safety.
-- Authentication, payments, database access, bot verification, and voucher
-  encryption are intentionally future work. This is not a production release.
-- A zero-cost commercial hosting option still needs review before any launch.
+- Docker and native PostgreSQL are not installed in this workspace; establishing
+  a real local test database is in progress. Do not claim DB checks passed yet.
+- Products are synthetic examples; policies remain drafts and contact details
+  are not configured. Exact A/B platform permissions remain required.
+- Authentication, order API, Turnstile, customer tracking, and delivery are later
+  phases. No real customers/payments/admin sessions may be accepted yet.
+- Zero-cost commercial hosting eligibility, operational backups, retention,
+  runtime DB privileges, and current dependency advisories need pre-launch review.

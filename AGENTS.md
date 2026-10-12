@@ -1,11 +1,11 @@
 # Repository guidance
 
 Read `README.md` and `PLAN.md` before changes. `PLAN.md` is the project source of
-truth. Follow the phase explicitly authorized by the owner. Phase 0 is approved
-and merged; the current task authorizes Phase 1 customer frontend pages only.
-The owner's corrected roadmap places database work in Phase 2. Do not start
-later phases, merge Phase 1 into `main`, deploy, or configure live services
-without instructions. Never commit real secrets, request
+truth. Follow the phase explicitly authorized by the owner. Phases 0 and 1 are
+approved and merged; the current task authorizes Phase 2 database work.
+Do not start later phases, deploy, or configure live services without instructions.
+The owner requires each completed phase to be merged into `main` after checks.
+Never commit real secrets, request
 customer passwords, or add payment/authentication shortcuts. Report actual checks.
 
 ## Working rules for every phase
@@ -17,24 +17,32 @@ customer passwords, or add payment/authentication shortcuts. Report actual check
 - Make sensible, simple MVP implementation decisions within the approved scope
   and record them in the final report. Do not add unrequested features or weaken
   security to avoid a blocker.
-- Finish with a working `npm run dev`, appropriate passing checks, small commits,
-  and a pushed phase branch. Do not merge or deploy without authorization.
+- Finish with working `npm run dev`, passing lint, typecheck, build, and tests,
+  small commits, a pushed phase branch, and a checked merge into `main`.
+- Validate every server input with strict Zod schemas. Derive order prices only
+  from the database. Test every implemented critical security/business rule.
+- Review changes like an attacker and fix findings before the final report.
+- Keep README setup, environment variables, completed work, and remaining work
+  current. Never leave security-critical placeholder logic or bypasses.
 - Keep the `Progress` section in `PLAN.md` current with **Done**, **Next**, and
   **Known issues** at every phase boundary. If a context/time limit prevents
   completion, record the exact checkpoint, commit and push safe progress, and
   clearly report the incomplete work; never call a checkpoint a finished phase.
 - Wait for approval for the next phase after the completed phase's final report.
 
-## Phase 1 boundaries
+## Phase 2 boundaries
 
-- Use one mock product file for the Home, Product/Plan, and Checkout pages.
-- Use simple Bangla, a mobile-first layout, and the requested policy/FAQ pages.
+- Implement PostgreSQL/Drizzle schema, migrations, validated server data access,
+  encryption, safe fixtures, and interactive administrator provisioning.
+- Replace mock product reads with database reads; keep the existing Bangla UI.
 - Checkout is UI only: no orders, payments, transaction IDs, credentials, or
   personal-data submissions. Do not persist form values in browser storage.
 - Display that products/prices are samples and ordering is not open. Do not
   invent subscriptions, approved platform resale rights, or contact details.
 - The floating WhatsApp icon may link to Contact while the real number is absent.
   Real `wa.me` order links and email templates belong to Phase 6.
+- Order API/rate limits/Turnstile are Phase 3; tracking Phase 4; login, 2FA,
+  administrator mutations, and audit events Phase 5. Do not expose them now.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
