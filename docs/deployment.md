@@ -1,8 +1,9 @@
 # Deployment and activation
 
-The configured private review address for the existing application is:
+The published private review of the existing application is:
 https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
-Confirm publication through the hosting result before claiming it is live.
+The hosting operation returned `succeeded` on 13 October 2026; this confirms
+publication, not actual provider/payment configuration.
 Review hosting is separate from a commercial launch. Payment collection is
 closed; the original sample catalog remains visible. Never place real customer
 information in the sample form.

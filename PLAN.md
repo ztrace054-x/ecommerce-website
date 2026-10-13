@@ -444,11 +444,21 @@ below is retained as history; the current checkpoint follows it.
   migrations/seeds/reruns and database-backed port-3000 HTTP smoke passed.
 - Created a private review hosting resource and adapter using the same source;
   kept checkout disabled and configured no real database/payment/customer records.
+- Pushed `phase-3-marketplace` as a child of the original Phase 2 head and opened
+  draft review PR #1. All 148 source files match the verified remote tree; main
+  is not merged. The owner-private review deployment returned succeeded at
+  https://ai-seba-marketplace.cwrtravel1102.chatgpt.site.
+- Current GitHub PR run 38432431598 passed native Compose/journal, all 69 tests,
+  both builds, migration/seed and development checks. Only the full dependency
+  audit failed for the documented hosting build advisory.
 
 ### Next
 
-- Push continuation branch and review PR, synchronize hosting source and deploy.
-- Record exact final verification and deployment result without overstating completion.
+- Resolve the dependency advisory/upcoming security release before commercial
+  activation. Obtain actual provider/payment/catalog/support/policy details and
+  complete native web-RPC concurrency, real-provider and rendered mobile QA.
+- Activate only after those prerequisites; keep the current review private and
+  checkout closed. Review/merge remains the owner's decision.
 
 ### Known issues / activation blockers
 

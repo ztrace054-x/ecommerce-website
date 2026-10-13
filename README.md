@@ -31,9 +31,13 @@ that a commercial system has been activated.
 [Security](docs/security.md) ·
 [Verification](docs/continuation-verification.md)
 
-Private review address: https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
-Publication is confirmed by the hosting result, not by this configured address.
-The review requires the owner's ChatGPT sign-in.
+Published private review: https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
+The hosting operation returned `succeeded` on 13 October. The review requires
+the owner's ChatGPT sign-in and keeps real payment collection closed.
+
+Review PR: https://github.com/ztrace054-x/ecommerce-website/pull/1
+All 69 tests and both builds also passed in native PostgreSQL GitHub CI. The
+workflow remains blocked only at the full dependency audit described below.
 
 ## Run locally
 

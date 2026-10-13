@@ -38,9 +38,16 @@ voucher sale or customer credential collection enabled.
 
 PGlite is a real PostgreSQL engine with one multiplexed backend. Local promise
 tests prove unique constraints/atomic behavior but do not establish independent
-native PostgreSQL concurrency or Supabase role/configuration behavior. The
-retained GitHub workflow uses native PostgreSQL 17 and Compose. Its new run must
-be inspected separately; the historical Phase 2 run does not prove this revision.
+native PostgreSQL RPC concurrency or Supabase role/configuration behavior. The
+retained GitHub workflow uses native PostgreSQL 17 and Compose. Its current
+[PR run 38432431598](https://github.com/ztrace054-x/ecommerce-website/actions/runs/38432431598)
+completed for `87c2819868fe8955c55bb697632f4108eb7356d5`. Install, Compose
+startup, journal, environment/lint/types/54 tests/dual build, 15 native SQL/terminal
+regressions, migrations/seed, development HTTP smoke and cleanup all succeeded.
+Only the full dependency audit failed; the overall workflow is therefore red.
+This is current evidence, separate from the historical Phase 2 run. Native
+multi-connection testing of the new web RPCs and actual Supabase staging remain
+activation checks; the native original TrxID regressions do not replace them.
 
 Supabase Auth/PostgREST and Turnstile responses are mocked only in tests. No real
 provider account, secret, payment, customer record or delivery was connected.
@@ -57,9 +64,20 @@ review the announced upstream security release before commercial launch.
 ## Review and activation
 
 The existing private hosting identity is retained. Source synchronization and
-deployment must return a successful native result before reporting a live URL.
-GitHub history remains based on Phase 2; a review PR does not merge main.
-Review deployment has no real database and payments stay disabled.
+deployment returned a successful native result on 13 October 2026:
+https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
+The original successful deployment is `appgdep_6ace5f82315881919aac8993d995661b`,
+version `appgprj_6acdc8c3db4481918fe0423ce597c557~appgver_5e9fa4cee11c8191adeae3106f9b6cbc`.
+All 148 GitHub source blobs matched local contents. The synchronized hosting
+source commit `03ada5853af9030c5f4bd534f6b05cb7b01bb5bf` has the same tree
+`59e9a5570d1202b51a7d53e2152b459055f9cb1b` as the verified GitHub commit.
+This completion checkpoint updates documentation only; application inputs for
+the tested builds are unchanged. Final deployment status is reported by its
+native result after synchronizing the checkpoint.
+
+GitHub history remains based on Phase 2. [Draft review PR #1](https://github.com/ztrace054-x/ecommerce-website/pull/1)
+does not merge main. Review deployment has no real database and payments stay
+disabled. No rendered browser QA or commercial launch is claimed.
 
 Activation still needs the owner's Supabase configuration and linked/enrolled
 admin, Turnstile keys, bKash recipient/method, approved catalog/prices, support
