@@ -23,7 +23,7 @@ async function main() {
   const connection = createDatabase(url);
   try {
     await createAdminUser(result.data, connection.db);
-    console.log("Administrator identity created. Login is not implemented; 2FA enrollment is required in Phase 5 before any session.");
+    console.log("Administrator identity created, inactive for web login. Link a provisioned Supabase identity and enroll TOTP before activating it; see docs/deployment.md.");
   } finally {
     await connection.pool.end();
   }

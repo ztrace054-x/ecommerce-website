@@ -37,12 +37,14 @@ jobs:
         run: npm run db:check
       - name: Check environment, lint, types, tests, and build
         run: npm run check
-      - name: Audit dependencies
-        run: npm run audit:dependencies
+      - name: Native PostgreSQL and terminal regression tests
+        run: npm run test:db
       - name: Migrate and seed local application database
         run: npm run db:migrate && npm run db:seed
       - name: Check database-backed development pages
         run: npm run smoke:dev
+      - name: Audit dependencies
+        run: npm run audit:dependencies
       - name: Remove this disposable CI database
         if: always()
         run: docker compose down --volumes

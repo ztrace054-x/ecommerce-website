@@ -1,9 +1,12 @@
-# Shared customer interface
+# Reusable interface components
 
-Small components serve the Bangla layout, product cards, policy pages, FAQ links,
-icons and local checkout preview. ProductCard accepts only the public catalog
-projection; database reads stay in server pages/data access. No raw HTML is used.
+Phase 1 uses small shared components for the header, footer, product cards,
+icons, policy layout, floating WhatsApp link, and checkout preview.
 
-CheckoutPreview still sends/stores no input. Its fields are for synthetic preview
-only. The floating WhatsApp icon opens Contact until an authorized real number is
-configured in Phase 6. No component authenticates an admin or verifies a payment.
+Only `checkout-preview.tsx` is a Client Component. It uses native input validity
+for local demo feedback. There is no HTML form, submit button, input name,
+network request, logging, or persistent storage. A different product remounts
+the preview so sample input does not carry across plans.
+
+Keep browser interaction separate from database access, administrator
+authorization, secret configuration, and real payment decisions.

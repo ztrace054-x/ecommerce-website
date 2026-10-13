@@ -1,6 +1,12 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-12. Current scope: **Phase 2 — database layer**.
+Last updated: 2026-10-13. Current scope: **authorized marketplace continuation**.
+
+The owner's latest request authorizes audit, backend/admin/customer implementation,
+testing, documentation and a review deployment. Earlier phase-specific approval
+statements below are historical; preserve the original requirements and history.
+See docs/repository-audit.md and docs/architecture-continuation.md for the current
+implementation roadmap and decisions.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -11,25 +17,25 @@ invent business offerings, credentials, or platform permissions.
 
 ## Working rules for every phase
 
-1. Finish each approved phase completely: working locally, checked, committed,
-   pushed, and merged into `main` after the checks pass. Do not deploy or connect
-   live services. Wait for approval before the next phase.
-2. Do not ask whether to continue mid-phase. Ask only for a true blocker.
-   Make simple, safe MVP decisions and record them; do not add unrequested features.
-3. Use strict Zod validation for every server input. The database supplies prices.
-   Never accept a browser's price, status, verification decision, or admin role.
-4. Test every implemented critical rule, including TrxID normalization/uniqueness,
-   database prices, order-code collisions, and encryption. Test rate limits,
-   administrator authentication, and status transitions with their later phases.
-5. Review changes as an attacker and fix findings before reporting completion.
-   Security-critical code must not contain fake implementations or bypasses.
-6. End each phase with working `npm run dev`, passing lint, typecheck, build and
-   tests, small commits, a pushed branch, and a checked merge into `main`.
-7. Keep README setup, environment variables, commands, completed and remaining
-   work current. Update Progress with Done / Next / Known issues. A forced
-   checkpoint is incomplete work and must be reported as such.
-8. Never request or commit real secrets. Keep `.env.example` values blank;
-   the owner supplies local configuration privately.
+1. Work in small, approved phases, and finish each phase completely: working
+   locally, checked, committed, and pushed. A partially completed phase is not
+   a finished phase.
+2. Do not pause within an authorized phase to ask whether to continue. Ask only
+   when a true blocker needs the owner's input, account, key, or business
+   permission. Continue independent work while a blocked part is clarified.
+3. Build the simplest working MVP that meets the stated requirements. Make and
+   report sensible implementation decisions; avoid extra features and complex
+   architecture. Required security controls must still work.
+4. Verify `npm run dev` starts and serves the application without errors at the
+   end of every phase. Run the other checks appropriate to that phase.
+5. Make small commits and push the phase branch after each phase. Check the
+   remote result. Never merge, deploy, or connect real services automatically.
+6. Update **Progress** with **Done**, **Next**, and **Known issues** at every
+   phase boundary. If context or time forces a checkpoint, record completed
+   work, exact next steps, and failures; commit and push safe progress and tell
+   the owner that the phase is incomplete.
+7. Give the final report only after completing the authorized phase, then wait
+   for the owner's approval before starting the next phase.
 
 ## 1. Project purpose
 
@@ -59,8 +65,8 @@ who checks the actual payment may mark it verified.
 2. Customer supplies name, email, bKash sender number, and an optional WhatsApp
    number. Do not request third-party account passwords.
 3. Server loads the selected product and its current amount from the database.
-   It creates a unique order code, in format `ORD-XXXXXXXX`, and records a price
-   snapshot for that pending order. A client-supplied price must never set the amount.
+   It creates a unique order code, such as `ORD-4F7K2A`, and records a price
+   snapshot for that order. A client-supplied price must never set the amount.
 4. Server displays the configured bKash recipient number, exact BDT amount, and
    order code. Payment happens outside the website in bKash.
 5. Customer submits the TrxID for that order.
@@ -81,19 +87,22 @@ Allowed customer-facing statuses:
 
 | Status | Meaning |
 | --- | --- |
-| `pending` | Order and database price recorded; no TrxID submitted yet. |
 | `submitted` | Valid payment claim received; payment is not yet confirmed. |
 | `verified` | Administrator checked and confirmed the actual payment. |
 | `delivered` | The verified order's permitted delivery has been completed. |
 | `rejected` | Administrator rejected the payment claim and recorded a reason. |
 | `refunded` | Administrator confirmed completion of an actual manual refund. |
 
-Normal progression is `pending` → `submitted` → `verified` → `delivered`.
-The owner explicitly added `pending` in Phase 2, resolving the Phase 0 open
-question. Pending rows have a null TrxID and null payment timestamps. A submitted
-claim is not payment approval. Administrator rejection/refund transitions and
-customer access protection must be finalized and tested in their API/admin phases.
-No administrator transition endpoint is implemented in Phase 2.
+Normal progression is `submitted` to `verified` to `delivered`; a submitted
+claim may instead be rejected. Refund eligibility and other transitions require
+an explicit policy before implementation. The server will enforce the approved
+transition rules rather than accept arbitrary status values from a browser.
+
+**Phase 2 design decision:** an order code and price must exist before the TrxID is
+submitted, but no pre-submission state was specified. Resolve how unpaid order
+records should be represented before building the schema. Choose and document
+the simplest safe representation that preserves the five requested statuses.
+Do not silently add `pending`, `draft`, or another sixth customer-facing status.
 
 ## 4. Delivery rules
 
@@ -154,61 +163,46 @@ non-commercial personal use. Its technical compatibility does not establish a
 zero-cost commercial launch. Check current provider terms and quotas before
 selecting or connecting any live hosting service.
 
-## 7. Database design and resolved questions
+## 7. Database plan — not a schema implementation
 
-Drizzle is retained because its TypeScript schema keeps database/application
-fields aligned, its SQL migrations are reviewable in Git, and its PostgreSQL
-queries/transactions parameterize data without another service.
+Keep schema definitions and reviewed migrations in `src/db/`. Database access
+will run on the server through Drizzle with parameterized queries.
 
-| Table | Responsibility |
+| Planned data | Minimum responsibility |
 | --- | --- |
-| `products` | Product details, positive integer BDT price, A/B/C delivery type, active flag, timestamps. |
-| `orders` | Unique display code, product reference, immutable database price snapshot, minimal contact fields, nullable unique canonical TrxID, state and timestamps. |
-| `delivery_codes` | Encrypted official voucher inventory; each used code references one matching product/order. |
-| `admin_users` | Canonical unique email, salted scrypt password hash, encrypted TOTP secret after enrollment, failed-login/lockout fields. |
-| `audit_logs` | Administrator/action/order references, minimal IP and timestamp; no passwords, voucher plaintext, or payment payloads. |
+| Products/plans | Name, delivery model, approved offering details, active flag, price and currency |
+| Orders | Internal identifier, unique display code, product reference, immutable price snapshot, minimum customer contact fields, approved state representation, timestamps |
+| Payment claims | Order reference, normalized TrxID, sender information, submission and manual verification/rejection records |
+| Deliveries | Order reference, permitted delivery model, completion record; encrypted voucher payload only when needed |
+| Administrator identity/session | Provider-backed identity and server-verified role; final design needs approval |
+| Audit events | Actor, action, affected order, timestamp, and minimal non-secret change details |
 
-### Phase 2 decisions
+- Store BDT amounts as integer minor units (poisha) to avoid floating-point
+  rounding. Format them for display without trusting a browser calculation.
+- Use database unique constraints for order codes and the approved canonical
+  TrxID representation; application checks alone cannot prevent concurrent reuse.
+- Apply foreign keys, required fields, positive-amount constraints, and approved
+  state constraints. Use transactions for related changes.
+- Generate order codes securely and retry collisions under a unique constraint.
+  A short display code is not an authentication credential.
+- Protect customer records and voucher inventory from direct public database
+  access. Supabase policies and database roles need explicit review; do not rely
+  solely on hiding browser UI or turning off a button.
+- Give migration and application access only the privileges each needs. Review
+  connection pooling and migration connections before adding Supabase.
+- Define customer-record retention and recovery procedures before real data is
+  accepted. Do not add a file-upload or screenshot-storage feature by assumption.
+- Store ciphertext, nonce, authentication tag, and key version where vouchers
+  require them. Key storage, rotation, and redemption safeguards are later work.
 
-- **Pre-submission order:** use the owner's explicit sixth status `pending` with
-  no TrxID. Submission later atomically sets the canonical TrxID, submitted time,
-  and `submitted` state. No separate payment-claim table is needed for the MVP.
-- **Money:** follow the new `price_bdt` / `amount_expected` requirement: whole BDT
-  integers, not Phase 1 poisha. Positive PostgreSQL integers avoid floating point.
-  The creation transaction locks the active product row and copies its current
-  price. Reject client amount/status/code fields. Existing orders keep their price.
-- **Product URLs:** use the product UUID in the existing `[slug]` route and
-  checkout selector, avoiding extra schema/presentation columns. Product details
-  come from database descriptions; delivery guidance derives from A/B/C only.
-- **Order code:** exactly eight cryptographically random unambiguous characters
-  after `ORD-`; database UNIQUE is authoritative, with bounded conflict retries.
-  This display code is not a credential. Private tracking needs separate access
-  protection in Phase 4; a code alone must never expose private order data.
-- **TrxID:** trim/uppercase and validate a conservative 10-character ASCII
-  alphanumeric storage format. Enforce both canonical format and UNIQUE in
-  PostgreSQL. Assigned IDs cannot be changed/released. Confirm the actual supported bKash payment method/TrxID format
-  before Phase 3 accepts real claims; format never proves payment.
-- **Seed:** four synthetic examples: two active service examples (C), and
-  inactive A/B examples pending exact platform/region/authorization review.
-  No admins, voucher codes, credentials, or customer orders are seeded. Re-running
-  the seed inserts missing fixed IDs without overwriting edited products.
-- **Administrator provisioning:** terminal-only creation with hidden password
-  confirmation and a salted memory-hard scrypt hash. No shared ADMIN_SECRET login.
-  TOTP is nullable only before Phase 5 enrollment; an unenrolled row must never
-  receive an administrator session. Phase 2 has no login/auth endpoint.
-- **Encrypted storage:** versioned AES-256-GCM payload with a random 12-byte IV,
-  16-byte authentication tag, and authenticated record/purpose context. The
-  external ENCRYPTION_KEY must decode canonically to exactly 32 bytes. Missing,
-  malformed, wrong, or tampered keys/data fail closed without logging payloads.
-- **Privacy/roles:** enable RLS with no public policies for all five tables. Use
-  server-only database access. Review least-privilege runtime/migration roles,
-  Supabase TLS/pooling, retention, backups, and key rotation before live use.
-  Local development uses a localhost-only PostgreSQL Docker Compose service.
-
-Remaining business decisions before dependent features: exact recipient bKash
-account/payment method and TrxID rules; approved products/platform permissions;
-customer private tracking access; duplicate-claim correction/refund policy;
-retention and recovery procedures. No live credentials or permissions are invented.
+**Decisions to resolve before dependent work:** pre-submission order representation;
+administrator authentication provider; customer access to their private order
+details; confirmed bKash TrxID rules and recipient account/payment method;
+duplicate-claim correction policy; refund eligibility; product offerings and
+official delivery permissions. Make and document routine technical choices under
+the working rules above. Request owner input only where a true blocker remains,
+such as unavailable account details or permission to offer a specific product.
+Do not invent credentials, recipient details, or platform permissions.
 
 ## 8. Security requirements
 
@@ -280,14 +274,11 @@ handle real customers, payments, vouchers, or administrator sessions.
 | 9 — Final cleanup and push | Remove dead code/placeholders, final checks, final documentation and source review | Working local application, clean commits, pushed release candidate; live services/deployment require separate explicit authorization |
 
 The owner approved Phase 0, authorized its merge after passing checks, and
-corrected the phase order above on 2026-10-11. Phase 1 is approved and merged after lint, typecheck, tests, build, dependency
-audit, and development browser checks. Phase 2 is now authorized in full. Finish
-it, merge after passing checks, report the result, then wait for Phase 3 approval.
+corrected the phase order above on 2026-10-11. Phase 1 is now authorized in full.
+Finish the authorized phase, report what changed and what passed, then wait for
+approval for Phase 2. Do not merge Phase 1 into `main` automatically.
 
-### Phase 1 implementation decisions (historical)
-
-Phase 2 replaces the temporary mock file/poisha prices/slug routing with the
-database design above. The following records the original frontend scope.
+### Phase 1 implementation decisions
 
 - Use one Next.js application and plain CSS; no UI framework, external font requests,
   cart, customer registration, search, or extra sales features.
@@ -357,67 +348,120 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-12. Status: **Phase 2 complete and merged into main after passing checks**.
+Updated: 2026-10-13. Status: **marketplace continuation under final verification**.
+The latest owner request authorizes the full continuation. The Phase 1 record
+below is retained as history; the current checkpoint follows it.
 
 ### Done
 
-- Phase 0 foundation and Phase 1 Bangla customer pages are approved and merged
-  into main. Phase 1 was rechecked with lint, types, 11 tests, build, audit and
-  default-port development browser checks before its approved fast-forward merge.
-- Recorded the owner's permanent complete/test/review/push/merge/document rules.
-- Resolved the old schema questions using pending orders, whole integer BDT,
-  UUID product URLs, strict canonical unique claims, and terminal admin identities.
-- Implemented all five PostgreSQL/Drizzle tables, enums, foreign keys, indexes,
-  RLS with no public policies, state/timestamp checks and reviewed migrations.
-- Added active-product locking and independent DB price-copy/immutable quote
-  guards, plus immutable assigned TrxIDs found during attacker review.
-- Added strict Zod server contracts, parameterized data access, redacted errors,
-  lazy verified-TLS connection preparation, crypto-secure order-code collision
-  retries, context-bound AES-256-GCM and salted scrypt password hashing.
-- Added local PostgreSQL 17 Compose setup with health check/persistent volume,
-  dedicated test DB initialization, non-destructive A/B/C seed and hidden terminal
-  admin identity creation. A/B samples stay inactive; no credentials/vouchers seeded.
-- Replaced mock product reads/file with active DB projections on existing pages,
-  kept the UI-only checkout, and added a generic non-secret catalog error state.
-- Local migrations/seed ran twice successfully. Development smoke and production/
-  development browser reviews passed across 11 customer route instances at
-  320/375/768/1280px: navigation, headers, DB prices, inactive/invalid selectors,
-  preview feedback/reset/no-JS, keyboard/FAQ and no input transmission/storage.
-- All 44 tests passed with zero skipped: 29 unit/configuration and 15 database/
-  terminal tests. Lint, strict types, build, migration checks and audit passed.
-- Native PostgreSQL 17 Docker Compose CI passed the documented fresh startup,
-  migrations, seed/admin tests, concurrent constraints, RLS, all checks, and
-  default-port DB-backed dev smoke. Evidence: GitHub Actions run 38215812387,
-  code/docs commit d3121a2f4bbac2a29513edf95c032c68497181d6.
-- Verified all 88 tracked files match the tested/pushed GitHub tree. Phase 2 uses
-  small commits on phase-2 and a checked fast-forward merge into main. No force
-  push, history rewrite, deployment, real credentials or live integrations.
-- Fixed the migration-tool esbuild advisory with a compatible patched dependency
-  override; migration generation/checking and audit pass (zero known advisories).
-- Updated README, database/local/architecture/security docs and boundary guidance.
-  No real service/account/key, payment API, login, deployment or later-phase feature.
+- Reviewed the repository, README, plan, structure, and existing `phase-0`
+  history. Retained the existing foundation commits.
+- In Phase 0, created the minimal Next.js App Router and strict TypeScript foundation with
+  clear application, component, database, API, authentication, and security
+  boundaries. That foundation phase added no customer pages or payment logic.
+- Added blank environment placeholders, private-file ignore rules, separated
+  server/public configuration, dependency locking and audits, and basic headers.
+- Added architecture, local-development, security, and verification guidance,
+  eleven repeatable configuration security tests, and GitHub checks.
+- Phase 0 is committed, pushed, approved, and merged into `main` by a fast-forward
+  after its latest GitHub checks passed. `phase-1` branches from that foundation.
+- Recorded the owner's whole-project working rules in this plan and `AGENTS.md`.
+- Completion checks passed: environment safeguards, lint, strict types, all
+  eleven security configuration tests, and a production build. The dependency
+  audit reported zero known vulnerabilities.
+- `npm run dev` and `npm start` both served the placeholder on default port 3000
+  without application errors. Security headers were verified, and unfinished
+  order/payment/login/admin paths returned 404 for GET and POST. Servers were
+  stopped after testing. See `docs/phase-0-verification.md` for the evidence.
+- GitHub's foundation checks passed for the pushed foundation. The workflow
+  now runs on `main` and all `phase-*` branches, with the same read-only checks.
+- Corrected the roadmap to the owner's phase order: frontend in Phase 1 and
+  database in Phase 2. Recorded the UI-only scope and mock/contact decisions.
+- Built the Bangla Home, catalog, four Product/Plan pages, UI-only Checkout,
+  Refund/Privacy/Terms/Contact pages, FAQ, and floating WhatsApp icon. Added one
+  mock product file, shared components, and a locally served licensed font.
+- Lint, strict types, all eleven tests, build, and dependency audit passed.
+  Development and fresh production browser checks passed across all thirteen
+  main customer route instances at 320, 375, 768, and 1280 pixels.
+- Verified navigation, matching mock prices, unknown/repeated product rejection,
+  keyboard/FAQ controls, optional WhatsApp, reload/product-change resets, and
+  no submission/storage of synthetic input, including with JavaScript disabled.
+- Visually reviewed mobile/desktop Home and Checkout. No horizontal overflow,
+  unexpected external requests, or application browser/server errors remained.
+  Future API/admin/tracking routes still returned 404 for GET and POST.
+- Updated README, local instructions, architecture/security notes, boundary
+  README files, and `docs/phase-1-verification.md`. No application dependency
+  changes, real credentials, payment logic, deployment, or Phase 1 merge added.
+- Resumed on 2026-10-12 and rechecked the final SVG navigation polish from a
+  clean build. Both production and development browser reviews passed again;
+  lint, types, all eleven tests, and the current dependency audit also passed.
 
 ### Next
 
-- Wait for the owner's approval before Phase 3: complete server Order API with
-  request validation, authoritative quotes, atomic durable rate limits, real
-  fail-closed Turnstile verification and immutable canonical TrxID submission.
-- Confirm the supported bKash method/TrxID format before accepting real claims.
-  Resolve private tracking and correction/refund policy before dependent phases.
-  Never request real secrets; the owner fills private configuration locally.
+- Wait for the owner's Phase 2 approval before database schema, migrations, or
+  seed data. Start from `phase-1`'s verified source and resolve the Phase 2 data
+  design decisions. Do not merge Phase 1 or connect live services automatically.
 
 ### Known issues
 
-- No unresolved Phase 2 functional/check failures remain. Local browser/engine
-  testing used PGlite because this workspace cannot run native Docker/PostgreSQL.
-  Native PostgreSQL 17 Compose CI separately passed; do not confuse the two.
-- No real remote Supabase/certificate/pooler, payment, Turnstile or Resend endpoint
-  was connected or tested. These require their authorized integration checks.
-- Full terminal automation uses Linux util-linux script; use Linux/WSL2 locally.
-- Products remain examples and policies drafts; no contact/payment details or
-  exact A/B platform permissions have been supplied. Conservative 10-character
-  TrxID format must be confirmed for the actual bKash method before real claims.
-- Auth/2FA, bot protection, atomic request limits, private tracking, authenticated
-  status changes and real delivery are later phases. No real transactions yet.
-- Commercial hosting eligibility, production DB privileges, retention/backups,
-  key recovery/rotation and current advisories need pre-launch review.
+- No unresolved Phase 0 functional errors were found in the completed checks.
+- No unresolved Phase 1 functional errors were found in the completed checks.
+  An older generated production page was resolved by a clean rebuild; the
+  complete production browser review passed afterward.
+- Products/prices remain samples. Policies remain drafts; no real WhatsApp
+  number or support email is configured. These are documented Phase 1 boundaries,
+  not a working payment, database, or support-service integration.
+- Recheck official Next.js advisories and apply any required patches before
+  deployment. The earlier dated notice could not be independently reverified
+  on 2026-10-12; see `docs/security.md`. A clean audit is not proof of safety.
+- Authentication, payments, database access, bot verification, and voucher
+  encryption are intentionally future work. This is not a production release.
+- A zero-cost commercial hosting option still needs review before any launch.
+
+
+## Continuation checkpoint — 13 October 2026
+
+### Done
+
+- Audited all 53 original files and reproduced baseline checks/build and eleven tests.
+- Retained Next.js, Bangla pages, plain CSS, local font and labelled sample UI.
+  Reconciled the unmerged Phase 2 head `8170a19cedfde1d0a169127c558cb4e05aabdf4b`:
+  original PostgreSQL tables/migrations, whole-BDT prices, eight-character codes,
+  10-character TrxIDs, pending records, encryption, terminal tools and tests stay.
+  Added web RPCs/columns/tables only through `0002_marketplace`.
+- Implemented reviewed SQL schema/grants/RLS, DB-level canonical TrxID uniqueness,
+  immutable quote/order snapshots, transaction locking, idempotency, optimistic
+  status versions, internal notes, audit history and atomic shared rate limits.
+- Implemented product/quote/claim/private-tracking APIs and provider-backed admin
+  MFA login/session/logout, overview, order/search/details/status/notes, products
+  and audit. Original terminal identities default to inactive for web login.
+- Added real checkout flow, private tracking, admin UI, loading/error states, FAQ
+  preview and configurable support without inventing destinations or actual offers.
+- Passed all 69 tests: 29 original unit/configuration, 25 marketplace and 15
+  retained SQL/actual-terminal regressions. Verified populated Phase 2 upgrades,
+  MFA denial, full quote/claim/verify/deliver flow, rollback/privacy/anti-abuse.
+- Environment checks, lint, strict types, journal check, both production builds,
+  migrations/seeds/reruns and database-backed port-3000 HTTP smoke passed.
+- Created a private review hosting resource and adapter using the same source;
+  kept checkout disabled and configured no real database/payment/customer records.
+
+### Next
+
+- Push continuation branch and review PR, synchronize hosting source and deploy.
+- Record exact final verification and deployment result without overstating completion.
+
+### Known issues / activation blockers
+
+- Actual Supabase credentials/admin identity, Turnstile keys, bKash recipient/method,
+  approved products/prices, support contacts and reviewed policies are not supplied.
+- PGlite tests use one multiplexed local PostgreSQL backend and mocked provider transport.
+  Independent-connection concurrency and real-provider staging checks remain required.
+- Supported control-browser is unavailable in this managed environment; rendered
+  browser/mobile QA of the new flows is not claimed.
+- Official Next.js upstream update is scheduled for 14 October; affected versions
+  and upgrade instructions are pending. Review and patch before commercial launch.
+- Standard Next.js runtime audit is clean. Full audit flags one unresolved
+  `braces` advisory across six hosting build-chain entries. No patched release
+  is available; the full CI audit is kept blocking and the PR must remain draft.
+- No voucher inventory, automated payments/emails or policy-dependent refund action
+  is enabled. No default passwords, payment bypasses or unauthorized public launch.

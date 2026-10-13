@@ -1,68 +1,178 @@
 import Link from "next/link";
-import { connection } from "next/server";
 import { ArrowIcon, CheckIcon, ServiceIcon } from "@/components/icons";
 import { ProductCard } from "@/components/product-card";
-import { listActiveProducts } from "@/server/catalog";
+import { catalog } from "@/lib/catalog";
+export const dynamic = "force-dynamic";
 
 const steps = [
-  { number: "০১", title: "সেবা বেছে নিন", text: "কী পাবেন ও কত লাগবে, আগে দেখে নিন।" },
-  { number: "০২", title: "পেমেন্ট যাচাই", text: "চালু হলে bKash পেমেন্ট হাতে যাচাই করা হবে।" },
-  { number: "০৩", title: "সেবা গ্রহণ করুন", text: "যাচাইয়ের পরে নির্বাচিত সেবা দেওয়া হবে।" },
+  {
+    number: "০১",
+    title: "সেবা বেছে নিন",
+    text: "কী পাবেন ও কত লাগবে, আগে দেখে নিন।",
+  },
+  {
+    number: "০২",
+    title: "পেমেন্ট যাচাই",
+    text: "প্রতিটি bKash পেমেন্ট দাবি হাতে যাচাই করা হবে।",
+  },
+  {
+    number: "০৩",
+    title: "সেবা গ্রহণ করুন",
+    text: "যাচাইয়ের পরে নির্বাচিত সেবা দেওয়া হবে।",
+  },
 ];
 
 export default async function HomePage() {
-  await connection();
-  const products = await listActiveProducts();
+  const { products, sample } = await catalog();
   return (
     <>
       <section className="hero">
         <div className="container hero-grid">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="small-dot" /> সহজ শুরু, নিরাপদ ব্যবহার</p>
-            <h1>AI সেবা নিন,<br /><span>সহজভাবে।</span></h1>
-            <p className="hero-description">সেটআপ থেকে নিজের ওয়েবসাইট—আপনার প্রয়োজনের সেবাটি বেছে নিন। কী পাবেন, আগে পরিষ্কারভাবে জেনে নিন।</p>
+            <p className="eyebrow">
+              <span className="small-dot" /> সহজ শুরু, নিরাপদ ব্যবহার
+            </p>
+            <h1>
+              AI সেবা নিন,
+              <br />
+              <span>সহজভাবে।</span>
+            </h1>
+            <p className="hero-description">
+              সেটআপ থেকে নিজের ওয়েবসাইট—আপনার প্রয়োজনের AI সেবাটি বেছে নিন।
+              স্থানীয় bKash পেমেন্ট, পরিষ্কার সেবার শর্ত ও যাচাইয়ের পরে
+              ডেলিভারি।
+            </p>
             <div className="hero-actions">
-              <Link href="/products" className="button button-primary">সেবা ও প্ল্যান দেখুন <ArrowIcon /></Link>
-              <Link href="/faq" className="text-link">কীভাবে কাজ করবে?</Link>
+              <Link href="/products" className="button button-primary">
+                সেবা ও প্ল্যান দেখুন <ArrowIcon />
+              </Link>
+              <Link href="/faq" className="text-link">
+                কীভাবে কাজ করবে?
+              </Link>
             </div>
-            <p className="hero-safety"><CheckIcon /> কোনো অ্যাকাউন্টের পাসওয়ার্ড দিতে হবে না</p>
+            <p className="hero-safety">
+              <CheckIcon /> কোনো অ্যাকাউন্টের পাসওয়ার্ড দিতে হবে না
+            </p>
           </div>
           <div className="journey-card">
             <div className="journey-heading">
-              <span className="service-icon"><ServiceIcon kind="prompt" /></span>
-              <div><span className="eyebrow">তিনটি সহজ ধাপ</span><h2>শুরু থেকে সেবা পাওয়া</h2></div>
+              <span className="service-icon">
+                <ServiceIcon kind="prompt" />
+              </span>
+              <div>
+                <span className="eyebrow">তিনটি সহজ ধাপ</span>
+                <h2>শুরু থেকে সেবা পাওয়া</h2>
+              </div>
             </div>
             <ol className="journey-steps">
               {steps.map((step) => (
                 <li key={step.number}>
                   <span className="step-number">{step.number}</span>
-                  <div><h3>{step.title}</h3><p>{step.text}</p></div>
+                  <div>
+                    <h3>{step.title}</h3>
+                    <p>{step.text}</p>
+                  </div>
                 </li>
               ))}
             </ol>
-            <p className="journey-note">চালু হওয়ার পর এই ধাপগুলো অনুসরণ করা যাবে।</p>
+            <p className="journey-note">
+              TrxID জমা দিলেই পেমেন্ট নিশ্চিত হয় না। প্রতিটি দাবি হাতে যাচাই করা
+              হবে।
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="container section-space" aria-labelledby="services-heading">
+      <section
+        className="container section-space"
+        aria-labelledby="services-heading"
+      >
         <div className="section-heading">
-          <div><p className="eyebrow">আপনার প্রয়োজন অনুযায়ী</p><h2 id="services-heading">সেবা ও প্ল্যান</h2></div>
-          <span className="sample-pill">নমুনা সেবা · নমুনা মূল্য</span>
+          <div>
+            <p className="eyebrow">আপনার প্রয়োজন অনুযায়ী</p>
+            <h2 id="services-heading">সেবা ও প্ল্যান</h2>
+          </div>
+          <span className="sample-pill">
+            {sample ? "নমুনা সেবা · নমুনা মূল্য" : "সেবা ও মূল্য"}
+          </span>
         </div>
-        <div className="product-grid">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div>
-        {products.length === 0 && <p className="notice">এখন কোনো সেবা দেখানো হচ্ছে না। পরে আবার দেখুন।</p>}
+        <div className="product-grid">
+          {products.map((product) => (
+            <ProductCard key={product.slug} product={product} sample={sample} />
+          ))}
+        </div>
+        {products.length === 0 && (
+          <p className="notice">নতুন সেবা শিগগিরই যুক্ত হবে।</p>
+        )}
       </section>
 
-      <section className="container safety-strip" aria-label="নিরাপদ সেবার নিয়ম">
-        <div><CheckIcon /><p><strong>নিজের অ্যাকাউন্ট</strong><span>শেয়ার করা লগইন নয়</span></p></div>
-        <div><CheckIcon /><p><strong>পাসওয়ার্ড প্রয়োজন নেই</strong><span>ব্যক্তিগত তথ্য নিরাপদ রাখুন</span></p></div>
-        <div><CheckIcon /><p><strong>যাচাইয়ের পর ডেলিভারি</strong><span>ম্যানুয়াল পেমেন্ট যাচাই</span></p></div>
+      <section
+        className="container safety-strip"
+        aria-label="নিরাপদ সেবার নিয়ম"
+      >
+        <div>
+          <CheckIcon />
+          <p>
+            <strong>নিজের অ্যাকাউন্ট</strong>
+            <span>শেয়ার করা লগইন নয়</span>
+          </p>
+        </div>
+        <div>
+          <CheckIcon />
+          <p>
+            <strong>পাসওয়ার্ড প্রয়োজন নেই</strong>
+            <span>ব্যক্তিগত তথ্য নিরাপদ রাখুন</span>
+          </p>
+        </div>
+        <div>
+          <CheckIcon />
+          <p>
+            <strong>যাচাইয়ের পর ডেলিভারি</strong>
+            <span>ম্যানুয়াল পেমেন্ট যাচাই</span>
+          </p>
+        </div>
       </section>
 
       <section className="container faq-callout">
-        <div><h2>কোনো প্রশ্ন আছে?</h2><p>সেবা, পেমেন্ট ও নিরাপদ ব্যবহার সম্পর্কে সহজ উত্তর দেখুন।</p></div>
-        <Link href="/faq" className="button button-secondary">প্রশ্নোত্তর দেখুন <ArrowIcon /></Link>
+        <div>
+          <h2>কোনো প্রশ্ন আছে?</h2>
+          <p>সেবা, পেমেন্ট ও নিরাপদ ব্যবহার সম্পর্কে সহজ উত্তর দেখুন।</p>
+        </div>
+        <Link href="/faq" className="button button-secondary">
+          প্রশ্নোত্তর দেখুন <ArrowIcon />
+        </Link>
+      </section>
+      <section
+        className="container section-space"
+        aria-labelledby="home-faq-heading"
+      >
+        <div className="section-heading">
+          <h2 id="home-faq-heading">শুরু করার আগে</h2>
+          <Link href="/track-order" className="text-link">
+            অর্ডার ট্র্যাক করুন
+          </Link>
+        </div>
+        <div className="faq-list">
+          <details>
+            <summary>
+              পেমেন্টের পরে কী হবে?<span aria-hidden="true">+</span>
+            </summary>
+            <p>
+              লেনদেনের তথ্য জমা দিন। অ্যাডমিন নিজের bKash অ্যাপে পেমেন্ট মিলিয়ে
+              দেখে নিশ্চিত করবেন। তারপর নির্বাচিত সেবা দেওয়া হবে।
+            </p>
+          </details>
+          <details>
+            <summary>
+              অর্ডার ট্র্যাক করতে কি পাসওয়ার্ড লাগবে?
+              <span aria-hidden="true">+</span>
+            </summary>
+            <p>
+              নতুন অ্যাকাউন্ট খুলতে হবে না। অর্ডার কোড, আপনার ইমেইল ও অর্ডারের
+              ব্যক্তিগত অ্যাক্সেস কী দিয়ে অবস্থা দেখা যাবে।
+            </p>
+          </details>
+        </div>
       </section>
     </>
   );

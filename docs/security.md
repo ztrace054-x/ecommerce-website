@@ -1,154 +1,103 @@
-# Security scope and preparation
+# Implemented security and launch limits
 
-## What Phase 0 provides
+This document describes controls in the continuation source. Configuration and
+actual-provider verification remain separate; a review build is not a commercial
+security certification. Historical foundation evidence remains in the phase docs.
 
-- Strict TypeScript and explicit application/database/authentication boundaries.
-- A blank environment template and ignored local environment/key files.
-- A lazy server-only configuration accessor with an explicit name allowlist.
-  Missing or blank configuration throws an error; values are never printed.
-- Public configuration contains only the future Turnstile site key. It may be
-  absent in Phase 0 because there is no protected submission feature yet.
-- Basic `nosniff`, frame denial, referrer, and browser-permission headers.
-- Exact direct dependency versions, an integrity-bearing lockfile, and audits.
-- A GitHub check workflow with pinned action commits, read-only repository
-  permissions, no persisted checkout credentials, and no deployment steps.
+## Implemented controls
 
-`requireServerEnv` does not validate a database URL, encryption-key encoding,
-key strength, or service-specific configuration. Those checks belong in the
-reviewed integration added later. Do not interpret a nonempty string as a safe
-or working integration. The application does not call this accessor in Phase 0.
+- Strict server schemas reject unexpected fields, constrain length/formats,
+  normalize email/phone/TrxID and reject markup/control characters in text.
+  The browser's validation is only usability; server checks are authoritative.
+- JSON content-type/origin checks and actual streamed 16 KiB body limits (4 KiB
+  login) apply before writes. Origin is compared to a configured exact origin;
+  attacker-supplied Host/forwarding values are not used as production authority.
+- Cookies are HttpOnly, SameSite=Strict and Secure on HTTPS. Mutations require
+  Origin, so login/logout/status/product/note requests have CSRF protection.
+- Web admin passwords are verified and bcrypt-hashed by Supabase Auth. An enrolled
+  TOTP factor must be challenged and verified before an application session is
+  created. The retained terminal CLI uses scrypt and creates an inactive identity;
+  its password hash does not authorize provider login. Provider
+  tokens are never sent in JSON or stored in localStorage. Every protected API
+  verifies provider token, active allowlist membership and the unexpired,
+  unrevoked DB session, including the original admin lock. There is no public signup, default password, browser-only
+  role check or ADMIN_SECRET bypass. Sessions last at most one hour.
+- Parameterized PostgreSQL functions enforce quote/session locking, unique
+  canonical TrxIDs, positive integer prices, foreign keys, valid status/version
+  checks and atomic status/note/audit changes. No client-supplied price is used.
+- Anonymous/authenticated DB roles have no application table grants or RPC
+  execute grants. RPCs are security invoker with an empty search path. A server
+  service credential is required. Runtime audit/note grants exclude UPDATE/DELETE.
+- Durable atomic PostgreSQL rate counters work across instances. No in-memory
+  production fallback exists. Untrusted proxy headers are ignored; unknown
+  clients share a conservative bucket. Production proxy trust needs host review.
+- Turnstile is verified server-side for success, exact hostname and claim action.
+  Missing/replayed/wrong-context tokens and provider/configuration failures deny
+  the claim. The provider supplies token expiry/replay rejection. No bypass is
+  included in production; test mocks exist only in the test suite.
+- Tracking uses a 256-bit key, email and order code in a POST body. Hashes are
+  stored; keys do not enter query strings, logs or browser storage. Tracking
+  returns a minimal projection, excluding contact/payment/internal-note fields.
+- React renders text with normal escaping. No raw HTML injection or user-supplied
+  scripts are used. Input sanitization does not remove the need for escaping.
+- Basic nosniff/frame/referrer/permission headers remain. API responses are
+  private/no-store and generic errors never expose upstream secrets, SQL errors
+  or submitted values. No application logger records PII or tokens.
+- The committed environment template is blank and private files ignored. CI,
+  strict types, dependency locking and environment checks are retained.
 
-The `server-only` import causes a Next.js build error if a client dependency
-graph imports that module. It does not protect a secret intentionally passed
-as a client prop, returned by an API, or printed in a log. Review data boundaries
-as well as imports.
+## Operational requirements
 
-## Repository safeguards
+Apply the migration/grants in an actual staging Supabase project, disable public
+signup, provision the real admin, set strong-password policies and protect/rotate
+server service keys. Revoke sessions after password changes or incidents; disabling
+an admin has immediate effect. Configure logging redaction at the chosen host too.
+The code cannot configure provider account settings without the owner's account.
 
-Run `npm run check:env` before committing. It checks both tracked and unignored
-files, rejects private environment files even if force-added, checks the ignore
-rules, and requires empty values and expected names in `.env.example`.
+Confirm bKash account/method and receipt rules. The retained 10-character alphanumeric
+TrxID check bounds input; it does not assert bKash authenticity or prove payment.
+A human must compare the actual transaction/recipient/sender/amount before
+verification. A rejected TrxID stays unique. Correction/refund and retention
+procedures must be finalized; no deletion or refund shortcut is exposed.
 
-This check is not a general secret scanner. It cannot detect every hardcoded
-token, a plaintext voucher placed in another file, or a previously leaked secret
-in Git history. Review every staged change. `.gitignore` cannot remove a file
-that has already been committed.
+Only manual delivery of the existing service categories is implemented. There is
+no voucher inventory to encrypt, subscription/seat resale permission assertion,
+third-party password field, automated bKash verification or outbound email sender.
+The original AES-GCM helper and encrypted voucher table are preserved and tested,
+but no voucher web operation is enabled. Resend remains reserved.
 
-Never create or store real credentials during these local phases. Later approved secrets belong
-only in ignored local configuration or the agreed server secret store. Keep
-database access keys, Turnstile secrets, Resend keys, encryption keys, and any
-future session-signing secret out of public configuration and Git.
+Keep the review deployment private and payment collection disabled. Before public
+launch, verify real-provider/staging concurrency and browser/mobile behavior,
+HTTPS/HSTS/CSP and hosting eligibility/backups/retention. A complete nonce-based
+CSP is not claimed: the existing basic headers are not a substitute for it.
 
-## Dependencies
+## Verified upstream notice
 
-Use `npm ci` to reproduce the lockfile. `npm run audit:dependencies` fails for
-known advisories rated moderate or higher, including development dependencies.
-An audit result is a point-in-time package check, not a complete application
-security assessment. Investigate advisories and review upgrades deliberately.
+On 13 October the official Next.js blog confirmed an upstream security release
+planned for 14 October, with two Critical and one High issue. Affected versions
+and fixes are not published yet. Recheck the advisory and patch before enabling
+commercial checkout; do not claim current installed dependencies are immune.
+https://nextjs.org/blog/upcoming-nextjs-security-update-october-2026
 
-The lint setup uses maintained ESLint 10 with compatible TypeScript tooling.
-The optional Next.js lint plugin is not installed: its current glob dependency
-is affected by [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
-Framework-specific lint rules can be added when a compatible audited release is
-available. Next.js still generates route types and type-checks the production
-build. No audit exclusions or forced dependency downgrades are configured. Phase 2
-found esbuild <=0.24.2 under Drizzle Kit's deprecated loader and pins the compatible
-patched esbuild 0.25.12 through a scoped override. Migration generation/checking
-and the application checks were rerun; audit reports zero known vulnerabilities.
-See [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99).
-Recheck this override when the upstream loader dependency changes.
+The 13 October full dependency audit flags `GHSA-vfj7-8cjw-p6xm` in `braces`
+3.0.3 through Vinext's build-plugin/glob chain. It reports six affected package
+entries for that one advisory. The upstream advisory lists no patched version;
+the current registry latest is 3.0.3. No forced adapter downgrade or audit
+suppression is applied. `npm audit --omit=dev --audit-level=moderate` is clean
+for the standard Next.js runtime; that does not certify the bundled Worker.
+Keep this owner-private review separate from a commercial launch and resolve
+the adapter chain before release. The full CI dependency audit remains blocking.
+https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
 
-References:
+## Tests and limitations
 
-- [Next.js environment-variable boundaries](https://nextjs.org/docs/app/guides/environment-variables)
-- [Next.js server and client components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
-- [Next.js ESLint plugin configuration](https://nextjs.org/docs/app/api-reference/config/eslint)
-- [ESLint supported versions](https://eslint.org/version-support/)
-- [TypeScript ESLint setup](https://typescript-eslint.io/getting-started/)
+The suite uses synthetic information, the actual local PostgreSQL engine via
+PGlite and mocked Supabase/Turnstile transport. It covers unknown fields, price
+manipulation, TrxID conflicts, unauthorized roles, CSRF, request size, rate limits,
+provider failure/replay, tracking privacy, session revocation, transitions and
+rollback. PGlite uses a single connection; production concurrency and provider
+configuration require actual staging checks. New browser QA is unavailable in
+this environment and is not inferred from a successful build.
 
-## Controls still required before real use
-
-### Upstream security review
-
-The earlier Phase 0 record cited a notice about a security update planned for
-14 October 2026. On 12 October, the notice could not be retrieved and its details
-could not be independently reverified from current primary sources. Do not
-treat its date or severity details as currently confirmed findings or a release
-guarantee. The historical verification record is retained with this limitation.
-
-Before deployment, review [official Next.js security advisories](https://github.com/vercel/next.js/security/advisories),
-apply patches required for the installed versions, and rerun checks. The final
-Phase 1 npm audit reported zero known vulnerabilities on 12 October, but that
-does not establish the absence of unpublished vulnerabilities. Local frontend
-work does not authorize a public launch.
-
-### Current frontend boundaries
-
-The customer pages use labelled sample services/prices only. Checkout has no
-HTML form, input names, submit control, network call, order code, transaction
-claim, recipient number, or storage. Its one button checks inputs locally only.
-The optional phone field and native validity feedback are not server security
-controls; reviewed server validation belongs to Phase 3.
-
-Only validated active database product UUIDs can select a product. Price query parameters are ignored,
-and untrusted query values are never rendered as HTML. React escapes displayed
-text; no raw HTML injection or remote content rendering is used.
-
-Policy pages are drafts for owner review, not guarantees about legal compliance,
-refund deadlines, or business eligibility. No actual WhatsApp destination or
-support email is configured. The floating icon navigates to Contact, and real
-order links are deferred. Do not add guessed contact or payment details.
-
-### Implemented Phase 2 controls
-
-- Strict server Zod schemas reject extra price/status/role fields and normalize
-  contact/TrxID fields. These internal operations are not exposed HTTP APIs.
-- PostgreSQL UNIQUE constraints and canonical-format checks protect order codes
-  and TrxIDs under concurrency. Assigned TrxIDs cannot be changed or released.
-- A transaction locks the active product. A DB trigger independently supplies
-  the price and freezes order identity/product/code/created time/price afterward.
-- Foreign keys, integer prices, state/timestamp checks, indexes and encrypted
-  storage-format guards prevent inconsistent records. They do not verify payment.
-- RLS is enabled with no public policies. Non-owner roles with table grants
-  cannot read/insert rows. Catalog readers project only active public fields.
-- Database modules are server-only, connections lazy, queries parameterized,
-  errors redacted and remote TLS certificate/hostname verification required.
-  Only loopback development may use plaintext transport.
-- AES-256-GCM uses a random 12-byte IV, 16-byte tag and authenticated record/purpose
-  context. Canonical 32-byte base64 keys are required; wrong keys, tampering and
-  context swapping fail closed. No real voucher/TOTP data or keys are stored.
-- Terminal provisioning accepts no credential arguments/piped input, hides both
-  password entries, validates confirmation, stores a salted memory-hard scrypt
-  hash and refuses duplicate email without overwriting it. No admin is seeded.
-- Tests use only an explicit disposable loopback `_test` database, never the app
-  URL. Full CI uses fresh native PostgreSQL 17 through the documented Compose setup.
-
-### Future application controls
-
-Order/payment claims have no endpoint yet. Phase 3 must implement request/body
-limits, durable atomic rate limits, trusted-IP rules and real server Turnstile
-verification before using the internal order function. Confirm actual bKash method
-and TrxID format; a formatted or unique ID is never proof of payment. Correction
-and refund policies must not permit silent reuse of retained transaction IDs.
-
-Administrator login/sessions, 2FA enrollment/verification, secure cookies,
-CSRF/origin checks, lockouts, authorization and allowed status transition graph
-belong to Phase 5. A provisioned row with null TOTP cannot receive a session.
-Every verification, delivery and refund must require an authenticated authorized
-administrator and the actual manual bKash check. State CHECKs alone do not do this.
-Private customer tracking and delivery access are also required later; knowing
-an eight-character display code must not expose contact data or vouchers.
-
-Before live use, review least-privilege runtime/migration roles, actual Supabase
-TLS/pooling, key backup/rotation, data retention/backups, public policies, CSP,
-HTTPS/HSTS and official package advisories. RLS does not protect a leaked owner
-credential. Local Compose credentials are private/local-only, CI credentials are
-public disposable fixtures, and neither is a production account. Do not deploy,
-accept real customers/payments or publish products yet.
-
-## If a secret is accidentally exposed later
-
-Revoke or rotate it immediately at the relevant provider, then review affected
-access. Removing the current file does not undo exposure or remove Git history.
-Agree on history cleanup and recovery actions separately; never rewrite shared
-history automatically. Do not post the exposed value in an issue or message.
+References: Supabase password security/database function documentation and
+Cloudflare Turnstile server validation are linked in the architecture document.

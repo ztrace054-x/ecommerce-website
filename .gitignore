@@ -15,6 +15,10 @@ playwright-report/
 test-results/
 *.log
 .vercel/
+dist/
+.sites-runtime/
+.wrangler/
+.vinext/
 
 # Credentials, keys, database copies, and editor/OS files
 *.pem

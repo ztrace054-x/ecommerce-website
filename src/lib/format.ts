@@ -9,3 +9,8 @@ const takaFormatter = new Intl.NumberFormat("bn-BD", {
 export function formatTaka(priceBdt: number): string {
   return takaFormatter.format(priceBdt);
 }
+
+/** API DTO amounts use integer poisha; storage remains whole BDT. */
+export function formatPoisha(pricePoisha: number): string {
+  return formatTaka(pricePoisha / 100);
+}

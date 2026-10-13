@@ -51,7 +51,7 @@ async function main() {
     assert.ok(html.includes("৫০০"), "Whole-BDT database price must appear.");
     assert.ok(!html.includes("অফিশিয়াল আমন্ত্রণের নমুনা"), "Inactive products must not be public.");
   }
-  for (const path of ["/checkout", "/refund", "/privacy", "/terms", "/contact", "/faq"]) {
+  for (const path of ["/checkout", "/refund", "/privacy", "/terms", "/contact", "/faq", "/track-order", "/admin", "/admin/login"]) {
     assert.equal((await fetch(`${origin}${path}`)).status, 200, path);
   }
   const tampered = await (await fetch(`${origin}/checkout?product=${productId}&price=1`)).text();
@@ -62,11 +62,16 @@ async function main() {
     assert.ok(response.status === 404 || html.includes("পেজটি পাওয়া যায়নি"), path);
     assert.ok(!html.includes('id="customer-name"'), "Invalid selectors cannot show checkout fields.");
   }
-  for (const path of ["/api/orders", "/admin", "/login", "/track"]) {
+  for (const path of ["/login", "/track"]) {
     for (const method of ["GET", "POST"]) assert.equal((await fetch(`${origin}${path}`, { method })).status, 404, `${method} ${path}`);
   }
+  for (const path of ["/api/admin/orders", "/api/admin/products", "/api/admin/overview", "/api/admin/audit"]) {
+    assert.equal((await fetch(`${origin}${path}`)).status, 401, `Protected ${path}`);
+  }
+  const closed = await fetch(`${origin}/api/orders`, { method: "POST", headers: { origin, "content-type": "application/json" }, body: "{}" });
+  assert.equal(closed.status, 503, "Unconfigured checkout must refuse claims.");
   assert.ok(!/⨯|unhandled|TypeError|ReferenceError|DataAccessError/iu.test(logs), "Development server must not log application errors.");
-  console.log("Development smoke passed: default port, DB products/prices, inactive/invalid selectors, policy pages, safe checkout and absent APIs.");
+  console.log("Development smoke passed: default port, DB products/prices, inactive/invalid selectors, policy/tracking/admin pages, closed checkout and protected APIs.");
 }
 
 try { await main(); } catch (error) {

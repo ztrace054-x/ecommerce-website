@@ -1,49 +1,24 @@
 # Repository guidance
 
-Read `README.md` and `PLAN.md` before changes. `PLAN.md` is the project source of
-truth. Follow the phase explicitly authorized by the owner. Phases 0 and 1 are
-approved and merged. Phase 2 database work is complete, with its checked merge
-authorized. Wait for the owner to approve Phase 3 before any Order API work.
-Do not start later phases, deploy, or configure live services without instructions.
-The owner requires each completed phase to be merged into `main` after checks.
-Never commit real secrets, request
-customer passwords, or add payment/authentication shortcuts. Report actual checks.
+Read README.md and PLAN.md before changes. Continue the existing project; never
+replace it with a starter. The owner's 13 October 2026 request authorizes the
+repository audit, backend/admin/customer development, testing, documentation and
+private review deployment. Earlier Phase 1-only boundaries are historical.
 
-## Working rules for every phase
+Work within the latest authorized scope. Explain major architecture decisions,
+finish the necessary work, test each major feature and report actual evidence.
+Do not stop for routine implementation choices. Ask only for genuinely missing
+business details or external configuration and continue independent work.
 
-- Complete the whole authorized phase before reporting back. Small phases are
-  boundaries for scope, not permission to leave partially working features.
-- Do not ask whether to continue in the middle of a phase. Ask only when a true
-  blocker needs the owner's input, account, key, or business permission.
-- Make sensible, simple MVP implementation decisions within the approved scope
-  and record them in the final report. Do not add unrequested features or weaken
-  security to avoid a blocker.
-- Finish with working `npm run dev`, passing lint, typecheck, build, and tests,
-  small commits, a pushed phase branch, and a checked merge into `main`.
-- Validate every server input with strict Zod schemas. Derive order prices only
-  from the database. Test every implemented critical security/business rule.
-- Review changes like an attacker and fix findings before the final report.
-- Keep README setup, environment variables, completed work, and remaining work
-  current. Never leave security-critical placeholder logic or bypasses.
-- Keep the `Progress` section in `PLAN.md` current with **Done**, **Next**, and
-  **Known issues** at every phase boundary. If a context/time limit prevents
-  completion, record the exact checkpoint, commit and push safe progress, and
-  clearly report the incomplete work; never call a checkpoint a finished phase.
-- Wait for approval for the next phase after the completed phase's final report.
+Keep secrets out of Git and browser code. Never use ADMIN_SECRET as a password,
+add a default admin, collect third-party passwords, PINs or OTPs, or treat a TrxID
+as proof of payment. Keep samples inactive/labelled and checkout closed until
+actual required configuration and policy/catalog approvals exist.
 
-## Phase 2 boundaries
-
-- Implement PostgreSQL/Drizzle schema, migrations, validated server data access,
-  encryption, safe fixtures, and interactive administrator provisioning.
-- Replace mock product reads with database reads; keep the existing Bangla UI.
-- Checkout is UI only: no orders, payments, transaction IDs, credentials, or
-  personal-data submissions. Do not persist form values in browser storage.
-- Display that products/prices are samples and ordering is not open. Do not
-  invent subscriptions, approved platform resale rights, or contact details.
-- The floating WhatsApp icon may link to Contact while the real number is absent.
-  Real `wa.me` order links and email templates belong to Phase 6.
-- Order API/rate limits/Turnstile are Phase 3; tracking Phase 4; login, 2FA,
-  administrator mutations, and audit events Phase 5. Do not expose them now.
+Use a continuation phase branch and keep history intact. Update PLAN.md progress
+and verification documents. Do not merge without instructions. Review deployment
+is authorized; preserve its private audience. A review URL is not a commercial
+launch or evidence that actual Supabase/bKash services are configured.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

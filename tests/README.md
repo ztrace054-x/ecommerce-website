@@ -1,36 +1,28 @@
-# Automated checks
+# Verification
 
-npm test runs all unit and database/terminal tests; npm run check includes it
-with environment checks, lint, typecheck and build. npm run audit:dependencies
-includes development dependencies. There are no silently skipped DB tests.
+Run `npm test` under Node 24. All fixtures use synthetic information and disposable
+local state. The original eleven environment tests remain in place.
 
-Unit tests cover environment secrecy/ignore rules, strict Zod/normalization,
-whole BDT formatting, order-code generation/collision limits, verified remote
-TLS configuration, AES-GCM round-trip/tamper/context/key failures, and salted
-scrypt password verification. Encryption/password fixtures are explicitly public
-synthetic values, never credentials for any actual service or seeded account.
+- validation/crypto/order-code/database-config tests retain the original Phase 2
+  contracts, AES-GCM tamper checks, salted scrypt and private configuration rules.
+- continuation-validation.test.ts covers new web claims, private tracking keys,
+  strict admin evidence, consent and exact whole-BDT/poisha conversion.
+- continuation-database.test.ts: actual additive migration/RPCs on PGlite,
+  uniqueness/idempotency, quote snapshots, privacy, roles, transitions, rollback,
+  atomic rate counters, revocation, product/search/overview/audit operations and
+  preservation of populated Phase 2 rows/price guards/append-only grants.
+- api.test.ts: actual route handlers over local PostgreSQL with mocked provider
+  transport; full quote/claim/track/login/verify/deliver/logout, CSRF/body limits,
+  wrong-context/replayed challenge, provider failure, proxy trust, rate limits and
+  rejection of password-only/wrong-code/unenrolled administrator login.
 
-Integration tests require an explicit disposable loopback TEST_DATABASE_URL
-whose database name ends in _test, separate from DATABASE_URL. They migrate the
-fresh schema and rerun migrations, then clean fixture rows from all five tables.
-Never use a database containing data you want to keep. Tests verify idempotent
-A/B/C seed, active-only public projection, pending/null claims, DB price snapshots,
-forged-price override/immutability, concurrent TrxID UNIQUE enforcement, canonical
-format, assigned-TrxID immutability, state/timestamp checks, order-code collision
-retry, foreign keys, encrypted-storage guard, admin provisioning and RLS denial.
+`npm test` runs 54 tests. `npm run test:db` runs the retained 15 PostgreSQL/actual
+terminal regression tests and requires a separate disposable `TEST_DATABASE_URL`.
+CI starts native PostgreSQL 17 with Compose and then runs migration, seed and
+HTTP development smoke checks. This workspace ran those 15 tests via disposable
+PGlite socket servers; it has no Docker/native PostgreSQL executable.
 
-Terminal tests run the actual creation command in a pseudo-terminal using Linux
-util-linux script. They verify hidden password/confirmation, no creation on mismatch,
-rejection of piped input/credential arguments, and a correct stored salted hash.
-Use Linux/WSL2 for the complete local suite. GitHub CI uses Ubuntu and starts
-fresh native PostgreSQL 17 through the committed Docker Compose setup.
-
-npm run smoke:dev starts/stops Next.js on default port 3000 and checks DB-backed
-customer pages, price tampering, inactive/invalid selectors, headers and absent
-APIs. Stop any other server first. Local browser review additionally checks
-mobile/desktop layouts, keyboard/navigation, preview resets and no data leakage.
-
-Rate limits, Turnstile, admin sessions/2FA, authorized status transitions and
-private tracking do not exist yet. Their full attack tests are mandatory in
-Phases 3–5; absence of an endpoint is not a substitute for those future controls.
-See docs/phase-2-verification.md and PLAN.md for actual evidence and limitations.
+Mocks cannot certify external provider setup. PGlite serializes its one connection;
+run independent-connection concurrency and rendered mobile/browser flow tests in
+staging before real customer use. No real credentials or payments are required
+or permitted in the local automated suite.

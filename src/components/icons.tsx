@@ -1,4 +1,5 @@
 import type { SVGProps } from "react";
+import type { MockProduct } from "@/data/mock-products";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -28,7 +29,7 @@ export function WhatsAppIcon(props: IconProps) {
   );
 }
 
-export function ServiceIcon({ kind, ...props }: IconProps & { kind: "setup" | "prompt" | "chatbot" | "website" }) {
+export function ServiceIcon({ kind, ...props }: IconProps & { kind: MockProduct["icon"] }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"
       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>

@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check, foreignKey, index, inet, integer, pgEnum, pgTable, text,
-  timestamp, unique, uuid, varchar, boolean,
+  timestamp, unique, uuid, varchar, boolean, jsonb, primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const deliveryType = pgEnum("delivery_type", ["A", "B", "C"]);
@@ -13,6 +13,8 @@ export const deliveryCodeStatus = pgEnum("delivery_code_status", ["available", "
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
 export const products = pgTable("products", {
+  storefrontSlug: text("storefront_slug").unique("products_storefront_slug_unique"),
+  storefrontMetadata: jsonb("storefront_metadata").notNull().default({}),
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 160 }).notNull(),
   description: varchar("description", { length: 4000 }).notNull(),
@@ -29,6 +31,13 @@ export const products = pgTable("products", {
 ]).enableRLS();
 
 export const orders = pgTable("orders", {
+  checkoutSessionId: uuid("checkout_session_id").unique("orders_checkout_session_id_unique").references(() => checkoutSessions.id),
+  productSnapshot: jsonb("product_snapshot"),
+  trackingTokenHash: text("tracking_token_hash"),
+  claimFingerprint: text("claim_fingerprint"),
+  customerMessage: text("customer_message").notNull().default(""),
+  version: integer("version").notNull().default(1),
+  updatedAt: timestamp("updated_at", {withTimezone:true}).notNull().defaultNow(),
   id: uuid("id").primaryKey().defaultRandom(),
   orderCode: varchar("order_code", { length: 12 }).notNull().unique("orders_order_code_unique"),
   productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
@@ -45,6 +54,9 @@ export const orders = pgTable("orders", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   adminNote: varchar("admin_note", { length: 2000 }),
 }, (t) => [
+  check("orders_tracking_token_format", sql`${t.trackingTokenHash} IS NULL OR ${t.trackingTokenHash} ~ '^[a-f0-9]{64}$'`),
+  check("orders_claim_fingerprint_format", sql`${t.claimFingerprint} IS NULL OR ${t.claimFingerprint} ~ '^[a-f0-9]{64}$'`),
+  check("orders_version_positive", sql`${t.version} > 0`),
   check("orders_code_format", sql`${t.orderCode} ~ '^ORD-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$'`),
   check("orders_amount_positive", sql`${t.amountExpected} > 0`),
   check("orders_customer_name_nonempty", sql`length(btrim(${t.customerName})) >= 2`),
@@ -92,6 +104,8 @@ export const deliveryCodes = pgTable("delivery_codes", {
 ]).enableRLS();
 
 export const adminUsers = pgTable("admin_users", {
+  authUserId: uuid("auth_user_id").unique("admin_users_auth_user_id_unique"),
+  isActive: boolean("is_active").notNull().default(false),
   id: uuid("id").primaryKey().defaultRandom(),
   email: varchar("email", { length: 254 }).notNull().unique("admin_users_email_unique"),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
@@ -108,11 +122,13 @@ export const adminUsers = pgTable("admin_users", {
 ]).enableRLS();
 
 export const auditLogs = pgTable("audit_logs", {
+  targetId: uuid("target_id"),
+  details: jsonb("details").notNull().default({}),
   id: uuid("id").primaryKey().defaultRandom(),
   adminId: uuid("admin_id").notNull().references(() => adminUsers.id, { onDelete: "restrict" }),
   action: varchar("action", { length: 80 }).notNull(),
   orderId: uuid("order_id").references(() => orders.id, { onDelete: "restrict" }),
-  ip: inet("ip").notNull(),
+  ip: inet("ip").notNull().default("0.0.0.0"),
   createdAt: createdAt(),
 }, (t) => [
   check("audit_logs_action_format", sql`${t.action} ~ '^[a-z][a-z0-9_.]{0,79}$'`),
@@ -120,3 +136,55 @@ export const auditLogs = pgTable("audit_logs", {
   index("audit_logs_order_idx").on(t.orderId),
   index("audit_logs_created_idx").on(t.createdAt),
 ]).enableRLS();
+
+const time = (name:string)=>timestamp(name,{withTimezone:true}).notNull().defaultNow();
+export const checkoutSessions = pgTable("ai_checkout_sessions", {
+  id: uuid("id").primaryKey(),
+  orderCode: text("order_code").notNull().unique(),
+  tokenHash: text("token_hash").notNull().unique(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id),
+  productSnapshot: jsonb("product_snapshot").notNull(),
+  amountPoisha: integer("amount_poisha").notNull(),
+  bkashRecipient: text("bkash_recipient").notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  createdAt: time("created_at"),
+}, (t) => [
+  check("ai_checkout_sessions_code_format", sql`${t.orderCode} ~ '^ORD-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$'`),
+  check("ai_checkout_sessions_token_format", sql`${t.tokenHash} ~ '^[a-f0-9]{64}$'`),
+  check("ai_checkout_sessions_amount_valid", sql`${t.amountPoisha} > 0 AND ${t.amountPoisha} <= 100000000 AND ${t.amountPoisha} % 100 = 0`),
+  check("ai_checkout_sessions_recipient_format", sql`${t.bkashRecipient} ~ '^01[3-9][0-9]{8}$'`),
+  check("ai_checkout_sessions_method_valid", sql`${t.paymentMethod} IN ('payment','send_money')`),
+]).enableRLS();
+export const adminSessions = pgTable("ai_admin_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  adminId: uuid("admin_id")
+    .notNull()
+    .references(() => adminUsers.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: time("created_at"),
+}, (t) => [check("ai_admin_sessions_token_format", sql`${t.tokenHash} ~ '^[a-f0-9]{64}$'`)]).enableRLS();
+export const orderNotes = pgTable("ai_order_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id),
+  actorId: uuid("admin_id")
+    .notNull()
+    .references(() => adminUsers.id),
+  note: text("note").notNull(),
+  createdAt: time("created_at"),
+}, (t) => [check("ai_order_notes_length", sql`length(${t.note}) BETWEEN 1 AND 2000`)]).enableRLS();
+export const rateLimits = pgTable(
+  "ai_rate_limits",
+  {
+    key: text("key").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    hits: integer("hits").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.key, t.windowStart] }), check("ai_rate_limits_hits_positive", sql`${t.hits} > 0`)],
+).enableRLS();

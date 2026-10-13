@@ -1,166 +1,123 @@
-# AI services e-commerce project
+# AI Service E-commerce — Bangladesh
 
-A Bangladesh-focused website for permitted AI services, official invitations,
-and authorized vouchers. Future bKash payments require manual administrator
-verification. [PLAN.md](PLAN.md) is the source of truth and its Progress section
-records the current checkpoint. Never request customer account passwords.
+Continuation of `ztrace054-x/ecommerce-website`, retaining the existing Next.js
+App Router application, Bangla customer pages, plain CSS and local licensed font.
+The original Phase 0/1 foundation was audited at
+`b2b490f25b12d66cc1b341c2455747a952cf0338`. The unmerged Phase 2 work at
+`8170a19cedfde1d0a169127c558cb4e05aabdf4b` is retained, including its original
+tables, migrations, money format, encryption and terminal tools. The marketplace
+extends that work with migration `0002_marketplace`; it has not been rebuilt.
 
-## Current stage: Phase 2 — database layer
+## Current progress
 
-Phase 1 is approved and merged. Phase 2 is complete and merged after local and
-native PostgreSQL 17 Compose CI checks. Phase 2 adds PostgreSQL, Drizzle, migrations,
-validated server data access, authenticated encryption, synthetic product seeds,
-interactive administrator provisioning, and database-backed customer pages.
+Customer catalog, database quotes, validated payment claims, private tracking,
+admin authentication, order verification/rejection/delivery, internal notes,
+product management and audit history are implemented. PostgreSQL constraints
+and restricted transactional RPCs protect the business rules. Supabase Auth
+handles web admin passwords and requires enrolled authenticator MFA; there is
+no default password or public signup. The original terminal-created identities
+remain inactive until linked to a provisioned provider user.
 
-There are five tables: products, orders, delivery codes, administrator identities,
-and audit logs. Orders begin as `pending` without a TrxID. Prices use positive
-whole BDT integers; a locked database price becomes an immutable order quote.
-TrxIDs are canonical uppercase values with a database UNIQUE constraint. Once
-assigned, they cannot be changed to free the original ID for reuse.
+**Real checkout is closed.** The owner has not supplied Supabase/Turnstile
+configuration, bKash recipient/method, finalized policies or approved actual
+prices. The original four samples remain labelled when no database is configured.
+No real payment, customer database, subscription inventory or voucher sale has
+been connected. This is a tested implementation/review candidate, not a claim
+that a commercial system has been activated.
 
-Home, Product/Plan, and Checkout now read active products from PostgreSQL.
-Product URLs use their database UUID; old mock slugs are removed. The seed adds
-four examples: two active services (C) and inactive invitation/voucher examples
-(A/B). These are samples, not approved live offers. Policy pages remain drafts.
+[Repository audit](docs/repository-audit.md) ·
+[Architecture](docs/architecture-continuation.md) ·
+[Activation guide](docs/deployment.md) ·
+[Security](docs/security.md) ·
+[Verification](docs/continuation-verification.md)
 
-**Checkout is still UI only.** It sends/stores no customer input and creates no
-orders or payment claims. No bKash recipient, Order API, admin login/session,
-2FA enrollment, tracking, delivery, email, or live WhatsApp integration exists.
-The provisioning script creates an identity only; it cannot grant a session.
-No real secrets or services are configured. Nothing is deployed.
+Private review address: https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
+Publication is confirmed by the hosting result, not by this configured address.
+The review requires the owner's ChatGPT sign-in.
 
 ## Run locally
 
-Install Node.js **24 LTS**, npm, Git, and Docker with **Compose v2**. Start Docker.
-The full automated terminal tests require Linux's `script` utility (util-linux);
-on Windows use Ubuntu/WSL2. GitHub CI runs the same setup on Ubuntu.
+Use Node.js 24 LTS and npm. Install the committed lockfile:
 
 ```bash
-git switch main
 npm ci
-cp .env.example .env
-```
-
-Edit your private `.env` on your computer. Fill these three values yourself:
-
-| Variable | Local value to supply |
-| --- | --- |
-| `POSTGRES_PASSWORD` | A local development password, never reused from another account. |
-| `DATABASE_URL` | `postgresql://ecommerce:<URL_ENCODED_LOCAL_PASSWORD>@127.0.0.1:5432/ecommerce` |
-| `TEST_DATABASE_URL` | `postgresql://ecommerce:<URL_ENCODED_LOCAL_PASSWORD>@127.0.0.1:5432/ecommerce_test` |
-
-Replace the angle-bracket placeholder. URL-encode special password characters;
-the URL password must match POSTGRES_PASSWORD. Never put values in `.env.example`,
-Git, screenshots, chat, or public configuration. The other placeholders may stay
-blank for the catalog. Then run:
-
-```bash
-npm run db:start
-npm run db:migrate
-npm run db:seed
 npm run dev
 ```
 
-Open <http://localhost:3000>. `db:start` waits for PostgreSQL health; migrations
-create the schema; seed inserts missing sample products without overwriting edits.
-The database and Next.js server bind only to localhost. No paid service is needed.
-Stop Next.js with Ctrl+C. `npm run db:stop` stops PostgreSQL while preserving data.
-
-## Environment variables
-
-| Variable | Purpose |
-| --- | --- |
-| `DATABASE_URL` | Server-only application PostgreSQL URL; required to load products. |
-| `MIGRATION_DATABASE_URL` | Optional direct/session connection for migrations; otherwise uses DATABASE_URL. |
-| `TEST_DATABASE_URL` | Separate disposable localhost database ending in `_test`; never falls back to the app database. |
-| `POSTGRES_PASSWORD` | Local Compose database password; not an application login. |
-| `ENCRYPTION_KEY` | Canonical base64 of exactly 32 random bytes; required for voucher/TOTP encryption, not catalog/provisioning. |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Future public bot-check key, Phase 3. |
-| `TURNSTILE_SECRET_KEY` | Future server bot-check secret, Phase 3. |
-| `RESEND_API_KEY` | Future email integration, Phase 6. |
-| `ADMIN_SECRET` | Reserved for reviewed future server use; never a shared admin password or bypass. |
-
-Node scripts read root `.env`; Next.js also supports its normal private environment
-files. Keep a single root `.env` for this local setup. All template values remain
-blank. Missing database configuration produces a generic catalog error, never a
-mock-data or unsafe connection fallback. Builds do not need a running database.
-
-## Checks and administrator provisioning
-
-Stop a running development server before the smoke check, which needs port 3000.
+Open http://localhost:3000. No credentials are needed for the closed preview.
+Use synthetic details in the preview form. No preview form data is stored or sent.
+Stop the server with Ctrl+C. For the real backend, follow the activation guide
+and put credentials only in an ignored local environment file or host secret
+store; never fill the committed `.env.example`.
 
 ```bash
-npm run db:check
 npm run check
 npm run audit:dependencies
-npm run smoke:dev
 ```
 
-`check` runs environment checks, lint, typecheck, all unit/database/terminal tests,
-and build. **Database tests delete fixtures from the five tables in the disposable
-TEST_DATABASE_URL database. Never point it at data you want to keep.** Tests do not
-skip when it is missing. `npm run test:unit` runs without a database; `npm test`
-runs the complete suite. CI starts a fresh PostgreSQL 17 Compose volume, runs the
-same checks, migrates/seeds the app database, verifies dev pages, and removes only
-its disposable CI database afterward.
+The checks validate environment safety, lint, strict types and security/business
+integration tests, then build both Next.js and the Sites Worker adapter.
+`npm run build:next` builds only standard Next.js; `npm start` serves it on
+loopback. `npm run build:site` builds the Worker from the same application.
+Installation/builds do not configure Supabase or take real payments.
 
-Optional local administrator creation:
+## Routes
 
-```bash
-npm run admin:create
-```
+| Page                                                | Purpose                                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `/`, `/products`, `/products/[slug]`                | Home, catalog and service details                                              |
+| `/checkout?product=<slug>`                          | Database-backed quote and claim flow when configured; closed preview otherwise |
+| `/track-order`                                      | Code + email + private access key; no customer password                        |
+| `/admin/login`, `/admin`                            | Protected administration; every data API authorizes access independently       |
+| `/faq`, `/contact`, `/privacy`, `/terms`, `/refund` | Help, configurable support and policy drafts                                   |
 
-The terminal asks for email and a hidden password plus confirmation. Use 15–128
-characters. Never pass passwords as arguments/environment variables. Only a salted,
-memory-hard scrypt hash is stored. Duplicate email does not reset a password.
-There is no seeded admin and no login yet; real 2FA is required in Phase 5.
+| API                                              | Methods / behavior                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------ |
+| `/api/products`                                  | GET active catalog; explicitly labelled samples only when unconfigured   |
+| `/api/orders/quote`                              | POST product ID; quote price and recipient come from the server/database |
+| `/api/orders`                                    | POST validated customer/payment claim; TrxID has DB-level uniqueness     |
+| `/api/orders/validate-transaction`               | POST syntax check only; never confirms payment or exposes other claims   |
+| `/api/orders/track`                              | POST private verification; no secrets in query strings                   |
+| `/api/admin/auth/login`, `/logout`, `/session`   | Provider authentication and revocable HttpOnly sessions                  |
+| `/api/admin/overview`, `/orders`, `/orders/[id]` | GET summary/list/detail; PATCH constrained status with version check     |
+| `/api/admin/orders/[id]/notes`                   | POST internal note, never returned by customer tracking                  |
+| `/api/admin/products`, `/products/[id]`          | GET/POST/PATCH catalog management; disable rather than delete history    |
+| `/api/admin/audit`                               | GET paginated admin action history                                       |
 
-For a local production build, use `npm run build`, then `npm start` after stopping
-dev. Neither command deploys the site. See [docs/local-development.md](docs/local-development.md)
-for troubleshooting and [docs/database.md](docs/database.md) for every table.
+Request/response examples and error behavior are in [API documentation](docs/api.md).
 
-## Folder structure
+## Where files belong
 
-| Path | Purpose |
-| --- | --- |
-| `src/app/` | Bangla customer pages; API folder has no endpoints yet. |
-| `src/components/` | Shared interface and checkout preview; no database writes. |
-| `src/db/schema.ts`, `src/db/migrations/` | Typed tables, constraints, enums, committed SQL migrations and snapshots. |
-| `src/server/` | Validated data access, database connection, demo seed, admin provisioning and security utilities. |
-| `src/lib/` | Environment boundary, BDT formatting, delivery-rule presentation. |
-| `scripts/` | Migrations, seed, hidden terminal provisioning, environment checks and dev smoke. |
-| `docker-compose.yml` | Local PostgreSQL 17 with a persistent volume and health check. |
-| `tests/` | Configuration, crypto, validation, real database and terminal tests. |
-| `docs/` | Beginner instructions, architecture, security and verification records. |
-| `public/fonts/` | Licensed, locally served Bangla font; no external font requests. |
+| Path                               | Responsibility                                                                           |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| `src/app`, `src/components`        | Existing customer UI plus checkout/tracking/admin                                        |
+| `src/app/api`                      | Small route handlers with validation and authorization                                   |
+| `src/db`                           | Retained Drizzle schema/history, additive RPC migration and restricted HTTP adapter |
+| `src/lib/auth`, `src/lib/security` | Provider/session checks, origin and body limits, rate limiting and Turnstile             |
+| `src/data/mock-products.ts`        | Original samples only; never authoritative order prices                                  |
+| `tests`                            | Configuration, validation, PostgreSQL and route integration tests with synthetic data    |
+| `build`, `vite.config.ts`          | Sites hosting adapter; standard Next.js scripts remain available                         |
+| `.openai/hosting.json`             | Review Site identity, never credentials                                                  |
 
-## Customer routes
+The web claim flow is `submitted → verified → delivered`, or `submitted → rejected`.
+Original Phase 2 `pending` rows and their timestamps remain intact; web quotes
+use separate checkout sessions and do not create new pending orders.
+`refunded` is reserved pending an approved refund procedure. A display code is
+not a password. The access key is shown at checkout and must be kept privately.
+A TrxID or WhatsApp conversation never proves a payment happened.
 
-- `/`, `/products`: active DB products.
-- `/products/10000000-0000-4000-8000-000000000001`: seeded setup service.
-- `/checkout?product=10000000-0000-4000-8000-000000000001`: UI preview with DB price.
-- `/checkout`: choose a product first.
-- `/refund`, `/privacy`, `/terms`, `/contact`, `/faq`: existing Bangla pages.
+## Before commercial launch
 
-Invalid/inactive product selectors are rejected. Query prices are ignored.
-The floating WhatsApp icon opens Contact until a real number is authorized.
+Follow [deployment.md](docs/deployment.md), including staging database/browser and
+real-provider checks, confirmed business/payment details, backups, retention and
+approved policies. Review the official October 14 Next.js/upstream security
+update and patch affected dependencies before enabling checkout. A clean package
+audit does not establish that unreleased vulnerabilities are absent.
 
-Verification: **44 tests, lint, typecheck, build, migrations, audit and development
-smoke passed**, with native PostgreSQL in CI. See
-[Phase 2 evidence](docs/phase-2-verification.md) and
-[passing native database checks](https://github.com/ztrace054-x/ecommerce-website/actions/runs/38215812387).
+The standard Next.js runtime dependency audit has zero known advisories. The
+hosting build chain has an unresolved `braces` advisory; the full dependency
+audit remains blocking and is not suppressed. See current verification for scope.
 
-## What remains
-
-Phase 3: protected Order API, request limits, Turnstile and TrxID submission.
-Phase 4: private order tracking. Phase 5: login, 2FA, authorized state changes,
-manual verification/delivery/refunds and audit writing. Phase 6: email/wa.me.
-Phases 7–9: hardening, complete end-to-end tests, deployment guide and cleanup.
-Wait for the owner's approval before each next phase.
-
-Before any real use, confirm bKash method/TrxID rules, product permissions, refund
-policy, contact details, runtime DB privileges, private tracking, key recovery,
-retention/backups and eligible commercial hosting. RLS denies public table access;
-it does not protect a leaked server database credential. See [docs/security.md](docs/security.md).
-Supabase is prepared through DATABASE_URL with verified TLS, but unconnected.
-Vercel compatibility does not guarantee free commercial hosting. Do not deploy.
+Historical foundation/customer checks are retained in `docs/phase-0-verification.md`
+and `docs/phase-1-verification.md`. Current evidence and limits are recorded
+separately; historical screenshots do not count as QA of the new flows.

@@ -8,14 +8,17 @@
   },
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
-    "build": "next build",
+    "build": "next build && node scripts/run-framework.mjs build",
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "npm run test:unit && npm run test:db",
+    "test": "npm run test:unit && npm run test:marketplace",
     "check:env": "node scripts/check-env.mjs",
     "audit:dependencies": "npm audit --audit-level=moderate",
     "check": "npm run check:env && npm run lint && npm run typecheck && npm test && npm run build",
+    "build:next": "next build",
+    "build:site": "node scripts/run-framework.mjs build",
+    "dev:site": "node scripts/run-framework.mjs dev",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
     "db:migrate": "node --conditions=react-server --env-file-if-exists=.env scripts/db-migrate.ts",
@@ -23,32 +26,46 @@
     "admin:create": "node --conditions=react-server --env-file-if-exists=.env scripts/create-admin.ts",
     "db:start": "docker compose up -d --wait db",
     "db:stop": "docker compose stop db",
-    "test:unit": "node --conditions=react-server --test tests/environment.test.ts tests/repository-env.test.ts tests/validation.test.ts tests/crypto.test.ts tests/order-code.test.ts tests/database-config.test.ts",
     "test:db": "node --conditions=react-server --env-file-if-exists=.env --test --test-concurrency=1 tests/database.test.ts tests/admin-cli.test.ts",
-    "smoke:dev": "node --env-file-if-exists=.env scripts/smoke-dev.ts"
+    "smoke:dev": "node --env-file-if-exists=.env scripts/smoke-dev.ts",
+    "test:unit": "node --conditions=react-server --test tests/environment.test.ts tests/repository-env.test.ts tests/validation.test.ts tests/crypto.test.ts tests/order-code.test.ts tests/database-config.test.ts",
+    "test:marketplace": "node --conditions=react-server --import ./tests/register.mjs --test tests/api.test.ts tests/continuation-database.test.ts tests/continuation-validation.test.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
     "next": "16.4.0",
-    "pg": "8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
-    "zod": "4.6.6"
+    "zod": "4.6.6",
+    "pg": "8.23.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
     "@eslint/js": "10.0.1",
     "@types/node": "24.19.2",
-    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "drizzle-kit": "0.31.11",
     "eslint": "10.12.0",
     "globals": "17.13.0",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.71.1"
+    "typescript-eslint": "8.71.1",
+    "@cloudflare/vite-plugin": "1.63.1",
+    "@cloudflare/workers-types": "5.20261013.1",
+    "@vitejs/plugin-rsc": "0.5.34",
+    "react-server-dom-webpack": "19.3.0",
+    "vinext": "1.1.0",
+    "vite": "8.3.4",
+    "wrangler": "4.149.0",
+    "prettier": "3.8.1",
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11"
   },
   "overrides": {
+    "miniflare": {
+      "sharp": "0.35.5"
+    },
+    "fflate": "0.8.3",
     "@esbuild-kit/core-utils": {
       "esbuild": "0.25.12"
     }

@@ -9,6 +9,17 @@ const expectedNames = new Set([
   "MIGRATION_DATABASE_URL",
   "TEST_DATABASE_URL",
   "POSTGRES_PASSWORD",
+  "SUPABASE_URL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "APP_URL",
+  "CHECKOUT_ENABLED",
+  "POLICIES_APPROVED",
+  "CATALOG_APPROVED",
+  "BKASH_RECIPIENT_NUMBER",
+  "BKASH_PAYMENT_METHOD",
+  "TRUSTED_CLIENT_IP_HEADER",
+  "SUPPORT_WHATSAPP_NUMBER",
+  "SUPPORT_EMAIL",
   "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
   "TURNSTILE_SECRET_KEY",
   "RESEND_API_KEY",
@@ -59,7 +70,9 @@ try {
 
     const match = /^([A-Z][A-Z0-9_]*)=(.*)$/.exec(line);
     if (!match) {
-      failures.push(`Invalid environment placeholder syntax on line ${index + 1}.`);
+      failures.push(
+        `Invalid environment placeholder syntax on line ${index + 1}.`,
+      );
       continue;
     }
 
@@ -71,13 +84,16 @@ try {
       failures.push(`Repeated environment variable on line ${index + 1}.`);
     }
     if (value !== "") {
-      failures.push(`Environment template must have a blank value on line ${index + 1}.`);
+      failures.push(
+        `Environment template must have a blank value on line ${index + 1}.`,
+      );
     }
     seen.add(name);
   }
 
   for (const name of expectedNames) {
-    if (!seen.has(name)) failures.push(`Missing environment placeholder: ${name}`);
+    if (!seen.has(name))
+      failures.push(`Missing environment placeholder: ${name}`);
   }
 
   const privatePaths = [
@@ -87,21 +103,30 @@ try {
     ".env.production.local",
     "src/.env.local",
   ];
-  const ignored = git(["check-ignore", "--no-index", "--stdin"], privatePaths.join("\n") + "\n");
+  const ignored = git(
+    ["check-ignore", "--no-index", "--stdin"],
+    privatePaths.join("\n") + "\n",
+  );
   const ignoredPaths = new Set(ignored.stdout.trim().split(/\r?\n/));
   for (const path of privatePaths) {
-    if (!ignoredPaths.has(path)) failures.push(`Environment path is not ignored: ${path}`);
+    if (!ignoredPaths.has(path))
+      failures.push(`Environment path is not ignored: ${path}`);
   }
 
   const template = git(["check-ignore", "--no-index", "--", ".env.example"]);
-  if (template.status === 0) failures.push("The root .env.example must not be ignored.");
+  if (template.status === 0)
+    failures.push("The root .env.example must not be ignored.");
 } catch {
-  failures.push("Environment checks could not complete. Check Git and .env.example.");
+  failures.push(
+    "Environment checks could not complete. Check Git and .env.example.",
+  );
 }
 
 if (failures.length > 0) {
   for (const failure of failures) console.error(failure);
   process.exitCode = 1;
 } else {
-  console.log("Environment checks passed: blank template, private files ignored, no Git-visible private environment files.");
+  console.log(
+    "Environment checks passed: blank template, private files ignored, no Git-visible private environment files.",
+  );
 }
