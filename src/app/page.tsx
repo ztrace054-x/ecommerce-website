@@ -22,6 +22,13 @@ const steps = [
   },
 ];
 
+const benefits = [
+  { icon: "prompt", title: "বাংলায় সহজ সহায়তা", text: "AI টুলের ব্যবহার ও কাজের নিয়ম নিজের ভাষায় বুঝে নিন।" },
+  { icon: "setup", title: "স্থানীয় পেমেন্ট", text: "সেবা চালু হলে আন্তর্জাতিক কার্ড ছাড়াই bKash দিয়ে পেমেন্ট করা যাবে।" },
+  { icon: "website", title: "আগেই পরিষ্কার শর্ত", text: "সেবায় কী পাবেন, সময় ও ডেলিভারির ধরন প্ল্যানেই দেখে নিন।" },
+  { icon: "chatbot", title: "অর্ডারের খবর জানুন", text: "ব্যক্তিগত অ্যাক্সেস কী দিয়ে পেমেন্ট যাচাই ও ডেলিভারির অবস্থা দেখুন।" },
+] as const;
+
 export default async function HomePage() {
   const { products, sample } = await catalog();
   return (
@@ -106,6 +113,20 @@ export default async function HomePage() {
         )}
       </section>
 
+      <section className="container section-space" aria-labelledby="benefits-heading">
+        <div className="section-heading">
+          <div><p className="eyebrow">বাংলাদেশের ব্যবহারকারীদের জন্য</p><h2 id="benefits-heading">আপনার কাজ, আপনার সুবিধা</h2></div>
+        </div>
+        <div className="benefit-grid">
+          {benefits.map((benefit) => (
+            <article className="benefit-card" key={benefit.title}>
+              <span className="service-icon"><ServiceIcon kind={benefit.icon} /></span>
+              <h3>{benefit.title}</h3><p>{benefit.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section
         className="container safety-strip"
         aria-label="নিরাপদ সেবার নিয়ম"
@@ -173,6 +194,14 @@ export default async function HomePage() {
             </p>
           </details>
         </div>
+      </section>
+      <section className="container home-cta" aria-labelledby="home-cta-heading">
+        <div>
+          <p className="eyebrow">আপনার প্রয়োজন থেকেই শুরু</p>
+          <h2 id="home-cta-heading">কোন AI সেবাটি আপনার কাজে লাগবে?</h2>
+          <p>প্রতিটি প্ল্যানের কাজ, সময় ও ডেলিভারির তথ্য তুলনা করে দেখুন। শুরু করার আগে সেবার শর্ত ও নীতিগুলো পড়ে নিন।</p>
+        </div>
+        <Link href="/products" className="button button-primary">সব সেবা দেখুন <ArrowIcon /></Link>
       </section>
     </>
   );

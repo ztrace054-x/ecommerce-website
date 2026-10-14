@@ -7,6 +7,10 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const origin = "http://127.0.0.1:3000";
 const productId = "10000000-0000-4000-8000-000000000001";
 const inactiveId = "10000000-0000-4000-8000-000000000003";
+const preview = !process.env.DATABASE_URL?.trim()
+  && !process.env.SUPABASE_URL?.trim()
+  && !process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+const selectedSlug = preview ? "ai-setup" : productId;
 const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--hostname", "127.0.0.1"], {
   cwd: root, env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1" },
   detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"],
@@ -40,8 +44,8 @@ async function main() {
     } catch { /* Wait for Next.js compilation, never suppress the final failure. */ }
     await delay(250);
   }
-  assert.ok(ready, "The DB-backed Home page must load on default port 3000.");
-  for (const path of ["/", "/products", `/products/${productId}`, `/checkout?product=${productId}`]) {
+  assert.ok(ready, "The Home page must load on default port 3000.");
+  for (const path of ["/", "/products", `/products/${selectedSlug}`, `/checkout?product=${selectedSlug}`]) {
     const response = await fetch(`${origin}${path}`);
     assert.equal(response.status, 200, path);
     assert.equal(response.headers.get("x-content-type-options"), "nosniff");
@@ -51,12 +55,27 @@ async function main() {
     assert.ok(html.includes("৫০০"), "Whole-BDT database price must appear.");
     assert.ok(!html.includes("অফিশিয়াল আমন্ত্রণের নমুনা"), "Inactive products must not be public.");
   }
+  if (preview) {
+    const catalogResponse = await fetch(`${origin}/api/products`);
+    assert.equal(catalogResponse.status, 200);
+    const catalog = await catalogResponse.json() as { products: { slug: string; active: boolean }[]; sample: boolean };
+    assert.equal(catalog.sample, true, "An unconfigured catalog must be labelled as samples.");
+    assert.equal(catalog.products.length, 4);
+    for (const product of catalog.products) {
+      assert.equal(product.active, false, "Preview samples must not become active inventory.");
+      assert.equal((await fetch(`${origin}/products/${product.slug}`)).status, 200);
+      const html = await (await fetch(`${origin}/checkout?product=${product.slug}`)).text();
+      assert.ok(html.includes("অর্ডার এখন বন্ধ"));
+      assert.ok(html.includes('id="customer-name"'));
+      assert.ok(!html.includes('name="trxId"'), "Closed checkout must not collect transaction claims.");
+    }
+  }
   for (const path of ["/checkout", "/refund", "/privacy", "/terms", "/contact", "/faq", "/track-order", "/admin", "/admin/login"]) {
     assert.equal((await fetch(`${origin}${path}`)).status, 200, path);
   }
-  const tampered = await (await fetch(`${origin}/checkout?product=${productId}&price=1`)).text();
+  const tampered = await (await fetch(`${origin}/checkout?product=${selectedSlug}&price=1`)).text();
   assert.ok(tampered.includes("৫০০"), "Query prices must be ignored.");
-  for (const path of [`/products/${inactiveId}`, "/products/not-a-uuid", `/checkout?product=${productId}&product=${inactiveId}`]) {
+  for (const path of [`/products/${inactiveId}`, "/products/not-a-uuid", `/checkout?product=${selectedSlug}&product=${inactiveId}`]) {
     const response = await fetch(`${origin}${path}`);
     const html = await response.text();
     assert.ok(response.status === 404 || html.includes("পেজটি পাওয়া যায়নি"), path);
@@ -71,7 +90,7 @@ async function main() {
   const closed = await fetch(`${origin}/api/orders`, { method: "POST", headers: { origin, "content-type": "application/json" }, body: "{}" });
   assert.equal(closed.status, 503, "Unconfigured checkout must refuse claims.");
   assert.ok(!/⨯|unhandled|TypeError|ReferenceError|DataAccessError/iu.test(logs), "Development server must not log application errors.");
-  console.log("Development smoke passed: default port, DB products/prices, inactive/invalid selectors, policy/tracking/admin pages, closed checkout and protected APIs.");
+  console.log(`Development smoke passed: default port, ${preview ? "four labelled sample plans" : "DB products/prices"}, inactive/invalid selectors, policy/tracking/admin pages, closed checkout and protected APIs.`);
 }
 
 try { await main(); } catch (error) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowIcon, ServiceIcon } from "@/components/icons";
+import { ArrowIcon, CheckIcon, ServiceIcon } from "@/components/icons";
 import type { Product } from "@/lib/domain";
 import { formatPoisha } from "@/lib/format";
 
@@ -20,6 +20,9 @@ export function ProductCard({
       </div>
       <h3>{product.name}</h3>
       <p className="card-description">{product.description}</p>
+      <ul className="check-list card-features" aria-label="প্ল্যানের সুবিধা">
+        {product.includes.slice(0, 3).map((feature) => <li key={feature}><CheckIcon />{feature}</li>)}
+      </ul>
       <div className="card-price">
         <span className="price-caption">
           {sample ? "নমুনা মূল্য" : "মূল্য"}
@@ -27,6 +30,10 @@ export function ProductCard({
         <strong>{formatPoisha(product.pricePoisha)}</strong>
         <span className="price-unit">/ {product.unit}</span>
       </div>
+      <dl className="card-facts">
+        <div><dt>সময়</dt><dd>{product.duration}</dd></div>
+        <div><dt>ডেলিভারি</dt><dd>{product.deliveryMethod}</dd></div>
+      </dl>
       <Link
         className="card-link"
         href={`/products/${product.slug}`}

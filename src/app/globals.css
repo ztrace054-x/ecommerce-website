@@ -170,9 +170,10 @@ main:focus {
 }
 .main-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 4px 14px;
   width: 100%;
   font-size: 0.86rem;
 }
@@ -431,7 +432,33 @@ main:focus {
   font-size: 0.84rem;
   color: var(--muted);
   flex: 1;
-  margin-bottom: 26px;
+  margin-bottom: 18px;
+}
+.product-card .card-features {
+  margin-bottom: 20px;
+  font-size: 0.78rem;
+  color: var(--text);
+  gap: 8px;
+}
+.product-card .card-features svg { width: 15px; height: 15px; }
+.card-facts { margin-block: 20px 0; display: grid; gap: 12px; }
+.card-facts div { display: grid; gap: 3px; }
+.card-facts dt { color: var(--muted); font-size: 0.72rem; }
+.card-facts dd { margin: 0; color: var(--text); font-size: 0.78rem; line-height: 1.8; overflow-wrap: anywhere; }
+.benefit-grid { display: grid; gap: 16px; }
+.benefit-card { padding: 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); min-width: 0; }
+.benefit-card .service-icon { margin-bottom: 18px; }
+.benefit-card h3 { font-size: 1.05rem; margin-bottom: 10px; }
+.benefit-card p { font-size: 0.86rem; color: var(--muted); margin-bottom: 0; }
+.home-cta { margin-block: 24px 56px; padding: 28px; border: 1px solid var(--border); border-radius: 18px; background: var(--soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; }
+.home-cta h2 { margin-bottom: 8px; font-size: 1.4rem; }
+.home-cta p { margin-bottom: 0; color: var(--muted); max-width: 560px; font-size: 0.9rem; }
+@media (min-width: 560px) {
+  .benefit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .benefit-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .home-cta { padding: 36px; }
 }
 .card-price {
   display: grid;

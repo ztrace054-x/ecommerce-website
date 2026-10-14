@@ -40,8 +40,9 @@ export default async function CheckoutPage({
         <p className="eyebrow">সেবা থেকে ডেলিভারি</p>
         <h1>চেকআউট</h1>
         <p className="page-intro">
-          নিশ্চিত মূল্য দেখুন, bKash-এ পেমেন্ট করুন, তারপর লেনদেনের তথ্য জমা
-          দিন।
+          {settings.ordersOpen
+            ? "নিশ্চিত মূল্য দেখুন, bKash-এ পেমেন্ট করুন, তারপর লেনদেনের তথ্য জমা দিন।"
+            : "নির্বাচিত সেবা ও ফর্মের নমুনা দেখুন। এখন কোনো অর্ডার তৈরি বা পেমেন্ট করা যাবে না।"}
         </p>
       </div>
       <ol className="checkout-steps" aria-label="অর্ডারের ধাপ">

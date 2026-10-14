@@ -9,10 +9,7 @@ export const sampleCatalog: Product[] = mockProducts.map((p, i) => ({
   ...p,
   id: `00000000-0000-4000-8000-00000000000${i + 1}`,
   includes: [...p.includes],
-  duration: "সময় ও কাজের পরিধি আগে আলোচনা করা হবে",
   deliveryType: "service",
-  deliveryMethod: "অনলাইন সেশন / ইমেইল",
-  terms: "এটি নমুনা সেবা। কাজের পরিধি, মূল্য ও ডেলিভারি আগে নিশ্চিত করতে হবে।",
   active: false,
 }));
 export async function catalog(): Promise<{products:Product[];sample:boolean}> {
