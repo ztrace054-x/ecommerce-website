@@ -1,5 +1,8 @@
 # Marketplace continuation verification
 
+The historical 13 October evidence below is retained. Current frontend changes,
+repeated checks and limitations are in [14 October progress](progress-2026-10-14.md).
+
 Date: 13 October 2026. Continuation branch: `phase-3-marketplace`.
 Baseline main: `b2b490f25b12d66cc1b341c2455747a952cf0338`.
 Retained Phase 2 head: `8170a19cedfde1d0a169127c558cb4e05aabdf4b`.

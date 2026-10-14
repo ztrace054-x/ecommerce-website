@@ -31,6 +31,12 @@ that a commercial system has been activated.
 [Security](docs/security.md) ·
 [Verification](docs/continuation-verification.md)
 
+Latest frontend completion, branch audit and remaining work:
+[14 October progress report](docs/progress-2026-10-14.md). The most advanced source
+is `phase-3-marketplace` (draft PR #1); `main` still contains the original frontend.
+The latest pass adds homepage benefits, complete sample plan facts, responsive
+navigation and clearer closed-checkout guidance while retaining the backend.
+
 Published private review: https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
 The hosting operation returned `succeeded` on 13 October. The review requires
 the owner's ChatGPT sign-in and keeps real payment collection closed.
@@ -58,6 +64,11 @@ store; never fill the committed `.env.example`.
 npm run check
 npm run audit:dependencies
 ```
+
+`npm run smoke:dev` starts and checks the Next.js development server on port 3000,
+then stops it. With no database configuration it checks all four labelled sample
+plans and the closed checkout. With the isolated seeded Node database it retains
+the original database smoke checks. Stop any existing port-3000 server first.
 
 The checks validate environment safety, lint, strict types and security/business
 integration tests, then build both Next.js and the Sites Worker adapter.
@@ -114,8 +125,10 @@ A TrxID or WhatsApp conversation never proves a payment happened.
 
 Follow [deployment.md](docs/deployment.md), including staging database/browser and
 real-provider checks, confirmed business/payment details, backups, retention and
-approved policies. Review the official October 14 Next.js/upstream security
-update and patch affected dependencies before enabling checkout. A clean package
+approved policies. Review current official Next.js/upstream security advisories
+and patch affected dependencies before enabling checkout. The earlier scheduled
+October 14 blog was inaccessible in the latest review; its release is not newly
+confirmed. A clean package
 audit does not establish that unreleased vulnerabilities are absent.
 
 The standard Next.js runtime dependency audit has zero known advisories. The

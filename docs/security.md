@@ -71,18 +71,21 @@ launch, verify real-provider/staging concurrency and browser/mobile behavior,
 HTTPS/HSTS/CSP and hosting eligibility/backups/retention. A complete nonce-based
 CSP is not claimed: the existing basic headers are not a substitute for it.
 
-## Verified upstream notice
+## Upstream review
 
-On 13 October the official Next.js blog confirmed an upstream security release
-planned for 14 October, with two Critical and one High issue. Affected versions
-and fixes are not published yet. Recheck the advisory and patch before enabling
-commercial checkout; do not claim current installed dependencies are immune.
+The 13 October record cited an official blog announcing a 14 October security
+release. On 14 October that exact URL was inaccessible to the retrieval service.
+The official advisory index was accessible; its latest displayed notices were
+dated 30 September. This does not confirm whether the scheduled release has
+published or which versions it affects. Recheck official notices and patch before
+commercial activation; do not claim the installed versions are immune.
 https://nextjs.org/blog/upcoming-nextjs-security-update-october-2026
+https://github.com/vercel/next.js/security/advisories
 
-The 13 October full dependency audit flags `GHSA-vfj7-8cjw-p6xm` in `braces`
+The 14 October full dependency audit still flags `GHSA-vfj7-8cjw-p6xm` in `braces`
 3.0.3 through Vinext's build-plugin/glob chain. It reports six affected package
 entries for that one advisory. The upstream advisory lists no patched version;
-the current registry latest is 3.0.3. No forced adapter downgrade or audit
+the installed version is 3.0.3. No forced adapter downgrade or audit
 suppression is applied. `npm audit --omit=dev --audit-level=moderate` is clean
 for the standard Next.js runtime; that does not certify the bundled Worker.
 Keep this owner-private review separate from a commercial launch and resolve

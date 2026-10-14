@@ -56,7 +56,7 @@ information in the sample form.
    If uncertain, leave it blank: anonymous clients share a conservative bucket;
    arbitrary forwarding headers cannot bypass rate limits.
 9. Resolve the hosting build-chain `braces` advisory documented in security.md.
-   Recheck the official October 14 Next.js/upstream advisory, apply required
+   Recheck current official Next.js/upstream advisories, apply required
    patched dependencies, run `npm run check` and the dependency audit, and run
    native PostgreSQL and staging browser/real-provider tests using synthetic data before accepting
    real customers. Confirm provider budgets, backups and hosting eligibility.

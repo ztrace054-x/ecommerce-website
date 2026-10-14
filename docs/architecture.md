@@ -8,3 +8,5 @@ The private review deployment keeps payment collection closed until configured.
 
 See [repository-audit.md](repository-audit.md) for the pre-continuation state and
 [deployment.md](deployment.md) for real-service activation and remaining checks.
+The [14 October report](progress-2026-10-14.md) maps the requested database/API
+responsibilities to this implementation and records the latest frontend work.

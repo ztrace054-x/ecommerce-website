@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-13. Current scope: **authorized marketplace continuation**.
+Last updated: 2026-10-14. Current scope: **frontend completion and backend preparation on the existing marketplace branch**.
 
 The owner's latest request authorizes audit, backend/admin/customer implementation,
 testing, documentation and a review deployment. Earlier phase-specific approval
@@ -348,7 +348,7 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-13. Status: **marketplace continuation under final verification**.
+Updated: 2026-10-14. Status: **customer frontend complete and verified; business activation remains blocked**.
 The latest owner request authorizes the full continuation. The Phase 1 record
 below is retained as history; the current checkpoint follows it.
 
@@ -468,10 +468,49 @@ below is retained as history; the current checkpoint follows it.
   Independent-connection concurrency and real-provider staging checks remain required.
 - Supported control-browser is unavailable in this managed environment; rendered
   browser/mobile QA of the new flows is not claimed.
-- Official Next.js upstream update is scheduled for 14 October; affected versions
-  and upgrade instructions are pending. Review and patch before commercial launch.
+- The earlier record cited a scheduled 14 October upstream update. That blog
+  could not be retrieved in the 14 October review; publication/affected versions
+  are not newly confirmed. Review current official advisories before launch.
 - Standard Next.js runtime audit is clean. Full audit flags one unresolved
   `braces` advisory across six hosting build-chain entries. No patched release
   is available; the full CI audit is kept blocking and the PR must remain draft.
 - No voucher inventory, automated payments/emails or policy-dependent refund action
   is enabled. No default passwords, payment bypasses or unauthorized public launch.
+
+## Frontend completion and current audit — 14 October 2026
+
+### Done
+
+- Inspected main, Phase 2, the advanced marketplace branch and draft PR #1 before
+  editing. Continued `phase-3-marketplace` at `4e23078f449152e506a144c0fe682abe30362ea3`.
+  All 148 source files/modes matched the existing private Site's source tree.
+- Added explicit homepage benefits/final CTA, wrapping mobile navigation and
+  product-card features/duration/delivery. Consolidated sample plan facts in the
+  original mock-product file and clarified closed-checkout introductory text.
+- Preserved all existing backend/admin/tracking logic and migrations. Documented
+  the existing Products/Orders/Payment Claims/Admin Users/Audit Logs mapping;
+  no live integration or extra payment implementation was added.
+- Made the existing development smoke command work without credentials. Lint,
+  types, all 54 current tests, environment/journal checks, dual production builds
+  and default-port development HTTP checks passed. Runtime audit is clean.
+- Wrote `docs/progress-2026-10-14.md` with completed/incomplete work, verification
+  limits, actual activation blockers and the current unpatched build advisory.
+- Committed/pushed the frontend change as `1e676f630df645fb78d1718f27c57cc49f77c9e6`
+  on the existing continuation branch. `main` remains unchanged. The literal
+  `npm run dev` also passed current-page HTTP checks on port 3000.
+
+### Next
+
+- Follow the remaining configuration/staging/security tasks in the latest report
+  before real activation; keep the existing review private and checkout closed.
+  The final handoff records the native publication result; merge remains the
+  owner's decision.
+
+### Known issues
+
+- Full dependency audit remains blocking on the unpatched braces build-chain
+  advisory. No dependency changes, suppression or forced downgrade were applied.
+- Supported rendered browser QA and native multi-connection/provider checks were
+  unavailable/not rerun here. HTTP smoke and 54 synthetic tests do not replace them.
+- Actual provider/payment/support details, approved products/prices and final
+  policies remain missing. Review publication does not activate the business.
