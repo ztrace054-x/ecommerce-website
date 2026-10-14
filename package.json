@@ -28,6 +28,7 @@
     "db:stop": "docker compose stop db",
     "test:db": "node --conditions=react-server --env-file-if-exists=.env --test --test-concurrency=1 tests/database.test.ts tests/admin-cli.test.ts",
     "smoke:dev": "node --env-file-if-exists=.env scripts/smoke-dev.ts",
+    "smoke:production": "node scripts/smoke-production.ts",
     "test:unit": "node --conditions=react-server --test tests/environment.test.ts tests/repository-env.test.ts tests/validation.test.ts tests/crypto.test.ts tests/order-code.test.ts tests/database-config.test.ts",
     "test:marketplace": "node --conditions=react-server --import ./tests/register.mjs --test tests/api.test.ts tests/continuation-database.test.ts tests/continuation-validation.test.ts"
   },

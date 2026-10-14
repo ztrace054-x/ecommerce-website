@@ -1,10 +1,11 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-14. Current scope: **frontend completion and backend preparation on the existing marketplace branch**.
+Last updated: 2026-10-14. Current scope: **deployment preparation and production verification only**.
 
-The owner's latest request authorizes audit, backend/admin/customer implementation,
-testing, documentation and a review deployment. Earlier phase-specific approval
-statements below are historical; preserve the original requirements and history.
+The owner's current request covers production testing, Vercel preparation and
+online review. Do not start or extend backend implementation in this task; keep
+the existing advanced branch's backend/admin work intact. Earlier phase-specific
+approval statements below are historical; preserve requirements and history.
 See docs/repository-audit.md and docs/architecture-continuation.md for the current
 implementation roadmap and decisions.
 
@@ -348,7 +349,7 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-14. Status: **customer frontend complete and verified; business activation remains blocked**.
+Updated: 2026-10-14. Status: **frontend and production verification complete; Vercel connection pending; business activation remains blocked**.
 The latest owner request authorizes the full continuation. The Phase 1 record
 below is retained as history; the current checkpoint follows it.
 
@@ -505,6 +506,39 @@ below is retained as history; the current checkpoint follows it.
   before real activation; keep the existing review private and checkout closed.
   The final handoff records the native publication result; merge remains the
   owner's decision.
+
+## Deployment preparation and production verification — 14 October 2026
+
+### Done
+
+- Rechecked local/remote `phase-3-marketplace` at `24d745e860e5a1dc3900754c3e97f4eb0888acb7`,
+  the existing draft PR, Next.js build configuration and environment requirements.
+- Preserved all application pages, backend/admin code and migrations. No new
+  backend implementation or real-service activation was started.
+- Added `vercel.json` with Next.js, locked `npm ci` and `npm run build:next`.
+  Existing Node 24 and other hosting builds remain intact.
+- Lint, environment checks, both existing builds and strict types passed.
+  Added/passed production smoke for 19 page routes, 13 static assets, local font,
+  security headers, invalid selectors, protected APIs and disabled checkout.
+  The same production check is included in the existing CI workflow.
+- Rechecked the existing private Site's current deployment as `succeeded`.
+  Prepared `docs/vercel-deployment.md` with exact manual steps, environment tables,
+  readiness evidence and a deployment checklist.
+
+### Next
+
+- Connect the owner's Vercel account or follow the prepared manual workflow.
+  Select the advanced branch, standard Next.js build and private review protection;
+  keep checkout/approval flags false during review. No Vercel URL is claimed yet.
+- Complete rendered mobile/browser-console review and future provider/security
+  activation checks separately. Existing backend code should not be rebuilt.
+
+### Known issues
+
+- No connected Vercel capability, project link or token was available. The
+  existing Sites URL remains online; account access is required only for Vercel.
+- Browser layout/console QA is unverified; production HTTP and server-log checks
+  passed. The pre-existing build-chain advisory still blocks the full audit.
 
 ### Known issues
 

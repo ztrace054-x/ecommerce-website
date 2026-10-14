@@ -37,6 +37,8 @@ jobs:
         run: npm run db:check
       - name: Check environment, lint, types, tests, and build
         run: npm run check
+      - name: Verify closed production storefront
+        run: npm run smoke:production
       - name: Native PostgreSQL and terminal regression tests
         run: npm run test:db
       - name: Migrate and seed local application database

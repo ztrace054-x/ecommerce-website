@@ -2,11 +2,16 @@
 
 The published private review of the existing application is:
 https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
-The hosting operation returned `succeeded` on 13 October 2026; this confirms
+The current hosting deployment was rechecked as `succeeded` on 14 October 2026; this confirms
 publication, not actual provider/payment configuration.
 Review hosting is separate from a commercial launch. Payment collection is
 closed; the original sample catalog remains visible. Never place real customer
 information in the sample form.
+
+For standard Next.js deployment on Vercel, use [vercel-deployment.md](vercel-deployment.md).
+It records the current branch, build override, environment requirements, verified
+production smoke and exact manual workflow. Vercel account access is not connected
+in the current task; this does not affect the existing private review URL.
 
 ## Connect the actual backend
 

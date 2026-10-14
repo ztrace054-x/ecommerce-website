@@ -37,8 +37,12 @@ is `phase-3-marketplace` (draft PR #1); `main` still contains the original front
 The latest pass adds homepage benefits, complete sample plan facts, responsive
 navigation and clearer closed-checkout guidance while retaining the backend.
 
+[Vercel setup and production verification](docs/vercel-deployment.md) records
+the exact branch/build/environment settings and manual deployment steps. The
+committed `vercel.json` selects `npm run build:next` for Vercel.
+
 Published private review: https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
-The hosting operation returned `succeeded` on 13 October. The review requires
+The current deployment was rechecked as `succeeded` on 14 October. The review requires
 the owner's ChatGPT sign-in and keeps real payment collection closed.
 
 Review PR: https://github.com/ztrace054-x/ecommerce-website/pull/1
@@ -69,6 +73,11 @@ npm run audit:dependencies
 then stops it. With no database configuration it checks all four labelled sample
 plans and the closed checkout. With the isolated seeded Node database it retains
 the original database smoke checks. Stop any existing port-3000 server first.
+
+After `npm run build:next`, run `npm run smoke:production` to check the actual
+production server, customer routes, local assets, security headers and closed
+checkout on port 3000. It isolates provider settings inside its test process and
+stops its server afterward. Browser/mobile interaction QA remains a separate check.
 
 The checks validate environment safety, lint, strict types and security/business
 integration tests, then build both Next.js and the Sites Worker adapter.
