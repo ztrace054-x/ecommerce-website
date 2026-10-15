@@ -1,113 +1,123 @@
-# Security scope and preparation
+# Implemented security and launch limits
 
-## What Phase 0 provides
+This document describes controls in the continuation source. Configuration and
+actual-provider verification remain separate; a review build is not a commercial
+security certification. Historical foundation evidence remains in the phase docs.
+Current scope is Phase 2 foundation only. Deployment, publishing and Vercel/live
+provider connections are paused by the owner.
 
-- Strict TypeScript and explicit application/database/authentication boundaries.
-- A blank environment template and ignored local environment/key files.
-- A lazy server-only configuration accessor with an explicit name allowlist.
-  Missing or blank configuration throws an error; values are never printed.
-- Public configuration contains only the future Turnstile site key. It may be
-  absent in Phase 0 because there is no protected submission feature yet.
-- Basic `nosniff`, frame denial, referrer, and browser-permission headers.
-- Exact direct dependency versions, an integrity-bearing lockfile, and audits.
-- A GitHub check workflow with pinned action commits, read-only repository
-  permissions, no persisted checkout credentials, and no deployment steps.
+## Implemented controls
 
-`requireServerEnv` does not validate a database URL, encryption-key encoding,
-key strength, or service-specific configuration. Those checks belong in the
-reviewed integration added later. Do not interpret a nonempty string as a safe
-or working integration. The application does not call this accessor in Phase 0.
+- Strict server schemas reject unexpected fields, constrain length/formats,
+  normalize email/phone/TrxID and reject markup/control characters in text.
+  The browser's validation is only usability; server checks are authoritative.
+- JSON content-type/origin checks and actual streamed 16 KiB body limits (4 KiB
+  login) apply before writes. Origin is compared to a configured exact origin;
+  attacker-supplied Host/forwarding values are not used as production authority.
+- Cookies are HttpOnly, SameSite=Strict and Secure on HTTPS. Mutations require
+  Origin, so login/logout/status/product/note requests have CSRF protection.
+- Web admin passwords are verified and bcrypt-hashed by Supabase Auth. An enrolled
+  TOTP factor must be challenged and verified before an application session is
+  created. The retained terminal CLI uses scrypt and creates an inactive identity;
+  its password hash does not authorize provider login. Provider
+  tokens are never sent in JSON or stored in localStorage. Every protected API
+  verifies provider token, active allowlist membership and the unexpired,
+  unrevoked DB session, including the original admin lock. There is no public signup, default password, browser-only
+  role check or ADMIN_SECRET bypass. Sessions last at most one hour.
+- Parameterized PostgreSQL functions enforce quote/session locking, unique
+  canonical TrxIDs, positive integer prices, foreign keys, valid status/version
+  checks and atomic status/note/audit changes. No client-supplied price is used.
+- Products/orders constrain currency to BDT. Payment status is a generated
+  column, preventing independently forged payment state. The private claim view
+  uses security_invoker/security_barrier and SELECT-only runtime privileges;
+  anonymous/authenticated roles have no access. Tests also prove underlying RLS
+  still denies rows if SELECT is accidentally granted to an ordinary role.
+- Existing admin/session RPCs explicitly require role `admin`. Reserved `support`
+  identities cannot open or reuse sessions or run admin actions. Role changes
+  deny subsequent session lookup; the role never comes from editable user metadata.
+- Anonymous/authenticated DB roles have no application table grants or RPC
+  execute grants. RPCs are security invoker with an empty search path. A server
+  service credential is required. Runtime audit/note grants exclude UPDATE/DELETE.
+- Durable atomic PostgreSQL rate counters work across instances. No in-memory
+  production fallback exists. Untrusted proxy headers are ignored; unknown
+  clients share a conservative bucket. Production proxy trust needs host review.
+- Turnstile is verified server-side for success, exact hostname and claim action.
+  Missing/replayed/wrong-context tokens and provider/configuration failures deny
+  the claim. The provider supplies token expiry/replay rejection. No bypass is
+  included in production; test mocks exist only in the test suite.
+- Tracking uses a 256-bit key, email and order code in a POST body. Hashes are
+  stored; keys do not enter query strings, logs or browser storage. Tracking
+  returns a minimal projection, excluding contact/payment/internal-note fields.
+- React renders text with normal escaping. No raw HTML injection or user-supplied
+  scripts are used. Input sanitization does not remove the need for escaping.
+- Basic nosniff/frame/referrer/permission headers remain. API responses are
+  private/no-store and generic errors never expose upstream secrets, SQL errors
+  or submitted values. No application logger records PII or tokens.
+- The committed environment template is blank and private files ignored. CI,
+  strict types, dependency locking and environment checks are retained.
 
-The `server-only` import causes a Next.js build error if a client dependency
-graph imports that module. It does not protect a secret intentionally passed
-as a client prop, returned by an API, or printed in a log. Review data boundaries
-as well as imports.
+## Operational requirements
 
-## Repository safeguards
+Apply the migration/grants in an actual staging Supabase project, disable public
+signup, provision the real admin, set strong-password policies and protect/rotate
+server service keys. Revoke sessions after password changes or incidents; disabling
+an admin has immediate effect. Configure logging redaction at the chosen host too.
+The code cannot configure provider account settings without the owner's account.
 
-Run `npm run check:env` before committing. It checks both tracked and unignored
-files, rejects private environment files even if force-added, checks the ignore
-rules, and requires empty values and expected names in `.env.example`.
+Confirm bKash account/method and receipt rules. The retained 10-character alphanumeric
+TrxID check bounds input; it does not assert bKash authenticity or prove payment.
+A human must compare the actual transaction/recipient/sender/amount before
+verification. A rejected TrxID stays unique. Correction/refund and retention
+procedures must be finalized; no deletion or refund shortcut is exposed.
 
-This check is not a general secret scanner. It cannot detect every hardcoded
-token, a plaintext voucher placed in another file, or a previously leaked secret
-in Git history. Review every staged change. `.gitignore` cannot remove a file
-that has already been committed.
+Only manual delivery of the existing service categories is implemented. There is
+no voucher inventory to encrypt, subscription/seat resale permission assertion,
+third-party password field, automated bKash verification or outbound email sender.
+The original AES-GCM helper and encrypted voucher table are preserved and tested,
+but no voucher web operation is enabled. Resend remains reserved.
 
-Never create or store real credentials for Phase 1. Later approved secrets belong
-only in ignored local configuration or the agreed server secret store. Keep
-database access keys, Turnstile secrets, Resend keys, encryption keys, and any
-future session-signing secret out of public configuration and Git.
+Keep the review deployment private and payment collection disabled. Before public
+launch, verify real-provider/staging concurrency and browser/mobile behavior,
+HTTPS/HSTS/CSP and hosting eligibility/backups/retention. A complete nonce-based
+CSP is not claimed: the existing basic headers are not a substitute for it.
 
-## Dependencies
+## Upstream review
 
-Use `npm ci` to reproduce the lockfile. `npm run audit:dependencies` fails for
-known advisories rated moderate or higher, including development dependencies.
-An audit result is a point-in-time package check, not a complete application
-security assessment. Investigate advisories and review upgrades deliberately.
+The 13 October record cited an official blog announcing a 14 October security
+release. On 14 October that exact URL was inaccessible to the retrieval service.
+The official advisory index was accessible; its latest displayed notices were
+dated 30 September. This does not confirm whether the scheduled release has
+published or which versions it affects. Recheck official notices and patch before
+commercial activation; do not claim the installed versions are immune.
+https://nextjs.org/blog/upcoming-nextjs-security-update-october-2026
+https://github.com/vercel/next.js/security/advisories
 
-The lint setup uses maintained ESLint 10 with compatible TypeScript tooling.
-The optional Next.js lint plugin is not installed: its current glob dependency
-is affected by [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
-Framework-specific lint rules can be added when a compatible audited release is
-available. Next.js still generates route types and type-checks the production
-build. No audit exclusions or forced dependency downgrades are configured.
+The 14 October full dependency audit still flags `GHSA-vfj7-8cjw-p6xm` in `braces`
+3.0.3 through Vinext's build-plugin/glob chain. It reports six affected package
+entries for that one advisory. The upstream advisory lists no patched version;
+the installed version is 3.0.3. No forced adapter downgrade or audit
+suppression is applied. `npm audit --omit=dev --audit-level=moderate` is clean
+for the standard Next.js runtime; that does not certify the bundled Worker.
+Keep this owner-private review separate from a commercial launch and resolve
+the adapter chain before release. The full CI dependency audit remains blocking.
+https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
 
-References:
+## Tests and limitations
 
-- [Next.js environment-variable boundaries](https://nextjs.org/docs/app/guides/environment-variables)
-- [Next.js server and client components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
-- [Next.js ESLint plugin configuration](https://nextjs.org/docs/app/api-reference/config/eslint)
-- [ESLint supported versions](https://eslint.org/version-support/)
-- [TypeScript ESLint setup](https://typescript-eslint.io/getting-started/)
+The suite uses synthetic information, the actual local PostgreSQL engine via
+PGlite and mocked Supabase/Turnstile transport. It covers unknown fields, price
+manipulation, TrxID conflicts, unauthorized roles, CSRF, request size, rate limits,
+provider failure/replay, tracking privacy, session revocation, transitions and
+rollback. PGlite uses a single connection; production concurrency and provider
+configuration require actual staging checks. New browser QA is unavailable in
+this environment and is not inferred from a successful build.
+The Phase 2 continuation adds populated-upgrade preservation across all six
+retained statuses, payment review attribution, generated-column/currency guards,
+role downgrade denial, and the single-product API's inactive/outage boundaries.
+The journal is loaded dynamically by tests so new migrations cannot be silently
+omitted. Native PostgreSQL/Drizzle replay and concurrent uniqueness tests remain
+in CI; PGlite's prepared migrator cannot replay the older multi-statement RPC
+chunk, so local tests apply the actual SQL via exec and query through Drizzle.
 
-## Controls still required before real use
-
-### Upstream security review
-
-The earlier Phase 0 record cited a notice about a security update planned for
-14 October 2026. On 12 October, the notice could not be retrieved and its details
-could not be independently reverified from current primary sources. Do not
-treat its date or severity details as currently confirmed findings or a release
-guarantee. The historical verification record is retained with this limitation.
-
-Before deployment, review [official Next.js security advisories](https://github.com/vercel/next.js/security/advisories),
-apply patches required for the installed versions, and rerun checks. The final
-Phase 1 npm audit reported zero known vulnerabilities on 12 October, but that
-does not establish the absence of unpublished vulnerabilities. Local frontend
-work does not authorize a public launch.
-
-### Phase 1 frontend boundaries
-
-The customer pages use labelled sample services/prices only. Checkout has no
-HTML form, input names, submit control, network call, order code, transaction
-claim, recipient number, or storage. Its one button checks inputs locally only.
-The optional phone field and native validity feedback are not server security
-controls; reviewed server validation belongs to Phase 3.
-
-Only known mock slugs can select a product. Price query parameters are ignored,
-and untrusted query values are never rendered as HTML. React escapes displayed
-text; no raw HTML injection or remote content rendering is used.
-
-Policy pages are drafts for owner review, not guarantees about legal compliance,
-refund deadlines, or business eligibility. No actual WhatsApp destination or
-support email is configured. The floating icon navigates to Contact, and real
-order links are deferred. Do not add guessed contact or payment details.
-
-### Future application controls
-
-Authentication, administrator authorization, CSRF protection, durable rate
-limiting, Turnstile verification, database access policies, payment-claim
-validation, voucher encryption, private delivery access, and service-specific
-environment validation do not exist yet. Their requirements are in PLAN.md.
-
-A complete Content Security Policy and HTTPS/HSTS also remain future work.
-The basic headers do not replace those controls. Do not deploy this foundation,
-accept real customer information, collect payments, or publish products from it.
-
-## If a secret is accidentally exposed later
-
-Revoke or rotate it immediately at the relevant provider, then review affected
-access. Removing the current file does not undo exposure or remove Git history.
-Agree on history cleanup and recovery actions separately; never rewrite shared
-history automatically. Do not post the exposed value in an issue or message.
+References: Supabase password security/database function documentation and
+Cloudflare Turnstile server validation are linked in the architecture document.

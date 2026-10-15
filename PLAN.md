@@ -1,6 +1,16 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-12. Current scope: **Phase 1 — customer frontend only**.
+Last updated: 2026-10-15. Current scope: **Phase 2 database and backend foundation**.
+
+The owner's current request authorizes the Phase 2 audit, additive database/API
+foundation, tests, documentation and source commits. Preserve all frontend and
+earlier backend work. **Do not deploy, publish, connect Vercel or live services.**
+Do not add admin UI, payment gateway integration or email automation. Earlier
+deployment and phase-specific approval statements below are historical.
+The current audit, implementation decisions and completion evidence are in
+[phase-2-foundation-audit.md](docs/phase-2-foundation-audit.md).
+See docs/repository-audit.md and docs/architecture-continuation.md for the current
+implementation roadmap and decisions.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -342,7 +352,9 @@ a successful build or a clean dependency audit is not a complete security review
 
 ## Progress
 
-Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
+Updated: 2026-10-14. Status: **frontend and production verification complete; Vercel connection pending; business activation remains blocked**.
+The latest owner request authorizes the full continuation. The Phase 1 record
+below is retained as history; the current checkpoint follows it.
 
 ### Done
 
@@ -409,3 +421,176 @@ Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
 - Authentication, payments, database access, bot verification, and voucher
   encryption are intentionally future work. This is not a production release.
 - A zero-cost commercial hosting option still needs review before any launch.
+
+
+## Continuation checkpoint — 13 October 2026
+
+### Done
+
+- Audited all 53 original files and reproduced baseline checks/build and eleven tests.
+- Retained Next.js, Bangla pages, plain CSS, local font and labelled sample UI.
+  Reconciled the unmerged Phase 2 head `8170a19cedfde1d0a169127c558cb4e05aabdf4b`:
+  original PostgreSQL tables/migrations, whole-BDT prices, eight-character codes,
+  10-character TrxIDs, pending records, encryption, terminal tools and tests stay.
+  Added web RPCs/columns/tables only through `0002_marketplace`.
+- Implemented reviewed SQL schema/grants/RLS, DB-level canonical TrxID uniqueness,
+  immutable quote/order snapshots, transaction locking, idempotency, optimistic
+  status versions, internal notes, audit history and atomic shared rate limits.
+- Implemented product/quote/claim/private-tracking APIs and provider-backed admin
+  MFA login/session/logout, overview, order/search/details/status/notes, products
+  and audit. Original terminal identities default to inactive for web login.
+- Added real checkout flow, private tracking, admin UI, loading/error states, FAQ
+  preview and configurable support without inventing destinations or actual offers.
+- Passed all 69 tests: 29 original unit/configuration, 25 marketplace and 15
+  retained SQL/actual-terminal regressions. Verified populated Phase 2 upgrades,
+  MFA denial, full quote/claim/verify/deliver flow, rollback/privacy/anti-abuse.
+- Environment checks, lint, strict types, journal check, both production builds,
+  migrations/seeds/reruns and database-backed port-3000 HTTP smoke passed.
+- Created a private review hosting resource and adapter using the same source;
+  kept checkout disabled and configured no real database/payment/customer records.
+- Pushed `phase-3-marketplace` as a child of the original Phase 2 head and opened
+  draft review PR #1. All 148 source files match the verified remote tree; main
+  is not merged. The owner-private review deployment returned succeeded at
+  https://ai-seba-marketplace.cwrtravel1102.chatgpt.site.
+- Current GitHub PR run 38432431598 passed native Compose/journal, all 69 tests,
+  both builds, migration/seed and development checks. Only the full dependency
+  audit failed for the documented hosting build advisory.
+
+### Next
+
+- Resolve the dependency advisory/upcoming security release before commercial
+  activation. Obtain actual provider/payment/catalog/support/policy details and
+  complete native web-RPC concurrency, real-provider and rendered mobile QA.
+- Activate only after those prerequisites; keep the current review private and
+  checkout closed. Review/merge remains the owner's decision.
+
+### Known issues / activation blockers
+
+- Actual Supabase credentials/admin identity, Turnstile keys, bKash recipient/method,
+  approved products/prices, support contacts and reviewed policies are not supplied.
+- PGlite tests use one multiplexed local PostgreSQL backend and mocked provider transport.
+  Independent-connection concurrency and real-provider staging checks remain required.
+- Supported control-browser is unavailable in this managed environment; rendered
+  browser/mobile QA of the new flows is not claimed.
+- The earlier record cited a scheduled 14 October upstream update. That blog
+  could not be retrieved in the 14 October review; publication/affected versions
+  are not newly confirmed. Review current official advisories before launch.
+- Standard Next.js runtime audit is clean. Full audit flags one unresolved
+  `braces` advisory across six hosting build-chain entries. No patched release
+  is available; the full CI audit is kept blocking and the PR must remain draft.
+- No voucher inventory, automated payments/emails or policy-dependent refund action
+  is enabled. No default passwords, payment bypasses or unauthorized public launch.
+
+## Frontend completion and current audit — 14 October 2026
+
+### Done
+
+- Inspected main, Phase 2, the advanced marketplace branch and draft PR #1 before
+  editing. Continued `phase-3-marketplace` at `4e23078f449152e506a144c0fe682abe30362ea3`.
+  All 148 source files/modes matched the existing private Site's source tree.
+- Added explicit homepage benefits/final CTA, wrapping mobile navigation and
+  product-card features/duration/delivery. Consolidated sample plan facts in the
+  original mock-product file and clarified closed-checkout introductory text.
+- Preserved all existing backend/admin/tracking logic and migrations. Documented
+  the existing Products/Orders/Payment Claims/Admin Users/Audit Logs mapping;
+  no live integration or extra payment implementation was added.
+- Made the existing development smoke command work without credentials. Lint,
+  types, all 54 current tests, environment/journal checks, dual production builds
+  and default-port development HTTP checks passed. Runtime audit is clean.
+- Wrote `docs/progress-2026-10-14.md` with completed/incomplete work, verification
+  limits, actual activation blockers and the current unpatched build advisory.
+- Committed/pushed the frontend change as `1e676f630df645fb78d1718f27c57cc49f77c9e6`
+  on the existing continuation branch. `main` remains unchanged. The literal
+  `npm run dev` also passed current-page HTTP checks on port 3000.
+
+### Next
+
+- Follow the remaining configuration/staging/security tasks in the latest report
+  before real activation; keep the existing review private and checkout closed.
+  The final handoff records the native publication result; merge remains the
+  owner's decision.
+
+## Deployment preparation and production verification — 14 October 2026
+
+### Done
+
+- Rechecked local/remote `phase-3-marketplace` at `24d745e860e5a1dc3900754c3e97f4eb0888acb7`,
+  the existing draft PR, Next.js build configuration and environment requirements.
+- Preserved all application pages, backend/admin code and migrations. No new
+  backend implementation or real-service activation was started.
+- Added `vercel.json` with Next.js, locked `npm ci` and `npm run build:next`.
+  Existing Node 24 and other hosting builds remain intact.
+- Lint, environment checks, both existing builds and strict types passed.
+  Added/passed production smoke for 19 page routes, 13 static assets, local font,
+  security headers, invalid selectors, protected APIs and disabled checkout.
+  The same production check is included in the existing CI workflow.
+- Rechecked the existing private Site's current deployment as `succeeded`.
+  Prepared `docs/vercel-deployment.md` with exact manual steps, environment tables,
+  readiness evidence and a deployment checklist.
+
+### Next
+
+- Connect the owner's Vercel account or follow the prepared manual workflow.
+  Select the advanced branch, standard Next.js build and private review protection;
+  keep checkout/approval flags false during review. No Vercel URL is claimed yet.
+- Complete rendered mobile/browser-console review and future provider/security
+  activation checks separately. Existing backend code should not be rebuilt.
+
+### Known issues
+
+- No connected Vercel capability, project link or token was available. The
+  existing Sites URL remains online; account access is required only for Vercel.
+- Browser layout/console QA is unverified; production HTTP and server-log checks
+  passed. The pre-existing build-chain advisory still blocks the full audit.
+
+### Known issues
+
+- Full dependency audit remains blocking on the unpatched braces build-chain
+  advisory. No dependency changes, suppression or forced downgrade were applied.
+- Supported rendered browser QA and native multi-connection/provider checks were
+  unavailable/not rerun here. HTTP smoke and 54 synthetic tests do not replace them.
+- Actual provider/payment/support details, approved products/prices and final
+  policies remain missing. Review publication does not activate the business.
+
+
+## Phase 2 foundation continuation — completed 15 October 2026 (current)
+
+### Done
+
+- Audited the latest `phase-3-marketplace` branch at `247f425`; preserved all
+  completed frontend and original database/API/admin work.
+- Added migration `0003_phase_2_foundation`: BDT-only currency, generated product
+  category/payment status, private security-invoker payment-claim view and
+  explicit admin/support role with denied support sessions/operations.
+- Added single-product GET through the existing server catalog; retained strict
+  validation, server-controlled prices, unique immutable TrxIDs and private
+  tracking. No public database access or default admin was introduced.
+- Passed environment/lint/types, journal checks, 64 local tests, both builds,
+  development smoke and production smoke (19 pages, assets and product APIs).
+- Pushed code as `b887d04b6c20c298d7f75de374c69264766e6f36`. CI run
+  `38712601967` also passed all 15 native PostgreSQL/terminal tests, migration
+  replay/seed and database-backed development smoke. All 79 tests passed;
+  the complete workflow fails only at the existing dependency audit.
+- Updated current architecture/database/API/security documentation and recorded
+  created files and evidence in `docs/phase-2-foundation-audit.md`.
+- Deployment, publishing, Vercel connection and live-service activation remain
+  paused. No new UI, payment gateway or email automation was added.
+
+### Next
+
+- Keep the reviewed source committed and the PR unmerged; publishing stays paused.
+- Complete authorized staging/provider/browser checks, business approvals,
+  backup/retention procedures and full security review before any activation.
+- Leave support permissions, claim corrections/refunds and deployment for later
+  explicit scope. The earlier Vercel connection task is paused.
+
+### Known issues
+
+- Full dependency audit still flags six build-chain entries for the existing
+  braces advisory. Runtime audit reports zero; full CI is not claimed green.
+- Local PGlite checks do not establish native concurrent or real-provider behavior;
+  native migration/replay/unique-claim tests remain in GitHub CI.
+- Payment Claims is a private read model of the existing one-claim-per-order
+  store. Missing historical admin review records remain NULL.
+- Actual Supabase/payment credentials, policies and approved catalog are absent;
+  checkout remains closed. No rendered browser QA or publication occurred here.

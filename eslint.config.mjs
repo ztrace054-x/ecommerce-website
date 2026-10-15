@@ -15,6 +15,9 @@ export default defineConfig([
   },
   globalIgnores([
     ".next/**",
+    "dist/**",
+    ".sites-runtime/**",
+    ".wrangler/**",
     "out/**",
     "coverage/**",
     "playwright-report/**",

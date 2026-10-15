@@ -6,10 +6,15 @@ export type MockProduct = Readonly<{
   description: string;
   pricePoisha: number;
   unit: string;
+  duration: string;
+  deliveryMethod: string;
+  terms: string;
   icon: "setup" | "prompt" | "chatbot" | "website";
   includes: readonly string[];
   deliveryNote: string;
 }>;
+
+const sampleTerms = "এটি নমুনা সেবা। কাজের পরিধি, মূল্য, সময় ও ডেলিভারি চালুর আগে নিশ্চিত করতে হবে।";
 
 export const mockProducts: readonly MockProduct[] = [
   {
@@ -19,6 +24,9 @@ export const mockProducts: readonly MockProduct[] = [
     description: "নিজের অ্যাকাউন্টে AI টুল ব্যবহার শুরু করার সহজ গাইড।",
     pricePoisha: 50000,
     unit: "একটি সেশন",
+    duration: "নমুনা: ৩০–৪৫ মিনিটের সেশন",
+    deliveryMethod: "অনলাইন গাইডেড সেশন",
+    terms: sampleTerms,
     icon: "setup",
     includes: [
       "বেসিক টুলের পরিচিতি",
@@ -34,6 +42,9 @@ export const mockProducts: readonly MockProduct[] = [
     description: "AI-কে পরিষ্কার নির্দেশনা দিয়ে ভালো উত্তর পাওয়ার কৌশল শিখুন।",
     pricePoisha: 75000,
     unit: "একটি সেশন",
+    duration: "নমুনা: ৬০ মিনিটের সেশন",
+    deliveryMethod: "অনলাইন সেশন ও অনুশীলনের গাইড",
+    terms: sampleTerms,
     icon: "prompt",
     includes: [
       "সহজ প্রম্পট লেখার নিয়ম",
@@ -49,6 +60,9 @@ export const mockProducts: readonly MockProduct[] = [
     description: "আপনার কাজের সাধারণ প্রশ্নের জন্য একটি ছোট চ্যাটবটের নমুনা।",
     pricePoisha: 300000,
     unit: "একটি প্রাথমিক সেটআপ",
+    duration: "নমুনা: কাজের পরিধি অনুযায়ী ৩–৫ কর্মদিবস",
+    deliveryMethod: "অনলাইন ডেমো ও সেটআপ হস্তান্তর",
+    terms: sampleTerms,
     icon: "chatbot",
     includes: [
       "প্রয়োজন ও প্রশ্নের তালিকা সাজানো",
@@ -64,6 +78,9 @@ export const mockProducts: readonly MockProduct[] = [
     description: "আপনার পরিচিতি বা কাজ তুলে ধরার জন্য একটি সহজ ওয়েবসাইট।",
     pricePoisha: 500000,
     unit: "একটি ছোট ওয়েবসাইট",
+    duration: "নমুনা: কাজের পরিধি অনুযায়ী ৫–৭ কর্মদিবস",
+    deliveryMethod: "প্রিভিউ লিংক ও ওয়েবসাইটের ফাইল",
+    terms: sampleTerms,
     icon: "website",
     includes: [
       "একটি ছোট তথ্যভিত্তিক ওয়েবসাইট",

@@ -1,123 +1,159 @@
-# AI services e-commerce project
+# AI Service E-commerce — Bangladesh
 
-A Bangladesh-focused project for ordering permitted AI products and services,
-paying through bKash, and receiving delivery after an administrator manually
-checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
-Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
-its [Progress section](PLAN.md#progress) records done, next, and known issues.
+Continuation of `ztrace054-x/ecommerce-website`, retaining the existing Next.js
+App Router application, Bangla customer pages, plain CSS and local licensed font.
+The original Phase 0/1 foundation was audited at
+`b2b490f25b12d66cc1b341c2455747a952cf0338`. The unmerged Phase 2 work at
+`8170a19cedfde1d0a169127c558cb4e05aabdf4b` is retained, including its original
+tables, migrations, money format, encryption and terminal tools. The marketplace
+extends that work with migration `0002_marketplace`; it has not been rebuilt.
 
-## Current stage: Phase 1 — customer frontend
+## Current progress
 
-Phase 0 is approved and merged into `main`. The `phase-1` branch adds the Bangla
-customer interface: Home, service list, Product/Plan, Checkout preview, Refund,
-Privacy, Terms, Contact, FAQ, and a floating WhatsApp icon. The roadmap has been
-corrected: database work is Phase 2, as requested by the owner.
-The mobile-first design uses plain CSS and a locally served, licensed Bangla
-font. It does not request fonts from Google or add a UI framework.
+**Current task: Phase 2 database/backend foundation; deployment is paused.**
+No Vercel connection, website publishing or real-service activation is authorized
+for this phase. [Phase 2 audit and progress](docs/phase-2-foundation-audit.md)
+records the existing implementation, additive changes, checks and future work.
+Migration `0003_phase_2_foundation` adds explicit currency/category/payment status,
+a private payment-claim view and role checks while preserving earlier data/flows.
 
-All four sample services and prices come from `src/data/mock-products.ts`.
-Prices are visibly labelled as samples. The checkout has local demo feedback
-only: it creates no orders, submits no personal information, takes no payments,
-and does not store input. Only synthetic details should be used in the preview.
+Customer catalog, database quotes, validated payment claims, private tracking,
+admin authentication, order verification/rejection/delivery, internal notes,
+product management and audit history are implemented. PostgreSQL constraints
+and restricted transactional RPCs protect the business rules. Supabase Auth
+handles web admin passwords and requires enrolled authenticator MFA; there is
+no default password or public signup. The original terminal-created identities
+remain inactive until linked to a provisioned provider user.
 
-The policy pages are drafts, without invented refund promises. No WhatsApp
-number or support email has been supplied, so the floating icon opens the
-Contact page. Real `wa.me` order links belong to Phase 6.
+**Real checkout is closed.** The owner has not supplied Supabase/Turnstile
+configuration, bKash recipient/method, finalized policies or approved actual
+prices. The original four samples remain labelled when no database is configured.
+No real payment, customer database, subscription inventory or voucher sale has
+been connected. This is a tested implementation/review candidate, not a claim
+that a commercial system has been activated.
 
-Database, authentication, payment, delivery, and email integrations remain
-unimplemented and unconnected. No real credentials or customer records exist.
-Nothing has been deployed. Phase 2 needs the owner's approval.
+[Repository audit](docs/repository-audit.md) ·
+[Architecture](docs/architecture-continuation.md) ·
+[Activation guide](docs/deployment.md) ·
+[Security](docs/security.md) ·
+[Verification](docs/continuation-verification.md)
+
+Latest frontend completion, branch audit and remaining work:
+[14 October progress report](docs/progress-2026-10-14.md). The most advanced source
+is `phase-3-marketplace` (draft PR #1); `main` still contains the original frontend.
+The latest pass adds homepage benefits, complete sample plan facts, responsive
+navigation and clearer closed-checkout guidance while retaining the backend.
+
+[Vercel setup and production verification](docs/vercel-deployment.md) records
+the exact branch/build/environment settings and manual deployment steps. The
+committed `vercel.json` selects `npm run build:next` for Vercel.
+
+Earlier private review (not updated by this Phase 2 work):
+https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
+Its earlier deployment was rechecked as `succeeded` before publishing was paused.
+The review requires the owner's ChatGPT sign-in and keeps payment collection closed.
+
+Review PR: https://github.com/ztrace054-x/ecommerce-website/pull/1
+All 79 tests (64 unit/API/PGlite plus 15 native PostgreSQL/terminal) and both
+builds passed in GitHub CI for code commit `b887d04` on 15 October. The workflow
+remains blocked only at the full dependency audit described below.
 
 ## Run locally
 
-Install **Node.js 24 LTS**, npm, and Git. In the repository folder:
+Use Node.js 24 LTS and npm. Install the committed lockfile:
 
 ```bash
-git switch phase-1
 npm ci
 npm run dev
 ```
 
-Open <http://localhost:3000>. `npm ci` uses the committed lockfile so everyone
-gets the same package versions. `npm run dev` starts a local development server;
-it does not publish the website. The server binds to the local computer only.
-
-No `.env` file or service account is needed for Phase 1. `.env.example` contains
-empty placeholders for future work. Keep them empty at this stage.
-
-To check the foundation and start a production build locally:
+Open http://localhost:3000. No credentials are needed for the closed preview.
+Use synthetic details in the preview form. No preview form data is stored or sent.
+Stop the server with Ctrl+C. For the real backend, follow the activation guide
+and put credentials only in an ignored local environment file or host secret
+store; never fill the committed `.env.example`.
 
 ```bash
 npm run check
 npm run audit:dependencies
-npm start
 ```
 
-Stop a running server with **Ctrl+C**. Stop the development server before
-starting the production server, because both use port 3000 by default.
+`npm run smoke:dev` starts and checks the Next.js development server on port 3000,
+then stops it. With no database configuration it checks all four labelled sample
+plans and the closed checkout. With the isolated seeded Node database it retains
+the original database smoke checks. Stop any existing port-3000 server first.
+
+After `npm run build:next`, run `npm run smoke:production` to check the actual
+production server, customer routes, local assets, security headers and closed
+checkout on port 3000. It isolates provider settings inside its test process and
+stops its server afterward. Browser/mobile interaction QA remains a separate check.
+
+The checks validate environment safety, lint, strict types and security/business
+integration tests, then build both Next.js and the Sites Worker adapter.
+`npm run build:next` builds only standard Next.js; `npm start` serves it on
+loopback. `npm run build:site` builds the Worker from the same application.
+Installation/builds do not configure Supabase or take real payments.
+
+## Routes
+
+| Page                                                | Purpose                                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `/`, `/products`, `/products/[slug]`                | Home, catalog and service details                                              |
+| `/checkout?product=<slug>`                          | Database-backed quote and claim flow when configured; closed preview otherwise |
+| `/track-order`                                      | Code + email + private access key; no customer password                        |
+| `/admin/login`, `/admin`                            | Protected administration; every data API authorizes access independently       |
+| `/faq`, `/contact`, `/privacy`, `/terms`, `/refund` | Help, configurable support and policy drafts                                   |
+
+| API                                              | Methods / behavior                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------ |
+| `/api/products`                                  | GET active catalog; explicitly labelled samples only when unconfigured   |
+| `/api/products/[slug]`                           | GET one public product with the same sample label; unknown/inactive → 404 |
+| `/api/orders/quote`                              | POST product ID; quote price and recipient come from the server/database |
+| `/api/orders`                                    | POST validated customer/payment claim; TrxID has DB-level uniqueness     |
+| `/api/orders/validate-transaction`               | POST syntax check only; never confirms payment or exposes other claims   |
+| `/api/orders/track`                              | POST private verification; no secrets in query strings                   |
+| `/api/admin/auth/login`, `/logout`, `/session`   | Provider authentication and revocable HttpOnly sessions                  |
+| `/api/admin/overview`, `/orders`, `/orders/[id]` | GET summary/list/detail; PATCH constrained status with version check     |
+| `/api/admin/orders/[id]/notes`                   | POST internal note, never returned by customer tracking                  |
+| `/api/admin/products`, `/products/[id]`          | GET/POST/PATCH catalog management; disable rather than delete history    |
+| `/api/admin/audit`                               | GET paginated admin action history                                       |
+
+Request/response examples and error behavior are in [API documentation](docs/api.md).
 
 ## Where files belong
 
-| Path | Purpose |
-| --- | --- |
-| `src/app/` | Bangla customer routes, shared layout, and mobile-first plain CSS. |
-| `src/app/api/` | Reserved for future server route handlers; no endpoints yet. |
-| `src/components/` | Shared header, footer, cards, policy layout, icons, and local checkout preview. |
-| `src/data/mock-products.ts` | The only source of mock products and prices; presentation only. |
-| `public/fonts/` | Self-hosted Bangla font, license, and source attribution. |
-| `src/db/` | Database schema and migrations are reserved for Phase 2. |
-| `src/lib/env/` | Explicit separation of public configuration and server secrets. |
-| `src/lib/auth/` | Authentication requirements; no login or bypass code. |
-| `src/lib/security/` | Security requirements for later input and bot checks. |
-| `scripts/` | Checks for safe environment configuration in Git. |
-| `docs/` | Architecture, local development, and security notes. |
-| `tests/` | Repeatable configuration/security tests; business tests arrive with their features. |
-| `.github/workflows/` | GitHub checks for installation, environment safety, types, lint, build, and dependencies. |
+| Path                               | Responsibility                                                                           |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| `src/app`, `src/components`        | Existing customer UI plus checkout/tracking/admin                                        |
+| `src/app/api`                      | Small route handlers with validation and authorization                                   |
+| `src/db`                           | Retained Drizzle schema/history, additive RPC migration and restricted HTTP adapter |
+| `src/lib/auth`, `src/lib/security` | Provider/session checks, origin and body limits, rate limiting and Turnstile             |
+| `src/data/mock-products.ts`        | Original samples only; never authoritative order prices                                  |
+| `tests`                            | Configuration, validation, PostgreSQL and route integration tests with synthetic data    |
+| `build`, `vite.config.ts`          | Sites hosting adapter; standard Next.js scripts remain available                         |
+| `.openai/hosting.json`             | Review Site identity, never credentials                                                  |
 
-Folders reserved for later phases contain explanatory README files. They keep
-the intended boundaries visible without unused database/authentication code.
+The web claim flow is `submitted → verified → delivered`, or `submitted → rejected`.
+Original Phase 2 `pending` rows and their timestamps remain intact; web quotes
+use separate checkout sessions and do not create new pending orders.
+`refunded` is reserved pending an approved refund procedure. A display code is
+not a password. The access key is shown at checkout and must be kept privately.
+A TrxID or WhatsApp conversation never proves a payment happened.
 
-## Customer routes
+## Before commercial launch
 
-| Route | What to try |
-| --- | --- |
-| `/` | Home and sample service cards. |
-| `/products` | All four sample plans. |
-| `/products/ai-setup` | Example details; each known slug has its own page. |
-| `/checkout?product=ai-setup` | Sample checkout; a query-supplied price is ignored. |
-| `/checkout` | Guidance to choose a plan first. |
-| `/refund`, `/privacy`, `/terms` | Draft policy pages. |
-| `/contact` | Contact information is not configured yet. |
-| `/faq` | Keyboard-accessible questions using native expandable sections. |
+Follow [deployment.md](docs/deployment.md), including staging database/browser and
+real-provider checks, confirmed business/payment details, backups, retention and
+approved policies. Review current official Next.js/upstream security advisories
+and patch affected dependencies before enabling checkout. The earlier scheduled
+October 14 blog was inaccessible in the latest review; its release is not newly
+confirmed. A clean package
+audit does not establish that unreleased vulnerabilities are absent.
 
-Unknown products display a Bangla not-found page. There is no cart, login,
-tracking page, payment endpoint, or API-backed order submission in Phase 1.
+The standard Next.js runtime dependency audit has zero known advisories. The
+hosting build chain has an unresolved `braces` advisory; the full dependency
+audit remains blocking and is not suppressed. See current verification for scope.
 
-## Safety rules
-
-- Never collect passwords for customers' third-party AI accounts.
-- Never sell pre-made accounts, shared logins, or stolen accounts.
-- Use only official, permitted invites/gifts, authorized vouchers, and services.
-- Keep secrets on the server. Never add them to `NEXT_PUBLIC_*` configuration.
-- Prices must come from the database when order handling is implemented.
-- A TrxID submission or WhatsApp message never proves payment by itself.
-- Never treat the example `ADMIN_SECRET` variable as a login password or API key.
-
-Read [docs/security.md](docs/security.md) before adding integrations and
-[docs/local-development.md](docs/local-development.md) for command explanations.
-See [docs/architecture.md](docs/architecture.md) for the planned boundaries and
-[tests/README.md](tests/README.md) for the validation strategy. Run `npm test` for
-the configuration security tests; `npm run check` includes them. The evidence is
-recorded in [docs/phase-0-verification.md](docs/phase-0-verification.md).
-Phase 1 runtime and interaction evidence is recorded in
-[docs/phase-1-verification.md](docs/phase-1-verification.md).
-
-## Budget and hosting
-
-Phase 1 runs locally without paid services. Future Supabase and Resend usage must
-stay within their permitted free-tier limits. No billing accounts are connected.
-
-Vercel compatibility is a technical requirement, not a promise of free business
-hosting. [Vercel's Hobby plan](https://vercel.com/docs/plans/hobby) currently limits
-usage to personal, non-commercial projects. Agree on an eligible hosting option
-before a future commercial launch. Do not deploy this foundation.
+Historical foundation/customer checks are retained in `docs/phase-0-verification.md`
+and `docs/phase-1-verification.md`. Current evidence and limits are recorded
+separately; historical screenshots do not count as QA of the new flows.

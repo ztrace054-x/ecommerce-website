@@ -1,48 +1,39 @@
-# Test strategy
+# Verification
 
-Phase 1 has UI-only customer pages and the foundation's security boundaries for
-configuration and Git-visible environment files. Run `npm test` on Node.js 24 to
-check those boundaries with synthetic values and disposable local Git fixtures.
-Tests make no network requests, use no real keys, and clean up their fixtures.
+Run `npm test` under Node 24. All fixtures use synthetic information and disposable
+local state. The original eleven environment tests remain in place.
 
-The tests cover missing/blank server values, lazy reads, unsupported variable
-names, frozen public configuration, empty templates, force-added private files,
-unexpected public keys, missing ignore rules, duplicate or missing placeholders,
-and error-output privacy. The server-module tests use Node's `react-server`
-package condition so the Next.js `server-only` marker can load in a server test
-process. The application's Client Component boundary remains unchanged.
+- validation/crypto/order-code/database-config tests retain the original Phase 2
+  contracts, AES-GCM tamper checks, salted scrypt and private configuration rules.
+- continuation-validation.test.ts covers new web claims, private tracking keys,
+  strict admin evidence, consent and exact whole-BDT/poisha conversion.
+- continuation-database.test.ts: actual additive migration/RPCs on PGlite,
+  uniqueness/idempotency, quote snapshots, privacy, roles, transitions, rollback,
+  atomic rate counters, revocation, product/search/overview/audit operations and
+  preservation of populated Phase 2 rows/price guards/append-only grants.
+- api.test.ts: actual route handlers over local PostgreSQL with mocked provider
+  transport; full quote/claim/track/login/verify/deliver/logout, CSRF/body limits,
+  wrong-context/replayed challenge, provider failure, proxy trust, rate limits and
+  rejection of password-only/wrong-code/unenrolled administrator login.
 
-`npm run check` includes these tests, the environment repository check, lint,
-strict types, and production build. `npm run audit:dependencies` separately checks
-published advisories. Local HTTP smoke checks verify the minimal runtime.
+- foundation-database.test.ts covers fresh Drizzle typed reads, populated upgrade
+  preservation, BDT/generated fields, claim audit attribution/rollback, private
+  view grants/RLS and role-change denial. API tests also cover single-product
+  sample labels, hidden inactive products, malformed selectors and outages.
 
-Do not add tests that merely repeat the placeholder's JSX or assert that a folder
-exists. Add meaningful feature tests alongside the feature in an approved phase.
+`npm test` runs 64 tests. `npm run test:db` runs the retained 15 PostgreSQL/actual
+terminal regression tests and requires a separate disposable `TEST_DATABASE_URL`.
+CI starts native PostgreSQL 17 with Compose and then runs migration, seed and
+HTTP development smoke checks. Native tests now also read the claim view and
+generated fields. This workspace has no Docker/native PostgreSQL executable;
+the current phase runs PGlite locally and checks native CI after pushing.
 
-Future test groups:
+`npm run smoke:production` covers the four product APIs (including unsupported
+POST), 19 page routes, assets/security headers and closed checkout. `smoke:dev`
+starts the existing Next.js development command on port 3000 and stops it after
+testing. Neither command publishes anything.
 
-| Group | Examples |
-| --- | --- |
-| Unit | BDT precision, independent input rules, allowed status transitions, encryption tamper rejection |
-| Database integration | Unique TrxIDs/order codes, concurrent claims, transaction rollback, private access |
-| Route/security | Authorization, CSRF/origin validation, rate limits, Turnstile failures, request size limits |
-| End-to-end | Server quote, valid submission, administrator verification, permitted delivery, rejection/refund policy |
-
-Use synthetic identities and payments, an isolated local database, and mocked
-email/bot services. Tests must not connect real Supabase, Resend, bKash, or AI
-platform accounts, and must not send WhatsApp messages.
-
-Important later attacks to cover: edited frontend prices, state/role injection,
-concurrent duplicate claims, order-code guessing, guessed customer-access tokens,
-repeated delivery requests, voucher exposure, and unavailable external services.
-
-Before a release, review the actual routes and data paths as well as test output.
-A green build and audit do not establish that a payment or authentication flow
-is safe. Phase 1 never claims to have implemented those protections.
-
-Phase 1 verification also checks routes, navigation, native FAQ interaction,
-responsive widths, and the checkout's no-submission/no-storage boundary with
-synthetic data. See `docs/phase-1-verification.md` for actual evidence and
-`docs/local-development.md` for owner checks. Browser tooling used for local
-review is separate from application dependencies; `npm test` still contains
-eleven configuration security tests, not a claimed payment feature suite.
+Mocks cannot certify external provider setup. PGlite serializes its one connection;
+run independent-connection concurrency and rendered mobile/browser flow tests in
+staging before real customer use. No real credentials or payments are required
+or permitted in the local automated suite.

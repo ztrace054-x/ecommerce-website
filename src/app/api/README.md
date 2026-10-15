@@ -1,10 +1,6 @@
-# Future API routes
-
-This folder reserves the App Router API boundary. It has no `route.ts` files,
-so Phase 1 exposes no order, payment, delivery, or administrator endpoints.
-The Order API belongs to Phase 3. The customer checkout currently displays and
-checks sample fields locally only.
-
-Later handlers must validate input and apply server-side authorization and the
-relevant abuse protections. Never trust a price, status, role, or voucher claim
-from a browser. Do not add placeholder handlers that approve every request.
+Implemented product list/single-product GET, quote, payment-claim, private-tracking
+and protected admin routes. Keep handlers thin: validate input, enforce access,
+call server-only catalog/RPC services, and return the shared private/no-store JSON
+error shape. The browser must never import database adapters. See docs/api.md for
+contracts and docs/phase-2-foundation-audit.md for current scope. No new admin UI,
+provider activation or deployment belongs to this phase.
