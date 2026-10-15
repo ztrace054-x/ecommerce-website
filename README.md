@@ -54,8 +54,9 @@ Its earlier deployment was rechecked as `succeeded` before publishing was paused
 The review requires the owner's ChatGPT sign-in and keeps payment collection closed.
 
 Review PR: https://github.com/ztrace054-x/ecommerce-website/pull/1
-All 69 tests and both builds also passed in native PostgreSQL GitHub CI. The
-workflow remains blocked only at the full dependency audit described below.
+All 79 tests (64 unit/API/PGlite plus 15 native PostgreSQL/terminal) and both
+builds passed in GitHub CI for code commit `b887d04` on 15 October. The workflow
+remains blocked only at the full dependency audit described below.
 
 ## Run locally
 

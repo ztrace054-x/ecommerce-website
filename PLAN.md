@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-14. Current scope: **Phase 2 database and backend foundation**.
+Last updated: 2026-10-15. Current scope: **Phase 2 database and backend foundation**.
 
 The owner's current request authorizes the Phase 2 audit, additive database/API
 foundation, tests, documentation and source commits. Preserve all frontend and
@@ -553,7 +553,7 @@ below is retained as history; the current checkpoint follows it.
   policies remain missing. Review publication does not activate the business.
 
 
-## Phase 2 foundation continuation — 14 October 2026 (current)
+## Phase 2 foundation continuation — completed 15 October 2026 (current)
 
 ### Done
 
@@ -567,6 +567,10 @@ below is retained as history; the current checkpoint follows it.
   tracking. No public database access or default admin was introduced.
 - Passed environment/lint/types, journal checks, 64 local tests, both builds,
   development smoke and production smoke (19 pages, assets and product APIs).
+- Pushed code as `b887d04b6c20c298d7f75de374c69264766e6f36`. CI run
+  `38712601967` also passed all 15 native PostgreSQL/terminal tests, migration
+  replay/seed and database-backed development smoke. All 79 tests passed;
+  the complete workflow fails only at the existing dependency audit.
 - Updated current architecture/database/API/security documentation and recorded
   created files and evidence in `docs/phase-2-foundation-audit.md`.
 - Deployment, publishing, Vercel connection and live-service activation remain
@@ -574,7 +578,7 @@ below is retained as history; the current checkpoint follows it.
 
 ### Next
 
-- Check native PostgreSQL/terminal CI on the pushed source; keep the PR unmerged.
+- Keep the reviewed source committed and the PR unmerged; publishing stays paused.
 - Complete authorized staging/provider/browser checks, business approvals,
   backup/retention procedures and full security review before any activation.
 - Leave support permissions, claim corrections/refunds and deployment for later

@@ -1,5 +1,8 @@
 # Phase 2 foundation audit and implementation plan — 14 October 2026
 
+Implementation and handoff completed on 15 October 2026. Verified code commit:
+`b887d04b6c20c298d7f75de374c69264766e6f36` on `phase-3-marketplace`.
+
 ## Current authorization
 
 Complete the database/backend foundation in the existing repository. Preserve
@@ -123,7 +126,15 @@ bypass the underlying tables' row security.
 | Development HTTP smoke | Default port 3000, four sample plans, invalid selectors, policies/tracking/admin routes and closed checkout passed; server stopped |
 | Runtime dependency audit | Zero known vulnerabilities reported |
 | Full dependency audit | Existing braces advisory still fails: six high affected package entries, one underlying advisory; not suppressed |
-| Native PostgreSQL/terminal suite | 15 existing tests extended; runs in GitHub CI after push, not claimed as locally executed |
+| Native PostgreSQL/terminal suite | All 15 passed in GitHub CI; fresh Drizzle migration/replay, native concurrent uniqueness and new fields/view verified |
+| Native migrate/seed/development smoke | All passed in the same CI run |
+
+[CI run 38712601967](https://github.com/ztrace054-x/ecommerce-website/actions/runs/38712601967)
+checked the exact code commit above on 15 October. All functional steps passed:
+64 unit/API/PGlite tests plus 15 native PostgreSQL/terminal tests (79 total), both
+builds, production smoke, migration/seed and database-backed development smoke.
+The run is **failed overall** solely at the existing full dependency audit;
+the advisory is not hidden or downgraded. This is a source/CI result, not deployment.
 
 PGlite tests execute the actual PostgreSQL migration SQL and query the generated
 schema through Drizzle. They cover fresh schemas and populated upgrades across
