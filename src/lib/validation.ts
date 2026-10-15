@@ -115,12 +115,10 @@ export const statusSchema = z
     }
   });
 export const noteSchema = z.object({ note: plainText(1, 2000) }).strict();
+export const productSlugSchema = z.string().max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 export const productSchema = z
   .object({
-    slug: z
-      .string()
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-      .max(80),
+    slug: productSlugSchema,
     name: plainText(2, 100),
     description: plainText(10, 2000),
     category: plainText(2, 50),

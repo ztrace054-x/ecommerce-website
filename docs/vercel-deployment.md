@@ -1,5 +1,9 @@
 # Vercel deployment preparation and production verification
 
+**Deployment is paused.** The owner's later Phase 2 request explicitly forbids
+Vercel connection and publishing. Retain these steps for a later authorized
+release; do not execute them as part of the current foundation work.
+
 Date: 14 October 2026. Continue the existing `phase-3-marketplace` branch.
 Audited starting commit: `24d745e860e5a1dc3900754c3e97f4eb0888acb7`.
 `main` still contains the older Phase 1 source; draft PR #1 is unmerged.

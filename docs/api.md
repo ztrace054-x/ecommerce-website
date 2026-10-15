@@ -7,6 +7,19 @@ Mutation and tracking requests must carry the exact APP_URL Origin and
 `Content-Type: application/json`. Cross-origin credentials/CORS are not enabled.
 Bodies are streamed with a 16 KiB limit (login: 4 KiB).
 
+## Products
+
+GET `/api/products` returns `{products, sample}`. GET `/api/products/[slug]`
+returns `{product, sample}` from that same public catalog. Slugs use the existing
+lowercase alphanumeric/hyphen format, up to 80 characters; legacy UUID slugs work.
+Malformed, unknown and inactive selectors return the same 404 `product_not_found`.
+Configured upstream failure returns 503 rather than a sample result. Unconfigured
+samples remain `sample:true` and `active:false`; a GET never creates an order.
+Only GET is implemented (framework HEAD/OPTIONS apply); writes receive 405.
+
+The `payment_claims` database view is private. No public claim-list or direct
+database endpoint is added. Existing customer tracking retains its narrow DTO.
+
 ## Quote and claim
 
 POST `/api/orders/quote` accepts only `{ "productId": "<UUID>" }` and returns a
@@ -30,10 +43,13 @@ returns no database availability information about somebody else's TrxID.
 
 ## Administrator
 
-POST `/api/admin/auth/login` accepts email/password. Provider tokens are never
+POST `/api/admin/auth/login` accepts email/password and the enrolled authenticator
+`mfaCode`. Provider tokens are never
 returned to JavaScript; the response sets an HttpOnly cookie. GET `/session`
 checks provider and DB role/session. POST `/logout` revokes the application
 session and expires the cookie. No signup or default-password route exists.
+Current admin operations require role `admin`. Reserved `support` identities
+have no web session/admin permissions until a future scoped authorization design.
 
 GET `/api/admin/orders?q=…&status=all&page=1` returns 25 orders/page and total.
 GET `/api/admin/orders/[id]` returns order, internal notes and audit events.

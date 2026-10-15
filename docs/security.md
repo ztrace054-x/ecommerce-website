@@ -3,6 +3,8 @@
 This document describes controls in the continuation source. Configuration and
 actual-provider verification remain separate; a review build is not a commercial
 security certification. Historical foundation evidence remains in the phase docs.
+Current scope is Phase 2 foundation only. Deployment, publishing and Vercel/live
+provider connections are paused by the owner.
 
 ## Implemented controls
 
@@ -25,6 +27,14 @@ security certification. Historical foundation evidence remains in the phase docs
 - Parameterized PostgreSQL functions enforce quote/session locking, unique
   canonical TrxIDs, positive integer prices, foreign keys, valid status/version
   checks and atomic status/note/audit changes. No client-supplied price is used.
+- Products/orders constrain currency to BDT. Payment status is a generated
+  column, preventing independently forged payment state. The private claim view
+  uses security_invoker/security_barrier and SELECT-only runtime privileges;
+  anonymous/authenticated roles have no access. Tests also prove underlying RLS
+  still denies rows if SELECT is accidentally granted to an ordinary role.
+- Existing admin/session RPCs explicitly require role `admin`. Reserved `support`
+  identities cannot open or reuse sessions or run admin actions. Role changes
+  deny subsequent session lookup; the role never comes from editable user metadata.
 - Anonymous/authenticated DB roles have no application table grants or RPC
   execute grants. RPCs are security invoker with an empty search path. A server
   service credential is required. Runtime audit/note grants exclude UPDATE/DELETE.
@@ -101,6 +111,13 @@ provider failure/replay, tracking privacy, session revocation, transitions and
 rollback. PGlite uses a single connection; production concurrency and provider
 configuration require actual staging checks. New browser QA is unavailable in
 this environment and is not inferred from a successful build.
+The Phase 2 continuation adds populated-upgrade preservation across all six
+retained statuses, payment review attribution, generated-column/currency guards,
+role downgrade denial, and the single-product API's inactive/outage boundaries.
+The journal is loaded dynamically by tests so new migrations cannot be silently
+omitted. Native PostgreSQL/Drizzle replay and concurrent uniqueness tests remain
+in CI; PGlite's prepared migrator cannot replay the older multi-statement RPC
+chunk, so local tests apply the actual SQL via exec and query through Drizzle.
 
 References: Supabase password security/database function documentation and
 Cloudflare Turnstile server validation are linked in the architecture document.

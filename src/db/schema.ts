@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check, foreignKey, index, inet, integer, pgEnum, pgTable, text,
-  timestamp, unique, uuid, varchar, boolean, jsonb, primaryKey,
+  timestamp, unique, uuid, varchar, boolean, jsonb, primaryKey, pgView,
 } from "drizzle-orm/pg-core";
 
 export const deliveryType = pgEnum("delivery_type", ["A", "B", "C"]);
@@ -13,6 +13,9 @@ export const deliveryCodeStatus = pgEnum("delivery_code_status", ["available", "
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
 export const products = pgTable("products", {
+  currency: varchar("currency", { length: 3 }).notNull().default("BDT"),
+  // Preserve the existing metadata write path without a second category value.
+  category: text("category").notNull().generatedAlwaysAs(sql`coalesce(nullif(btrim(storefront_metadata->>'category'), ''), 'সেবা')`),
   storefrontSlug: text("storefront_slug").unique("products_storefront_slug_unique"),
   storefrontMetadata: jsonb("storefront_metadata").notNull().default({}),
   id: uuid("id").primaryKey().defaultRandom(),
@@ -24,6 +27,7 @@ export const products = pgTable("products", {
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
+  check("products_currency_bdt", sql`${t.currency} = 'BDT'`),
   check("products_price_positive", sql`${t.priceBdt} > 0`),
   check("products_name_nonempty", sql`length(btrim(${t.name})) >= 2`),
   check("products_description_nonempty", sql`length(btrim(${t.description})) >= 2`),
@@ -31,6 +35,14 @@ export const products = pgTable("products", {
 ]).enableRLS();
 
 export const orders = pgTable("orders", {
+  currency: varchar("currency", { length: 3 }).notNull().default("BDT"),
+  // Payment remains verified after fulfillment; clients cannot edit this value.
+  paymentStatus: text("payment_status").notNull().generatedAlwaysAs(sql`CASE
+    WHEN status = 'pending' THEN 'unpaid'
+    WHEN status = 'submitted' THEN 'submitted'
+    WHEN status = 'rejected' THEN 'rejected'
+    WHEN status = 'refunded' THEN 'refunded'
+    ELSE 'verified' END`),
   checkoutSessionId: uuid("checkout_session_id").unique("orders_checkout_session_id_unique").references(() => checkoutSessions.id),
   productSnapshot: jsonb("product_snapshot"),
   trackingTokenHash: text("tracking_token_hash"),
@@ -54,6 +66,7 @@ export const orders = pgTable("orders", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   adminNote: varchar("admin_note", { length: 2000 }),
 }, (t) => [
+  check("orders_currency_bdt", sql`${t.currency} = 'BDT'`),
   check("orders_tracking_token_format", sql`${t.trackingTokenHash} IS NULL OR ${t.trackingTokenHash} ~ '^[a-f0-9]{64}$'`),
   check("orders_claim_fingerprint_format", sql`${t.claimFingerprint} IS NULL OR ${t.claimFingerprint} ~ '^[a-f0-9]{64}$'`),
   check("orders_version_positive", sql`${t.version} > 0`),
@@ -104,6 +117,8 @@ export const deliveryCodes = pgTable("delivery_codes", {
 ]).enableRLS();
 
 export const adminUsers = pgTable("admin_users", {
+  // Support is reserved. Current admin RPCs/session creation require 'admin'.
+  role: text("role").$type<"admin" | "support">().notNull().default("admin"),
   authUserId: uuid("auth_user_id").unique("admin_users_auth_user_id_unique"),
   isActive: boolean("is_active").notNull().default(false),
   id: uuid("id").primaryKey().defaultRandom(),
@@ -115,6 +130,7 @@ export const adminUsers = pgTable("admin_users", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [
+  check("admin_users_role_valid", sql`${t.role} IN ('admin', 'support')`),
   check("admin_users_email_canonical", sql`${t.email} = lower(btrim(${t.email})) AND length(${t.email}) >= 3`),
   check("admin_users_password_hash_format", sql`${t.passwordHash} ~ '^scrypt-v1[$]131072[$]8[$]1[$][A-Za-z0-9_-]{43}[$][A-Za-z0-9_-]{86}$'`),
   check("admin_users_totp_ciphertext_format", sql`${t.totpSecretEncrypted} IS NULL OR (${t.totpSecretEncrypted} ~ '^v1[.][A-Za-z0-9_-]{16}[.][A-Za-z0-9_-]{22}[.][A-Za-z0-9_-]+$' AND octet_length(${t.totpSecretEncrypted}) <= 16384)`),
@@ -188,3 +204,32 @@ export const rateLimits = pgTable(
   },
   (t) => [primaryKey({ columns: [t.key, t.windowStart] }), check("ai_rate_limits_hits_positive", sql`${t.hits} > 0`)],
 ).enableRLS();
+
+// One immutable claim per order. Keep the existing orders/audit tables as the
+// authority, with a private read-only projection rather than dual writes.
+export const paymentClaims = pgView("payment_claims", {
+  orderId: uuid("order_id").notNull(),
+  trxId: varchar("trx_id", { length: 10 }).notNull(),
+  senderBkashNumber: varchar("sender_bkash_number", { length: 11 }).notNull(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull(),
+  verificationStatus: text("verification_status").notNull(),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  reviewedBy: uuid("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewAuditId: uuid("review_audit_id"),
+}).with({ securityInvoker: true, securityBarrier: true }).as(sql`
+  SELECT o.id AS order_id, o.trx_id, o.sender_bkash_number, o.submitted_at,
+    o.payment_status AS verification_status, o.verified_at,
+    review.admin_id AS reviewed_by, review.created_at AS reviewed_at,
+    review.id AS review_audit_id
+  FROM public.orders o
+  LEFT JOIN LATERAL (
+    SELECT a.id, a.admin_id, a.created_at FROM public.audit_logs a
+    WHERE a.order_id = o.id AND (
+      (o.status IN ('verified', 'delivered', 'refunded') AND a.action = 'order.verified')
+      OR (o.status = 'rejected' AND a.action = 'order.rejected')
+    )
+    ORDER BY a.created_at DESC, a.id DESC LIMIT 1
+  ) review ON true
+  WHERE o.trx_id IS NOT NULL
+`);

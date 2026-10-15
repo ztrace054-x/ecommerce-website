@@ -10,6 +10,13 @@ extends that work with migration `0002_marketplace`; it has not been rebuilt.
 
 ## Current progress
 
+**Current task: Phase 2 database/backend foundation; deployment is paused.**
+No Vercel connection, website publishing or real-service activation is authorized
+for this phase. [Phase 2 audit and progress](docs/phase-2-foundation-audit.md)
+records the existing implementation, additive changes, checks and future work.
+Migration `0003_phase_2_foundation` adds explicit currency/category/payment status,
+a private payment-claim view and role checks while preserving earlier data/flows.
+
 Customer catalog, database quotes, validated payment claims, private tracking,
 admin authentication, order verification/rejection/delivery, internal notes,
 product management and audit history are implemented. PostgreSQL constraints
@@ -41,9 +48,10 @@ navigation and clearer closed-checkout guidance while retaining the backend.
 the exact branch/build/environment settings and manual deployment steps. The
 committed `vercel.json` selects `npm run build:next` for Vercel.
 
-Published private review: https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
-The current deployment was rechecked as `succeeded` on 14 October. The review requires
-the owner's ChatGPT sign-in and keeps real payment collection closed.
+Earlier private review (not updated by this Phase 2 work):
+https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
+Its earlier deployment was rechecked as `succeeded` before publishing was paused.
+The review requires the owner's ChatGPT sign-in and keeps payment collection closed.
 
 Review PR: https://github.com/ztrace054-x/ecommerce-website/pull/1
 All 69 tests and both builds also passed in native PostgreSQL GitHub CI. The
@@ -98,6 +106,7 @@ Installation/builds do not configure Supabase or take real payments.
 | API                                              | Methods / behavior                                                       |
 | ------------------------------------------------ | ------------------------------------------------------------------------ |
 | `/api/products`                                  | GET active catalog; explicitly labelled samples only when unconfigured   |
+| `/api/products/[slug]`                           | GET one public product with the same sample label; unknown/inactive → 404 |
 | `/api/orders/quote`                              | POST product ID; quote price and recipient come from the server/database |
 | `/api/orders`                                    | POST validated customer/payment claim; TrxID has DB-level uniqueness     |
 | `/api/orders/validate-transaction`               | POST syntax check only; never confirms payment or exposes other claims   |

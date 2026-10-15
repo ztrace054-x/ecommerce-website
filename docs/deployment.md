@@ -1,5 +1,10 @@
 # Deployment and activation
 
+**Paused by the owner's latest instruction.** Phase 2 database/backend work is
+authorized; deployment, publishing, Vercel connection and live provider setup
+are not. The URL/status and procedures below are historical/future reference,
+not authorization to publish current commits. See phase-2-foundation-audit.md.
+
 The published private review of the existing application is:
 https://ai-seba-marketplace.cwrtravel1102.chatgpt.site
 The current hosting deployment was rechecked as `succeeded` on 14 October 2026; this confirms

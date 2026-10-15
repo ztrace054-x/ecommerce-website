@@ -11,6 +11,7 @@ import { GET as sessionRoute } from "../src/app/api/admin/auth/session/route.ts"
 import { GET as orderListRoute } from "../src/app/api/admin/orders/route.ts";
 import { PATCH as updateRoute } from "../src/app/api/admin/orders/[id]/route.ts";
 import { GET as productsRoute } from "../src/app/api/products/route.ts";
+import { GET as productRoute } from "../src/app/api/products/[slug]/route.ts";
 import {
   GET as adminProductsRoute,
   POST as createProductRoute,
@@ -41,6 +42,9 @@ const consumed = new Set<string>();
 let databaseDown = false;
 let authDown = false;
 let botDown = false;
+async function getProduct(slug: string) {
+  return productRoute(new Request(`${appUrl}/api/products/${encodeURIComponent(slug)}`), { params: Promise.resolve({ slug }) });
+}
 before(async () => {
   Object.assign(process.env, {
     SUPABASE_URL: "https://synthetic.supabase.co",
@@ -127,6 +131,55 @@ before(async () => {
     }
     throw new Error("Unexpected test network call");
   };
+});
+
+test("single-product API exposes only the active catalog projection and hides unknown/inactive products", async () => {
+  const response = await getProduct("synthetic-service");
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store, private");
+  const data = await response.json();
+  assert.equal(data.product.id, productId);
+  assert.equal(data.product.pricePoisha, 50000);
+  assert.equal(data.sample, false);
+  assert.equal(data.product.storefrontMetadata, undefined);
+  const unknown = await getProduct("unknown");
+  assert.equal(unknown.status, 404);
+  await db.query("UPDATE public.products SET is_active=false WHERE id=$1", [productId]);
+  try {
+    const inactive = await getProduct("synthetic-service");
+    assert.equal(inactive.status, 404);
+    assert.deepEqual(await inactive.json(), await unknown.json());
+  } finally { await db.query("UPDATE public.products SET is_active=true WHERE id=$1", [productId]); }
+});
+
+test("single-product API rejects malformed identifiers and fails closed on configured outages", async () => {
+  databaseDown = true;
+  try {
+    for (const slug of ["../admin", "' OR 1=1 --", "a".repeat(81), ""]) {
+      assert.equal((await getProduct(slug)).status, 404);
+    }
+    const unavailable = await getProduct("synthetic-service");
+    assert.equal(unavailable.status, 503);
+    assert.ok(!(await unavailable.text()).includes("SYNTHETIC_SERVER_ROLE_TOKEN"));
+  } finally { databaseDown = false; }
+});
+
+test("single-product API labels unconfigured samples and does not enable their purchase", async () => {
+  const config = { SUPABASE_URL: process.env.SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY! };
+  const databaseUrl = process.env.DATABASE_URL;
+  Object.assign(process.env, { SUPABASE_URL: "", SUPABASE_SERVICE_ROLE_KEY: "", DATABASE_URL: "" });
+  try {
+    const response = await getProduct("ai-setup");
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.sample, true);
+    assert.equal(data.product.active, false);
+    assert.equal(checkoutSettings().ordersOpen, false);
+  } finally {
+    Object.assign(process.env, config);
+    if (databaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = databaseUrl;
+  }
 });
 after(async () => {
   globalThis.fetch = originalFetch;

@@ -4,8 +4,9 @@ import type { PGlite } from "@electric-sql/pglite";
 // Apply the real immutable Phase 2 history before the additive continuation.
 export async function migrateMarketplace(db: PGlite) {
   await db.exec("CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;");
-  for (const name of ["0000_phase_2_schema", "0001_order_price_guards", "0002_marketplace"]) {
-    await db.exec(readFileSync(new URL(`../../src/db/migrations/${name}.sql`, import.meta.url), "utf8"));
+  const journal = JSON.parse(readFileSync(new URL("../../src/db/migrations/meta/_journal.json", import.meta.url), "utf8")) as { entries: { tag: string }[] };
+  for (const { tag } of journal.entries) {
+    await db.exec(readFileSync(new URL(`../../src/db/migrations/${tag}.sql`, import.meta.url), "utf8"));
   }
 }
 // Shape-only synthetic fixture, never an actual login credential or seed default.

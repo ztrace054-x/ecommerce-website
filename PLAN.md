@@ -1,11 +1,14 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-14. Current scope: **deployment preparation and production verification only**.
+Last updated: 2026-10-14. Current scope: **Phase 2 database and backend foundation**.
 
-The owner's current request covers production testing, Vercel preparation and
-online review. Do not start or extend backend implementation in this task; keep
-the existing advanced branch's backend/admin work intact. Earlier phase-specific
-approval statements below are historical; preserve requirements and history.
+The owner's current request authorizes the Phase 2 audit, additive database/API
+foundation, tests, documentation and source commits. Preserve all frontend and
+earlier backend work. **Do not deploy, publish, connect Vercel or live services.**
+Do not add admin UI, payment gateway integration or email automation. Earlier
+deployment and phase-specific approval statements below are historical.
+The current audit, implementation decisions and completion evidence are in
+[phase-2-foundation-audit.md](docs/phase-2-foundation-audit.md).
 See docs/repository-audit.md and docs/architecture-continuation.md for the current
 implementation roadmap and decisions.
 
@@ -548,3 +551,42 @@ below is retained as history; the current checkpoint follows it.
   unavailable/not rerun here. HTTP smoke and 54 synthetic tests do not replace them.
 - Actual provider/payment/support details, approved products/prices and final
   policies remain missing. Review publication does not activate the business.
+
+
+## Phase 2 foundation continuation — 14 October 2026 (current)
+
+### Done
+
+- Audited the latest `phase-3-marketplace` branch at `247f425`; preserved all
+  completed frontend and original database/API/admin work.
+- Added migration `0003_phase_2_foundation`: BDT-only currency, generated product
+  category/payment status, private security-invoker payment-claim view and
+  explicit admin/support role with denied support sessions/operations.
+- Added single-product GET through the existing server catalog; retained strict
+  validation, server-controlled prices, unique immutable TrxIDs and private
+  tracking. No public database access or default admin was introduced.
+- Passed environment/lint/types, journal checks, 64 local tests, both builds,
+  development smoke and production smoke (19 pages, assets and product APIs).
+- Updated current architecture/database/API/security documentation and recorded
+  created files and evidence in `docs/phase-2-foundation-audit.md`.
+- Deployment, publishing, Vercel connection and live-service activation remain
+  paused. No new UI, payment gateway or email automation was added.
+
+### Next
+
+- Check native PostgreSQL/terminal CI on the pushed source; keep the PR unmerged.
+- Complete authorized staging/provider/browser checks, business approvals,
+  backup/retention procedures and full security review before any activation.
+- Leave support permissions, claim corrections/refunds and deployment for later
+  explicit scope. The earlier Vercel connection task is paused.
+
+### Known issues
+
+- Full dependency audit still flags six build-chain entries for the existing
+  braces advisory. Runtime audit reports zero; full CI is not claimed green.
+- Local PGlite checks do not establish native concurrent or real-provider behavior;
+  native migration/replay/unique-claim tests remain in GitHub CI.
+- Payment Claims is a private read model of the existing one-claim-per-order
+  store. Missing historical admin review records remain NULL.
+- Actual Supabase/payment credentials, policies and approved catalog are absent;
+  checkout remains closed. No rendered browser QA or publication occurred here.

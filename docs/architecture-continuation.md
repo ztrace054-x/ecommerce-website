@@ -2,8 +2,9 @@
 
 The existing Next.js App Router application, Bangla interface and plain CSS are
 retained. No starter app replaces them. The audit is in `repository-audit.md`.
-The latest owner request authorizes backend/admin/customer continuation and a
-review deployment. Historical frontend-only approval boundaries are superseded.
+The current owner request authorizes the Phase 2 foundation audit and additive
+database/API work. Deployment, publishing and Vercel connection are paused.
+Earlier deployment authorization is historical. Existing admin UI is preserved.
 
 ## Database and request boundaries
 
@@ -13,6 +14,11 @@ are unchanged. `0002_marketplace.sql` adds checkout/session/note/rate tables,
 columns, privileges and transactional RPCs to the existing schema. Apply the
 journal with the existing migration CLI, never schema push or replacement DDL.
 Do not create or modify provider-owned `auth.users` through these migrations.
+
+`0003_phase_2_foundation` adds BDT currency checks, generated category/payment
+status, an explicit admin role and a private `payment_claims` view. It replaces
+only the three existing admin/session guards to require role `admin`; their
+restricted grants remain intact. No existing migration or data row is replaced.
 
 Web marketplace requests use the Supabase HTTP interface, with a server-only service
 credential. This supports both Next.js on Node and the Sites Worker without a
@@ -27,6 +33,7 @@ parameters. They check administrator membership for every admin operation.
 | `products`             | Original products, whole-BDT integer prices and active flag; additive storefront slug/metadata |
 | `ai_checkout_sessions` | Pre-payment code, hash of random access token, price/product and recipient snapshots, 24-hour expiry; no customer PII     |
 | `orders`               | Original whole-BDT price, 10-character unique canonical TrxID and status/timestamps; additive snapshots/private tracking |
+| `payment_claims` (view) | Read-only claim projection with sender, status and nullable review actor/time/audit reference; security invoker |
 | `admin_users`          | Original scrypt identities, encryption/lock fields; additive provider identity and inactive-by-default web allowlist |
 | `ai_admin_sessions`    | Hashed provider token, expiry and immediate application revocation                                                        |
 | `audit_logs`           | Original actors/order/IP history; additive target/details, append-only runtime admin events |
@@ -38,6 +45,13 @@ The original Node/Compose catalog and CLIs retain Drizzle/node-postgres access.
 When only `DATABASE_URL` is configured, the storefront reads that database and
 labels it as a sample preview. A configured Supabase failure never switches to
 Node/sample data. The review Worker has no TCP database configuration.
+
+Products/orders explicitly constrain currency to BDT. `products.category` is
+generated from existing metadata, avoiding changes to the product write path.
+`orders.payment_status` is generated from the existing status: pending means
+unpaid; delivered keeps payment verified. The claim view uses the existing
+unique `orders.trx_id` and audit foreign keys. Legacy reviews without an audit
+retain NULL attribution; no administrator or payment proof is invented.
 
 `price_bdt`/`amount_expected` remain integer whole BDT. HTTP DTOs and new quote
 sessions use integer poisha with exact ×100 conversion and whole-BDT checks.
@@ -78,7 +92,9 @@ application session. Password-only and unenrolled logins cannot obtain a session
 The retained terminal CLI stores a scrypt hash and creates an inactive identity;
 it is not a web login or a substitute for provider enrollment.
 There is no public registration route or `ADMIN_SECRET` login. A successful
-provider login must also pass the active database allowlist. The provider token
+provider login must also pass the active database allowlist and the `admin` role.
+The reserved `support` role cannot open/reuse admin sessions or invoke admin
+operations; scoped support permissions require later review. The provider token
 stays in a short-lived `HttpOnly`, `SameSite=Strict` cookie (`Secure` over HTTPS).
 Every admin API verifies it with the provider and checks the unexpired,
 unrevoked application session. Sessions are capped at one hour; expiry requires

@@ -73,6 +73,17 @@ async function main() {
     assert.ok(!response.headers.get("content-type")?.includes("text/html"), "Assets must not resolve to an HTML fallback.");
   }
   assert.equal((await fetch(`${origin}/fonts/noto-sans-bengali.woff2`)).status, 200);
+  for (const product of mockProducts) {
+    const response = await fetch(`${origin}/api/products/${product.slug}`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store, private");
+    const data = await response.json();
+    assert.equal(data.sample, true);
+    assert.equal(data.product.active, false);
+    assert.equal(data.product.pricePoisha, product.pricePoisha);
+    assert.equal((await fetch(`${origin}/api/products/${product.slug}`, { method: "POST" })).status, 405);
+  }
+  assert.equal((await fetch(`${origin}/api/products/unknown`)).status, 404);
   for (const path of ["/not-a-real-page", "/products/unknown", "/checkout?product=unknown", "/checkout?product=ai-setup&product=prompt-training"]) {
     const response = await fetch(`${origin}${path}`);
     const html = await response.text();

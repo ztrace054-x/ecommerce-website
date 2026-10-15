@@ -1,5 +1,12 @@
 # Repository guidance
 
+Current owner instruction (14 October 2026): audit and complete the Phase 2
+database/backend foundation, preserve the existing frontend and earlier backend
+work, test and commit progress. Do not deploy, publish, connect Vercel, connect
+live services, or extend admin UI/payment integrations. This supersedes the
+historical deployment authorization below. GitHub source commits and CI checks
+are authorized; neither the workflow nor this task publishes a website.
+
 Read README.md and PLAN.md before changes. Continue the existing project; never
 replace it with a starter. The owner's 13 October 2026 request authorizes the
 repository audit, backend/admin/customer development, testing, documentation and

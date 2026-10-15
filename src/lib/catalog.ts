@@ -4,6 +4,8 @@ import { databaseConfig } from "./config.ts";
 import { rpc } from "../db/client.ts";
 import type { Product } from "./domain.ts";
 import { productPresentation } from "./product-presentation.ts";
+import { productSlugSchema } from "./validation.ts";
+import { AppError } from "./errors.ts";
 
 export const sampleCatalog: Product[] = mockProducts.map((p, i) => ({
   ...p,
@@ -30,4 +32,15 @@ export async function catalog(): Promise<{products:Product[];sample:boolean}> {
  }
  const products=await rpc<Product[]>("ai_catalog",{});
  return {products,sample:process.env.CATALOG_APPROVED!=="true"};
+}
+
+export async function catalogProduct(input: unknown): Promise<{ product: Product; sample: boolean }> {
+  const slug = productSlugSchema.safeParse(input);
+  const missing = () => new AppError(404, "product_not_found", "সেবাটি পাওয়া যায়নি।");
+  if (!slug.success) throw missing();
+  const { products, sample } = await catalog();
+  const product = products.find((item) => item.slug === slug.data);
+  // catalog() already restricts configured data to publicly selectable products.
+  if (!product) throw missing();
+  return { product, sample };
 }

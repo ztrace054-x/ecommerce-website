@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { before, after, test } from "node:test";
 import { randomUUID } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
-import { products, orders, deliveryCodes, adminUsers, auditLogs } from "../src/db/schema.ts";
+import { products, orders, deliveryCodes, adminUsers, auditLogs, paymentClaims } from "../src/db/schema.ts";
 import { connectTestDatabase } from "./helpers/database.ts";
 import { applyMigrations } from "../src/server/database/migrations.ts";
 import { seedDemoProducts, demoProducts } from "../src/server/seed.ts";
@@ -45,6 +45,8 @@ test("fresh schema accepts an idempotent seed with A/B/C, no admins/vouchers/ord
   assert.equal((await db.select().from(adminUsers)).length, 0);
   assert.equal((await db.select().from(orders)).length, 0);
   assert.equal((await db.select().from(deliveryCodes)).length, 0);
+  assert.ok((await db.select().from(products)).every((row) => row.currency === "BDT" && row.category.length > 0));
+  assert.equal((await db.select().from(paymentClaims)).length, 0);
   const active = await listActiveProducts(db);
   assert.equal(active.length, 2);
   assert.equal(await findActiveProduct(voucherProductId, db), undefined);
@@ -60,6 +62,8 @@ test("pending order copies only the DB price, normalizes contacts and permits mu
   const [stored] = await db.select().from(orders).where(eq(orders.id, first.id));
   assert.equal(stored!.trxId, null);
   assert.equal(stored!.submittedAt, null);
+  assert.equal(stored!.currency, "BDT");
+  assert.equal(stored!.paymentStatus, "unpaid");
   assert.equal(stored!.customerEmail, "demo@example.com");
   assert.equal(stored!.whatsapp, "+8801700000000");
   await assert.rejects(createPendingOrder({ ...customer, amountExpected: 1 }, db), { name: "ZodError" });
@@ -90,6 +94,10 @@ test("duplicate canonical TrxID is rejected by PostgreSQL, including concurrent 
   const rejected = results.find((result) => result.status === "rejected");
   assert.ok(rejected?.status === "rejected");
   assert.equal(isDatabaseError(rejected.reason, "23505", "orders_trx_id_unique"), true);
+  const claims = await db.select().from(paymentClaims).where(eq(paymentClaims.trxId, canonical));
+  assert.equal(claims.length, 1);
+  assert.equal(claims[0]!.verificationStatus, "submitted");
+  assert.equal(claims[0]!.reviewedBy, null);
 });
 
 test("direct DB writes cannot bypass TrxID uppercase/length/space checks or pending/submitted state constraints", async () => {
