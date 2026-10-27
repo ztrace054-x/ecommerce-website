@@ -14,6 +14,7 @@ export function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers } });
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("Cache-Control", "private, no-store");
+  if (["/track", "/api/orders/track"].includes(request.nextUrl.pathname)) response.headers.set("Referrer-Policy", "no-referrer");
   return response;
 }
 export const config = { matcher: ["/((?!_next/static|_next/image|fonts/|favicon.ico).*)"] };
