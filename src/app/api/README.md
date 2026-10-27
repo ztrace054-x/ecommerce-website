@@ -1,10 +1,6 @@
-# Future API routes
+# Customer API
 
-This folder reserves the App Router API boundary. It has no `route.ts` files,
-so Phase 1 exposes no order, payment, delivery, or administrator endpoints.
-The Order API belongs to Phase 3. The customer checkout currently displays and
-checks sample fields locally only.
-
-Later handlers must validate input and apply server-side authorization and the
-relevant abuse protections. Never trust a price, status, role, or voucher claim
-from a browser. Do not add placeholder handlers that approve every request.
+POST /api/orders creates a submitted payment claim, not a verified payment.
+Other methods return 405. See ../../../docs/phase-4-order-api.md for configuration,
+processing order, error responses, rate limits and manual verification boundaries.
+No admin, tracking, delivery or email APIs are implemented.
