@@ -340,6 +340,23 @@ Never use real payments, real customer details, real vouchers, or production
 credentials in development tests. Record proof of actual checks and limitations;
 a successful build or a clean dependency audit is not a complete security review.
 
+## Phase 5 branch checkpoint — 2026-10-27
+
+The owner authorized merging PR #2 and then customer tracking on a new branch.
+PR #2 merged as `7a00318843050ed862bad0eb84773f50a7e3ef10`; all post-merge
+checks passed on clean main (26 tests, build, audit zero). Earlier phase notes
+below retain their historical status.
+
+- **Done:** customer lookup API/page, hashed PostgreSQL code locks, per-IP limits,
+  shared security helpers, private response shape, bilingual timeline and safe
+  checkout handoff. Phase 5 lint/types/37 tests/build/audit and live curl checks
+  passed. See [evidence](docs/phase-5-order-tracking.md).
+- **Next:** review the Phase 5 PR; do not merge automatically. Phase 6 admin panel
+  with 2FA needs separate approval.
+- **Known issues:** pending: verify manually in a real browser. Do not trust the
+  proxy CA. Confirm deployment IP headers/replica behavior and review the weak
+  four-digit possession factor and intentional lockout availability tradeoff.
+
 ## Phase 4 branch checkpoint — 2026-10-27
 
 The owner explicitly authorized the customer-side order API in this task on

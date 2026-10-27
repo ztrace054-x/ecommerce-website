@@ -6,6 +6,13 @@ checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
 Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
 its [Progress section](PLAN.md#progress) records done, next, and known issues.
 
+## Branch update: Phase 5 tracking
+
+Phase 4 is merged. `feat/phase-5-order-track` adds customer tracking by order code
+and the sending bKash number's last four digits. See [Phase 5 setup and evidence](docs/phase-5-order-tracking.md)
+for migration, limits, verification and remaining manual checks. No new environment
+variables or dependencies are required. This branch is for review, not deployment.
+
 ## Branch update: Phase 4 order API
 
 The owner explicitly authorized the customer-side order API on
