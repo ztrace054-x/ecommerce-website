@@ -1,14 +1,5 @@
-# Database preparation
+# PostgreSQL database
 
-PostgreSQL with Drizzle is the planned persistence layer. Supabase free-tier
-access is deferred until real-service connection is explicitly approved.
-
-Phase 2 will resolve the schema questions in PLAN.md, then add schema definitions,
-reviewed migrations, and synthetic local fixtures. No schema, database client,
-live connection, migrations, or real records exist in Phase 1. The single
-`src/data/mock-products.ts` file supplies sample presentation data only.
-
-Keep database access server-only, queries parameterized, access roles restricted,
-and duplicate/state constraints enforced in the database. Customer and voucher
-data must not be exposed by public Supabase access. An empty DATABASE_URL must
-never select a shared production database or an insecure fallback.
+See migrations/0001_orders.sql and ../../docs/phase-4-order-api.md for schema,
+explicit migration/seed commands, isolated tests, RLS and runtime-role requirements.
+Only submitted claims are created; no administrative transitions are exposed.
