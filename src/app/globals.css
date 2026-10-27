@@ -237,3 +237,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }
 }
+
+.track-page { max-width: 48rem; }
+.tracking-result { margin-top: 2rem; overflow-wrap: anywhere; }
+.tracking-result ol { display: flex; flex-wrap: wrap; gap: 1rem 2rem; padding-inline-start: 1.5rem; }
+.tracking-result [aria-current="step"] { font-weight: 700; }

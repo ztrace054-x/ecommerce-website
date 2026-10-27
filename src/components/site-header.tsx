@@ -14,6 +14,7 @@ export function SiteHeader() {
           <nav className="main-nav" aria-label="প্রধান মেনু">
             <Link href="/">হোম</Link>
             <Link href="/products">সেবা ও প্ল্যান</Link>
+            <Link href="/track">অর্ডার ট্র্যাক</Link>
             <Link href="/faq">প্রশ্নোত্তর</Link>
             <Link href="/contact">যোগাযোগ</Link>
           </nav>
