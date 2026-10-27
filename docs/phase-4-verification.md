@@ -42,7 +42,7 @@ HTTPS request to `https://challenges.cloudflare.com` returned HTTP 200.
 | GET | 405 with Allow: POST |
 | Malformed JSON | 400 |
 | Six rapid attempts with extra price | Five 400s, then 429 with Retry-After: 600 |
-| Checkout widget under nonce CSP | Pending approval: Chromium reported ERR_CERT_AUTHORITY_INVALID |
+| Checkout widget under nonce CSP | pending: verify manually in a real browser |
 
 The successful response amount matched the product's PostgreSQL price. Its
 public shape contains only `orderCode`, `amountExpected`, `status` and
@@ -60,7 +60,8 @@ confirmed. Curl and Node trust the existing environment-proxy CA, while Chromium
 NSS store does not. Automatic approval review rejected importing that CA into the
 persistent user trust store because it would broaden TLS interception. No trust
 change, certificate-verification bypass, captcha bypass, or mock was applied.
-The browser/widget check remains pending an approved trust configuration.
+The in-browser widget check is skipped in this environment at the owner's request;
+status: **pending: verify manually in a real browser**. Do not import or trust the proxy CA.
 
 All requested live API cases passed using the real external verification endpoint.
 This is not a completed-phase or production-readiness claim: the browser/widget

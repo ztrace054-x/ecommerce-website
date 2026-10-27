@@ -353,12 +353,13 @@ pushing, or merging. A submitted TrxID never proves payment.
   wiring and nonce CSP are implemented. Lint, strict types, all 26 tests, build
   and dependency audit passed. Current live evidence is recorded in
   [docs/phase-4-verification.md](docs/phase-4-verification.md).
-- **Next:** Finish the pending browser check after an approved trust setup.
+- **Next:** Widget check status: **pending: verify manually in a real browser**.
   Changes are organized into local logical commits without pushing or merging.
   All requested live API checks passed, including the official always-fail
   Turnstile key. Browser nonce checks passed, but actual widget loading remains
-  pending an approved Chromium trust configuration after certificate validation
-  failed; no trust change or verification bypass was applied. Hosted CI remains
+  pending manual verification in a real browser after certificate validation
+  failed. Do not import or trust the proxy CA; no trust change or verification
+  bypass was applied. Hosted CI remains
   unrun. This is not a completed-phase or production-readiness claim. Phase 5
   order tracking is a later task requiring an explicit access design.
 - **Known issues:** Production service configuration is unset. Confirm real
