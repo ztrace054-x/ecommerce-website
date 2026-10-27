@@ -6,6 +6,21 @@ checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
 Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
 its [Progress section](PLAN.md#progress) records done, next, and known issues.
 
+## Branch update: Phase 4 order API
+
+The owner explicitly authorized the customer-side order API on
+`feat/phase-4-order-api`. This branch adds local PostgreSQL migrations, submitted
+payment claims, database rate limits, Turnstile verification, and checkout wiring.
+It does not add administrator transitions, tracking, delivery, or email. A
+submitted claim is not a verified payment. No production database is connected,
+and no branch has been pushed or merged as part of this work.
+
+Use [Phase 4 setup](docs/phase-4-order-api.md) for this branch's required local
+database and configuration; the Phase 1 commands and descriptions below record
+the earlier frontend-only foundation. See [verification](docs/phase-4-verification.md)
+for actual results and remaining live checks. Production contacts, origin,
+credentials, and deployment assumptions still require configuration and review.
+
 ## Current stage: Phase 1 — customer frontend
 
 Phase 0 is approved and merged into `main`. The `phase-1` branch adds the Bangla

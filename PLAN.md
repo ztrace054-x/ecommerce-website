@@ -340,6 +340,32 @@ Never use real payments, real customer details, real vouchers, or production
 credentials in development tests. Record proof of actual checks and limitations;
 a successful build or a clean dependency audit is not a complete security review.
 
+## Phase 4 branch checkpoint — 2026-10-27
+
+The owner explicitly authorized the customer-side order API in this task on
+`feat/phase-4-order-api`, retaining the earlier phase history below. This scope
+adds the missing local database foundation and submitted claims only; it does
+not authorize administrator features, tracking, delivery, email, deployment,
+pushing, or merging. A submitted TrxID never proves payment.
+
+- **Done:** PostgreSQL migration/seed, Drizzle data access, security helpers,
+  Turnstile-protected order submission, database-backed rate limits, checkout
+  wiring and nonce CSP are implemented. Lint, strict types, all 26 tests, build
+  and dependency audit passed. Current live evidence is recorded in
+  [docs/phase-4-verification.md](docs/phase-4-verification.md).
+- **Next:** Widget check status: **pending: verify manually in a real browser**.
+  Changes are organized into local logical commits without pushing or merging.
+  All requested live API checks passed, including the official always-fail
+  Turnstile key. Browser nonce checks passed, but actual widget loading remains
+  pending manual verification in a real browser after certificate validation
+  failed. Do not import or trust the proxy CA; no trust change or verification
+  bypass was applied. Hosted CI remains
+  unrun. This is not a completed-phase or production-readiness claim. Phase 5
+  order tracking is a later task requiring an explicit access design.
+- **Known issues:** Production service configuration is unset. Confirm real
+  bKash TrxID format, Vercel IP-header behavior and serverless rate-limit operation
+  before launch. No production database or real customer data was used.
+
 ## Progress
 
 Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.

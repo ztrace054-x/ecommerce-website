@@ -11,6 +11,14 @@ const expectedNames = new Set([
   "RESEND_API_KEY",
   "ADMIN_SECRET",
   "ENCRYPTION_KEY",
+  "IP_HASH_SECRET",
+  "ALLOWED_ORIGINS",
+  "SITE_ORIGIN",
+  "TRUSTED_PROXY_MODE",
+  "ADMIN_WHATSAPP_NUMBER",
+  "BKASH_RECIPIENT_NUMBER",
+  "LOCAL_ORDER_SMOKE",
+  "ALLOW_LOCAL_SEED",
 ]);
 const failures = [];
 
