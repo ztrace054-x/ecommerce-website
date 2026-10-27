@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { connectDatabase } from "../../db/client.ts";
 import type { OrderInput } from "./validation.ts";
+import { createTrackingStore } from "./tracking-store.ts";
 import { generateOrderCode } from "./security.ts";
 
 export class OrderConflict extends Error {}
@@ -11,7 +12,8 @@ export function createOrderStore(url: string, nextCode = generateOrderCode) {
   const db = connection.db;
   return {
     close: connection.close,
-    async rateLimit(ipHash: string): Promise<number> {
+    tracking: createTrackingStore(db),
+    async rateLimit(ipHash: string, limits = { short: 5, day: 20 }): Promise<number> {
       return db.transaction(async tx => {
         // Serialize all replicas for this identity, including concurrent cold starts.
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${ipHash}, 0))`);
@@ -23,7 +25,7 @@ export function createOrderStore(url: string, nextCode = generateOrderCode) {
             ceil(extract(epoch FROM (min(created_at) + interval '1 day' - now())))::int AS day_retry
           FROM order_rate_events WHERE ip_hash = ${ipHash}`);
         const row = rows[0]!;
-        const retry = Math.max(Number(row.short_count) >= 5 ? Number(row.short_retry) : 0, Number(row.day_count) >= 20 ? Number(row.day_retry) : 0);
+        const retry = Math.max(Number(row.short_count) >= limits.short ? Number(row.short_retry) : 0, Number(row.day_count) >= limits.day ? Number(row.day_retry) : 0);
         if (retry > 0) return retry;
         await tx.execute(sql`INSERT INTO order_rate_events (ip_hash) VALUES (${ipHash})`);
         return 0;
