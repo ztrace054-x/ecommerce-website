@@ -1,3 +1,6 @@
+import { readJsonRequest } from "./request.ts";
+import { errorResponse } from "./responses.ts";
+export { errorResponse } from "./responses.ts";
 import "server-only";
 import { z } from "zod";
 import type { OrderEnv } from "../env/orders.ts";
@@ -5,12 +8,8 @@ import { getClientIp, hashIp } from "./security.ts";
 import { orderSchema } from "./validation.ts";
 import { OrderConflict, ProductUnavailable, type OrderStore } from "./store.ts";
 
-const BODY_LIMIT = 10 * 1024;
 const captchaResponse = z.object({ success: z.boolean(), hostname: z.string().optional(), action: z.string().optional() });
-export function errorResponse(status: number, code: string, message: string, headers: Record<string, string> = {}) {
-  return Response.json({ error: { code, message } }, { status, headers: { "Cache-Control": "no-store", ...headers } });
-}
-export async function verifyTurnstile(token: string, config: OrderEnv, origin: string) {
+export async function verifyTurnstile(token: string, config: OrderEnv, origin: string, action = "order") {
   try {
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST", body: new URLSearchParams({ secret: config.TURNSTILE_SECRET_KEY, response: token }),
@@ -22,32 +21,15 @@ export async function verifyTurnstile(token: string, config: OrderEnv, origin: s
   const officialTest = /^(1x|2x|3x)/.test(config.TURNSTILE_SECRET_KEY);
   if (officialTest && process.env.NODE_ENV !== "production") return true;
   if (officialTest && process.env.LOCAL_ORDER_SMOKE === "1") return true;
-  return result.data.hostname === new URL(origin).hostname && result.data.action === "order";
+  return result.data.hostname === new URL(origin).hostname && result.data.action === action;
   } catch { return false; }
 }
 export function createOrderHandler(config: OrderEnv, store: OrderStore, captcha = verifyTurnstile) {
   return async (request: Request) => {
     try {
-      const originHeader = request.headers.get("origin");
-      let origin: string;
-      try { origin = originHeader ?? new URL(request.headers.get("referer") ?? "").origin; }
-      catch { return errorResponse(403, "ORIGIN", "Request not permitted."); }
-      if (!config.ALLOWED_ORIGINS.includes(origin)) return errorResponse(403, "ORIGIN", "Request not permitted.");
-      if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get("content-type") ?? "")) return errorResponse(415, "CONTENT_TYPE", "JSON required.");
-      const declaredLength = request.headers.get("content-length");
-      if (declaredLength && (!/^\d+$/.test(declaredLength) || Number(declaredLength) > BODY_LIMIT)) return errorResponse(413, "BODY_SIZE", "Request too large.");
-      const reader = request.body?.getReader();
-      const chunks: Uint8Array[] = [];
-      let size = 0;
-      if (reader) {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          size += value.length;
-          if (size > BODY_LIMIT) { await reader.cancel(); return errorResponse(413, "BODY_SIZE", "Request too large."); }
-          chunks.push(value);
-        }
-      }
+      const boundary = await readJsonRequest(request, config.ALLOWED_ORIGINS);
+      if (boundary instanceof Response) return boundary;
+      const { origin, chunks } = boundary;
       const ipHash = hashIp(getClientIp(request, config.TRUSTED_PROXY_MODE), config.IP_HASH_SECRET);
       const retry = await store.rateLimit(ipHash);
       if (retry) return errorResponse(429, "RATE_LIMIT", "Too many attempts. Try again later.", { "Retry-After": String(retry) });
