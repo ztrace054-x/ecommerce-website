@@ -385,6 +385,19 @@ pushing, or merging. A submitted TrxID never proves payment.
 
 ## Progress
 
+### Phase 6 review checkpoint — 2026-10-29
+
+- **Done:** local PostgreSQL restored; merged main passed all 37 tests/build/audit.
+  Phase 6 adds admin migration, Argon2id/TOTP/recovery authentication, hashed
+  sessions, CSRF, order/product/audit UI and APIs. 44 tests/build/audit and real
+  production login/TOTP HTTP smoke checks pass. See docs/phase-6-admin.md.
+- **Next:** review Phase 6 PR; do not merge or deploy automatically. Complete
+  independent security and real-browser checks before production.
+- **Known issues:** real-browser Turnstile/secure-cookie/XSS interaction pending;
+  deployment header/replica and key/backup operations need verification. Earlier
+  phase progress below is historical.
+
+
 Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
 
 ### Done

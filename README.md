@@ -6,6 +6,13 @@ checks the payment. [PLAN.md](PLAN.md) is the project source of truth.
 Its [working rules](PLAN.md#working-rules-for-every-phase) apply to every phase;
 its [Progress section](PLAN.md#progress) records done, next, and known issues.
 
+## Branch update: Phase 6 administration
+
+Phase 5 is merged. This branch adds the private admin panel with password plus
+TOTP/recovery authentication and manual order review. See [Phase 6 operation and
+verification](docs/phase-6-admin.md) before configuration or use. This is a review
+branch, not a deployment. No public sign-up, email or automatic delivery is added.
+
 ## Branch update: Phase 5 tracking
 
 Phase 4 is merged. `feat/phase-5-order-track` adds customer tracking by order code
