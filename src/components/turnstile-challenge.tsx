@@ -3,7 +3,7 @@ import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 type Turnstile = { render: (element: HTMLElement, options: Record<string, unknown>) => string; remove: (id: string) => void; reset: (id: string) => void };
 declare global { interface Window { turnstile?: Turnstile } }
-export function TurnstileChallenge({ siteKey, nonce, action, onToken, resetKey }: { siteKey: string; nonce: string; action: "order" | "track"; onToken: (token: string) => void; resetKey: number }) {
+export function TurnstileChallenge({ siteKey, nonce, action, onToken, resetKey }: { siteKey: string; nonce: string; action: "order" | "track" | "admin"; onToken: (token: string) => void; resetKey: number }) {
   const container = useRef<HTMLDivElement>(null);
   const widget = useRef<string | undefined>(undefined);
   const [ready, setReady] = useState(false);
