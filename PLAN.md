@@ -385,6 +385,20 @@ pushing, or merging. A submitted TrxID never proves payment.
 
 ## Progress
 
+### Dependency maintenance — 2026-11-02
+
+- **Done:** On main's Phase 5 tree, resolved the minimatch advisory with ESLint
+  10.14.0, typescript-eslint 8.72.1, and minimatch 11.0.1 overrides scoped to its
+  three lint-tool consumers. Locked install, lint, types, 37 tests (no failures or
+  skips), build, environment guard and full audit passed (zero vulnerabilities).
+- **Next:** Merge only this fix after green CI and private-repository verification;
+  rerun main baseline, then merge main into the existing Phase 6 PR without
+  rewriting its six commits. Phase 6 must remain unmerged.
+- **Known issues:** Latest upstream lint packages still request minimatch 10;
+  remove the overrides when their declared ranges include the patched release.
+  See docs/dependency-advisory.md.
+
+
 Updated: 2026-10-12. Status: **Phase 1 complete**. Phase 2 is not authorized.
 
 ### Done
