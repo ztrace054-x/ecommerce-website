@@ -5,22 +5,24 @@ import { errorResponse } from "../orders/responses.ts";
 import { getClientIp, hashIp } from "../orders/security.ts";
 import { verifyTurnstile } from "../orders/handler.ts";
 import { createOrderStore } from "../orders/store.ts";
-import { createAdminStore } from "./store.ts";
+import { AdminSessionExpired, createAdminStore } from "./store.ts";
 import { digest, equal, validPassword, hashPassword } from "./crypto.ts";
 import type { AdminEnv } from "./config.ts";
 const login=z.object({email:z.string().email().max(254).transform(v=>v.toLowerCase()),password:z.string().min(1).max(256),turnstileToken:z.string().min(1).max(2048)}).strict();
 const query=z.object({page:z.coerce.number().int().min(1).max(10000).default(1),status:z.enum(['','submitted','verified','delivered','rejected','refunded']).default(''),search:z.string().regex(/^(?:|ORD-[A-Z2-9]{8}|[A-Za-z0-9]{4})$/).default(''),from:z.union([z.literal(''),z.iso.date()]).default(''),until:z.union([z.literal(''),z.iso.date()]).default('')}).strict();
 export function createAdminHandler(config:AdminEnv,store:ReturnType<typeof createAdminStore>,limiter:ReturnType<typeof createOrderStore>,captcha=verifyTurnstile){
- return async(request:Request,path:string)=>{
+ const handle=async(request:Request,path:string)=>{
   const fail=(status:number,code:string,message:string)=>errorResponse(status,code,message,{'Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex','X-Frame-Options':'DENY'});
   const json=(value:unknown,cookie?:string)=>Response.json(value,{headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex','X-Frame-Options':'DENY',...(cookie?{'Set-Cookie':cookie}:{})}});
   const sessionCookie=(token:string)=>`__Host-admin=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800`;
   try{
+   if(!['login','second','password','logout','orders','products','audit','action'].includes(path)&&!/^orders\/ORD-[A-Z2-9]{8}$/.test(path))return fail(404,'NOT_FOUND','Not found.');
    const ip=getClientIp(request,config.TRUSTED_PROXY_MODE);
    if(config.ADMIN_IP_ALLOWLIST.length&&!config.ADMIN_IP_ALLOWLIST.includes(ip))return fail(404,'NOT_FOUND','Not found.');
    const ipHash=hashIp(ip,config.IP_HASH_SECRET),ua=digest(request.headers.get('user-agent')??'');
    let body:unknown={};
    if(request.method==='POST'){
+    if(!request.headers.get('origin'))return fail(403,'ORIGIN','Request not permitted.');
     const boundary=await readJsonRequest(request,config.ALLOWED_ORIGINS);if(boundary instanceof Response)return boundary;
     try{body=JSON.parse(Buffer.concat(boundary.chunks).toString('utf8'));}catch{return fail(400,'VALIDATION','Invalid JSON.');}
    }
@@ -64,14 +66,19 @@ export function createAdminHandler(config:AdminEnv,store:ReturnType<typeof creat
    if(request.method==='POST'&&path==='action'){
     const parsed=z.object({orderCode:z.string().regex(/^ORD-[A-Z2-9]{8}$/),action:z.enum(['verified','rejected','delivered','refunded']),note:z.string().max(2000).default(''),reason:z.string().max(500).default('')}).strict().refine(v=>(v.action!=='rejected'||v.reason.trim().length>0)&&(v.action!=='refunded'||v.note.trim().length>0)).safeParse(body);
     if(!parsed.success)return fail(400,'VALIDATION','Check action, note and reason.');
-    const d=parsed.data;return await store.action(d.orderCode,d.action,d.note,d.reason,session.admin_id,ipHash)?json({ok:true}):fail(409,'TRANSITION','Order state does not allow this action.');
+    const d=parsed.data;return await store.action(d.orderCode,d.action,d.note,d.reason,session.admin_id,ipHash,token)?json({ok:true}):fail(409,'TRANSITION','Order state does not allow this action.');
    }
    if(request.method==='POST'&&path==='products'){
     const parsed=z.object({id:z.uuid(),name:z.string().trim().min(1).max(160),description:z.string().max(4000),priceBdt:z.number().int().min(1).max(10000000),isActive:z.boolean()}).strict().safeParse(body);
     if(!parsed.success)return fail(400,'VALIDATION','Invalid product.');const d=parsed.data;
-    return await store.product(d.id,d.name,d.description,d.priceBdt,d.isActive,session.admin_id,ipHash)?json({ok:true}):fail(404,'NOT_FOUND','Not found.');
+    return await store.product(d.id,d.name,d.description,d.priceBdt,d.isActive,session.admin_id,ipHash,token)?json({ok:true}):fail(404,'NOT_FOUND','Not found.');
    }
    return fail(404,'NOT_FOUND','Not found.');
-  }catch{return fail(500,'INTERNAL','Unable to process request.');}
+  }catch(error){if(error instanceof AdminSessionExpired)return fail(404,'NOT_FOUND','Not found.');return fail(500,'INTERNAL','Unable to process request.');}
+ };
+ return async(request:Request,path:string)=>{
+  const response=await handle(request,path);
+  for(const [name,value] of Object.entries({'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow','X-Frame-Options':'DENY'}))response.headers.set(name,value);
+  return response;
  };
 }

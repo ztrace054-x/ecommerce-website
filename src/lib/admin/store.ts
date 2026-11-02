@@ -1,6 +1,7 @@
 import "server-only";
 import postgres from "postgres";
 import { decrypt, digest, equal, hashPassword, opaque, totp, verifyPassword } from "./crypto.ts";
+export class AdminSessionExpired extends Error {}
 export function createAdminStore(url: string, key: string) {
   const db = postgres(url, { max: 5, prepare: false });
   const dummy = hashPassword(opaque());
@@ -11,6 +12,14 @@ export function createAdminStore(url: string, key: string) {
     const token = opaque(), csrf = opaque();
     await tx`INSERT INTO admin_sessions(id,admin_id,csrf_hash,authenticated,expires_at,ip_hash,user_agent_hash) VALUES (${digest(token)},${admin},${digest(csrf)},${full},now()+${full ? '8 hours' : '5 minutes'}::interval,${ip},${ua})`;
     return { token, csrf };
+  }
+  // Serialize mutations and revocations on the administrator before locking sessions.
+  // Recheck with wall-clock time after lock waits, not the transaction start time.
+  async function lockSession(tx: postgres.TransactionSql, token: string, admin: string) {
+    const [user] = await tx`SELECT id FROM admin_users WHERE id=${admin} AND totp_enabled FOR UPDATE`;
+    if (!user) throw new AdminSessionExpired();
+    const [session] = await tx`SELECT id FROM admin_sessions WHERE id=${digest(token)} AND admin_id=${admin} AND authenticated AND expires_at>clock_timestamp() AND last_seen_at>clock_timestamp()-interval '30 minutes' FOR UPDATE`;
+    if (!session) throw new AdminSessionExpired();
   }
   return {
     close: () => db.end(),
@@ -27,19 +36,22 @@ export function createAdminStore(url: string, key: string) {
       });
     },
     async session(token: string, ua: string, pending = false) {
-      const [s] = await db`UPDATE admin_sessions SET last_seen_at=now() WHERE id=${digest(token)} AND user_agent_hash=${ua} AND expires_at>now() AND last_seen_at>now()-interval '30 minutes' AND (authenticated OR ${pending}) RETURNING admin_id,csrf_hash,authenticated`;
+      const [s] = await db`UPDATE admin_sessions SET last_seen_at=now() WHERE id=${digest(token)} AND user_agent_hash=${ua} AND expires_at>now() AND last_seen_at>now()-interval '30 minutes' AND (authenticated OR ${pending}) AND EXISTS (SELECT 1 FROM admin_users WHERE admin_users.id=admin_sessions.admin_id AND totp_enabled) RETURNING admin_id,csrf_hash,authenticated`;
       return s ?? null;
     },
     async second(token: string, code: string, csrf: string, ip: string, ua: string) {
       return db.begin(async tx => {
-        const [s] = await tx`SELECT * FROM admin_sessions WHERE id=${digest(token)} AND user_agent_hash=${ua} AND NOT authenticated AND expires_at>now() FOR UPDATE`;
+        const [candidate] = await tx`SELECT admin_id FROM admin_sessions WHERE id=${digest(token)}`;
+        if (!candidate) return null;
+        const [u] = await tx`SELECT * FROM admin_users WHERE id=${candidate.admin_id} FOR UPDATE`;
+        const [s] = await tx`SELECT * FROM admin_sessions WHERE id=${digest(token)} AND user_agent_hash=${ua} AND NOT authenticated AND expires_at>clock_timestamp() AND last_seen_at>clock_timestamp()-interval '30 minutes' FOR UPDATE`;
         if (!s || !equal(s.csrf_hash,digest(csrf))) return null;
-        const [u] = await tx`SELECT * FROM admin_users WHERE id=${s.admin_id} FOR UPDATE`;
         if (!u || !u.totp_enabled || (u.locked_until && new Date(u.locked_until).getTime()>Date.now())) return null;
         let valid:boolean;
         if (/^\d{6}$/.test(code)) {
-          const delta=totp(decrypt(u.totp_secret_encrypted,key)).validate({token:code,window:1});
-          const step=Math.floor(Date.now()/30000)+(delta??0);
+          const timestamp=Date.now();
+          const delta=totp(decrypt(u.totp_secret_encrypted,key)).validate({token:code,window:1,timestamp});
+          const step=Math.floor(timestamp/30000)+(delta??0);
           valid=delta!==null && step>Number(u.last_totp_step);
           if(valid)await tx`UPDATE admin_users SET last_totp_step=${step} WHERE id=${u.id}`;
         } else {
@@ -55,23 +67,23 @@ export function createAdminStore(url: string, key: string) {
     },
     async password(token:string,oldPassword:string,newHash:string,admin:string,ip:string) {
       return db.begin(async tx=>{
-        const [u]=await tx`SELECT password_hash FROM admin_users WHERE id=${admin} FOR UPDATE`;
-        if(!u || !await verifyPassword(u.password_hash,oldPassword))return false;
-        const [session]=await tx`SELECT id FROM admin_sessions WHERE id=${digest(token)} AND authenticated AND expires_at>now() AND last_seen_at>now()-interval '30 minutes'`;
-        if(!session)return false;
+        await lockSession(tx,token,admin);
+        const [u]=await tx`SELECT password_hash FROM admin_users WHERE id=${admin}`;
+        if(!u || !await verifyPassword(u.password_hash,oldPassword)){await audit(tx,admin,"admin.password.failed",ip);return false;}
         await tx`UPDATE admin_users SET password_hash=${newHash} WHERE id=${admin}`;
         await tx`DELETE FROM admin_sessions WHERE admin_id=${admin}`;
         await audit(tx,admin,"admin.password.changed",ip);return true;
       });
     },
-    async logout(token: string, admin: string, ip: string) { await db.begin(async tx=>{await tx`DELETE FROM admin_sessions WHERE id=${digest(token)}`;await audit(tx,admin,"admin.logout",ip);}); },
+    async logout(token: string, admin: string, ip: string) { await db.begin(async tx=>{await lockSession(tx,token,admin);await tx`DELETE FROM admin_sessions WHERE id=${digest(token)}`;await audit(tx,admin,"admin.logout",ip);}); },
     async readAudit(admin:string,action:string,ip:string){await db.begin(tx=>audit(tx,admin,action,ip));},
     async orders(page: number, status: string, search: string, from: string, until: string) {
       return db`SELECT order_code,status,amount_expected,created_at FROM orders WHERE (${status}='' OR status=${status}) AND (${search}='' OR order_code=${search.toUpperCase()} OR right(trx_id,4)=${search.toUpperCase()} OR right(sender_bkash_number,4)=${search}) AND (${from}='' OR created_at>=NULLIF(${from},'')::date) AND (${until}='' OR created_at<NULLIF(${until},'')::date+interval '1 day') ORDER BY created_at DESC,id DESC LIMIT 25 OFFSET ${(page-1)*25}`;
     },
     async detail(code: string) { const [row]=await db`SELECT o.order_code,o.status,p.name AS product_name,o.amount_expected,o.customer_name,o.customer_email,o.whatsapp,o.sender_bkash_number,o.trx_id,o.created_at,o.verified_at,o.delivered_at,o.admin_note,o.rejected_reason FROM orders o JOIN products p ON p.id=o.product_id WHERE order_code=${code}`;return row??null; },
-    async action(code: string, action: string, note: string, reason: string, admin: string, ip: string) {
+    async action(code: string, action: string, note: string, reason: string, admin: string, ip: string, token: string) {
       return db.begin(async tx=>{
+        await lockSession(tx,token,admin);
         const [o]=await tx`SELECT id,status FROM orders WHERE order_code=${code} FOR UPDATE`;
         const allowed:Record<string,string[]>={verified:["submitted"],rejected:["submitted"],delivered:["verified"],refunded:["rejected","verified"]};
         if(!o || !allowed[action]?.includes(o.status))return false;
@@ -80,7 +92,7 @@ export function createAdminStore(url: string, key: string) {
       });
     },
     async products(){return db`SELECT id,name,description,price_bdt,is_active FROM products ORDER BY created_at DESC`;},
-    async product(id:string,name:string,description:string,price:number,active:boolean,admin:string,ip:string){return db.begin(async tx=>{const rows=await tx`UPDATE products SET name=${name},description=${description},price_bdt=${price},is_active=${active} WHERE id=${id} RETURNING id`;if(!rows.length)return false;await audit(tx,admin,"admin.product.updated",ip);return true;});},
+    async product(id:string,name:string,description:string,price:number,active:boolean,admin:string,ip:string,token:string){return db.begin(async tx=>{await lockSession(tx,token,admin);const rows=await tx`UPDATE products SET name=${name},description=${description},price_bdt=${price},is_active=${active} WHERE id=${id} RETURNING id`;if(!rows.length)return false;await audit(tx,admin,"admin.product.updated",ip);return true;});},
     async audits(page:number){return db`SELECT admin_id,action,order_id,created_at FROM audit_logs ORDER BY created_at DESC,id DESC LIMIT 25 OFFSET ${(page-1)*25}`;},
   };
 }
