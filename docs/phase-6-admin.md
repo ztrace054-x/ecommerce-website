@@ -1,5 +1,121 @@
 # Phase 6 — private administration with 2FA
 
+
+## Follow-up review — 2026-11-02
+
+The original six Phase 6 commits were preserved. Dependency-fix PR #5 passed
+GitHub Actions and was merged as `279f2d8fbf843e15d93b6fc54a7a977a20cf107d`.
+Post-merge main passed the full ordered baseline: locked install, lint, types,
+37 tests (zero failed/skipped), production build, and zero audit vulnerabilities.
+Main was merged normally into this branch as `4052187`; both progress notes were
+retained when PLAN.md conflicted. No history was rewritten or force-pushed.
+Before further changes, the updated Phase 6 branch passed all 44 existing tests,
+production build and full audit. See docs/dependency-advisory.md for the dev-only
+minimatch chains, upstream checks and scoped overrides.
+
+This environment uses workspace-local Node 24.22.2 (official download checksum
+verified) and native PostgreSQL 17, not the historical Docker container. A fresh
+cluster was initialized under the workspace, listening only on 127.0.0.1:55432;
+ecommerce_test was created with UTF-8 encoding and migrations 0001–0003 applied.
+Only synthetic fixtures were used and smoke-test accounts/orders were removed.
+No remote database was contacted.
+
+### Targeted fixes
+
+- Order/product mutations, password changes and logout lock the administrator
+  first and recheck the full session inside their transaction. Expired, disabled
+  or revoked authorization returns no data and cannot commit a later mutation.
+  Expiry checks use clock_timestamp after lock waits. A mutation that already
+  acquired the lock can finish before a concurrent revocation; revocation then
+  prevents subsequent writes. Previously authorized in-flight reads may finish.
+- 2FA uses the same administrator-before-session lock order as revocation and
+  uses one captured timestamp for TOTP validation and the replay counter.
+- Unknown admin API paths return 404 before parsing bodies. Every recognized
+  admin POST requires an explicit allowed Origin; authenticated/pending POSTs
+  also require their session CSRF token. The initial login is protected by
+  Origin, JSON/body/schema checks, Turnstile and rate limits before a session exists.
+- Privacy headers now cover boundary and rate-limit errors as well as successful
+  handler responses. Nonce CSP is supplied by the existing Next.js proxy.
+- Startup validates admin configuration through the existing order environment
+  loader as well. Failed password-change attempts receive a safe audit event.
+
+No older migration, existing test assertion, lint rule or audit gate was weakened.
+No public signup, delivery automation, email or customer account was introduced.
+
+### Fresh verification
+
+| Check (ordered) | Result |
+| --- | --- |
+| npm ci | PASS |
+| npm run lint | PASS |
+| npm run typecheck | PASS |
+| npm test | 57 passed, zero failed/skipped |
+| npm run build | PASS, Next.js 16.4.3 |
+| npm audit | 0 vulnerabilities |
+| Environment guard | PASS |
+| Production and development local servers | PASS |
+| Interactive bootstrap in a pseudoterminal | Hidden password; one URI; eight unique recovery codes and eight stored hashes |
+
+The 13 additional counted tests cover revocation between authentication and
+mutation, disabled/expired sessions, a TOTP step boundary, concurrent one-time
+recovery redemption, 2FA lockout, per-IP/account limits, all half-session routes,
+strict cookie flags, Origin and 404 boundaries, allowlist/captcha failure and
+missing production admin configuration. An initial test-fixture TypeScript error
+(NODE_ENV inferred as string) was corrected with a literal type before rerunning
+all checks. npm reports an Argon2 install-script approval warning on this npm
+version; its packaged native binding loaded and all real Argon2 tests passed.
+
+Production curl checks used real Cloudflare Siteverify with official always-pass
+test keys, fresh in-memory synthetic credentials, and the loopback database:
+
+| Request | HTTP |
+| --- | --- |
+| Admin page, nonce CSP and privacy headers | 200 |
+| Unknown POST / unauthenticated orders / half-session orders | 404 |
+| Missing Origin / missing CSRF | 403 |
+| Password + Turnstile / TOTP / authenticated orders | 200 |
+| Illegal transition / repeated verify | 409 |
+| Verify / deliver / reject / refund | 200 |
+| Product edit / audit viewer | 200 |
+| Logout / subsequent access | 200 / 404 |
+
+Four successful order actions produced four matching audit rows. Product edits
+preserved both existing order prices. Server output contained none of the generated
+password, TOTP secret or encryption key. Enrollment output was captured privately
+for terminal assertions and was not printed in chat, committed or application-logged.
+The curl harness sends cookies explicitly; it does not prove browser HTTPS-cookie
+behavior. No TLS validation was bypassed and no CA trust changes were made.
+
+New environment names remain ADMIN_SECRET_KEY, ADMIN_PATH_PREFIX and optional
+ADMIN_IP_ALLOWLIST; templates remain blank. No further variables were added.
+
+### Current security assessment and remaining checks
+
+- Auth bypass — PASS in tested scope: both factors required, disabled/revoked
+  identities denied, mutation authorization rechecked transactionally.
+- Brute force — PARTIAL: IP/account/2FA limits and lockouts pass locally; verify
+  trusted proxy headers, distributed replicas and operator lockout recovery.
+- Session fixation/hijack — PARTIAL: rotation, hashed tokens, strict cookie flags,
+  idle/absolute expiry and revocation pass; real HTTPS/browser behavior and stolen
+  bearer-cookie exposure remain operational concerns.
+- CSRF — PASS in tested scope: explicit Origin plus session token for protected
+  POSTs; login additionally uses Turnstile before issuing a pending session.
+- XSS — PARTIAL: actual detail-component escaping and nonce headers pass; rendered
+  hostile text, Turnstile CSP interaction and mobile/keyboard flows need browser QA.
+- SQLi — PASS in tested scope: bound SQL parameters and strict filters; hostile
+  search/status inputs are rejected.
+- Double-processing — PASS: row-locked transitions, database trigger and concurrent
+  tests permit one verification; repeated HTTP verification returns 409.
+- Secrets — PARTIAL: Argon2id, AES-GCM, hashed tokens/codes and hidden bootstrap
+  verified; production key custody, rotation and backup recovery need operator review.
+- Audit trail — PASS in tested scope: action and audit commit atomically; define
+  retention, monitoring and least-privilege production database access.
+
+Next: independent browser/HTTPS and deployment-security review, including proxy
+headers, replica limits, Argon2 resource usage, backup/key recovery and retention.
+Delivery-code storage remains a separately authorized future task. PR #4 must
+remain open and unmerged; no deployment is authorized by this review.
+
 The owner authorized this phase after PR #3 merged as
 `be795e093efc54ce8829f00976725add18c42aa9`. No further merge or revert was performed.
 The stopped local `ecommerce-phase4-test` PostgreSQL 17 container was restarted
@@ -101,7 +217,7 @@ customer text, TOTP or recovery codes are logged. Reads also emit a generic admi
 read event. Product audit entries record the actor/action, not a full before/after
 revision history. Customer text and notes use escaped JSX, never raw HTML.
 
-## Verification
+## Original verification — October 2026
 
 All changes passed locked install, lint, types, **44 tests (0 failed/skipped)**,
 production build, and npm audit (**0 vulnerabilities**). The original 37 remain;

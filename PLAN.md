@@ -385,6 +385,22 @@ pushing, or merging. A submitted TrxID never proves payment.
 
 ## Progress
 
+### Phase 6 follow-up — 2026-11-02
+
+- **Done:** Dependency PR #5 merged after private-repository and green CI checks
+  (`279f2d8`); post-merge main passed 37 tests/build/audit. Normal merge into Phase 6
+  preserved its six commits. Transactional session rechecks, 2FA lock ordering,
+  TOTP boundary handling, strict admin Origin/404/header behavior and startup
+  validation now pass 57 tests, build and zero-vulnerability audit. Production
+  curl login/2FA/verify/deliver/reject/refund/logout and terminal bootstrap passed.
+- **Next:** Keep PR #4 unmerged. Complete independent browser/HTTPS and deployment
+  security checks; see docs/phase-6-admin.md for current evidence.
+- **Known issues:** Browser widget/secure-cookie/mobile checks, proxy trust,
+  replicas, key/backup operations and retention remain manual. In-flight actions
+  are serialized with revocation; already-authorized reads may finish. Earlier
+  progress entries below are historical.
+
+
 ### Phase 6 review checkpoint — 2026-10-29
 
 - **Done:** local PostgreSQL restored; merged main passed all 37 tests/build/audit.
