@@ -41,12 +41,17 @@ test("tracking security with real PostgreSQL", async t => {
       assert.deepEqual(missing,wrong);assert.equal(await store.tracking.lookupOrder("ORD-ZZZZZZZZ","0000"),null);
     });
     await t.test("all statuses have the expected safe bilingual message", async () => {
+      // Build independent status fixtures; production updates now enforce transitions.
+      async function fixtureStatus(status: string) {
+        const [row] = await db`DELETE FROM orders WHERE order_code=${input.orderCode} RETURNING *`;
+        await db`INSERT INTO orders(order_code,product_id,customer_name,customer_email,sender_bkash_number,trx_id,amount_expected,status) VALUES (${row!.order_code},${row!.product_id},${row!.customer_name},${row!.customer_email},${row!.sender_bkash_number},${row!.trx_id},${row!.amount_expected},${status})`;
+      }
       const expected={submitted:["অপেক্ষায়","awaiting"],verified:["যাচাই হয়েছে","verified"],delivered:["সম্পন্ন","completed"],rejected:["গ্রহণ করা হয়নি","rejected"],refunded:["ফেরত","Refund"]};
       for(const status of Object.keys(statusMessages) as Array<keyof typeof statusMessages>){
-        await db`UPDATE orders SET status=${status} WHERE order_code=${input.orderCode}`;
+        await fixtureStatus(status);
         const view=await store.tracking.lookupOrder(input.orderCode,"0000");assert.equal(view?.status,status);assert.deepEqual(view?.message,statusMessages[status]);assert.ok(view!.message.bn.includes(expected[status][0]!));assert.ok(view!.message.en.includes(expected[status][1]!));
       }
-      await db`UPDATE orders SET status='submitted' WHERE order_code=${input.orderCode}`;
+      await fixtureStatus('submitted');
     });
     await t.test("invalid formats, unknown keys, SQLi and XSS rejected", async () => {
       const patches=[{last4:"123"},{last4:"12345"},{last4:"abcd"},{orderCode:"ORD-00000000"},{orderCode:"ORD-IIIIIIII"},{price:1},{last4:"' OR 1=1 --"},{orderCode:'"; DROP TABLE orders;--'},{last4:"<script>alert(1)</script>"},{orderCode:"<script>alert(1)</script>"}];

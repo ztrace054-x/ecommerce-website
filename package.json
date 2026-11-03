@@ -20,8 +20,10 @@
     "db:seed:local": "node scripts/seed-local.ts"
   },
   "dependencies": {
+    "argon2": "0.45.1",
     "drizzle-orm": "0.45.4",
     "next": "16.4.3",
+    "otpauth": "9.5.2",
     "postgres": "3.4.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",

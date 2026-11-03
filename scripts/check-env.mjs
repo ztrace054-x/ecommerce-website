@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const expectedNames = new Set([
+  "ADMIN_SECRET_KEY",
+  "ADMIN_PATH_PREFIX",
+  "ADMIN_IP_ALLOWLIST",
   "DATABASE_URL",
   "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
   "TURNSTILE_SECRET_KEY",
@@ -21,6 +24,10 @@ const expectedNames = new Set([
   "ALLOW_LOCAL_SEED",
 ]);
 const failures = [];
+if (process.env.NODE_ENV === "production") {
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(process.env.ADMIN_SECRET_KEY ?? "")) failures.push("ADMIN_SECRET_KEY is missing or invalid.");
+  if (!/^\/[a-z][a-z0-9-]{5,63}$/.test(process.env.ADMIN_PATH_PREFIX ?? "")) failures.push("ADMIN_PATH_PREFIX is missing or invalid.");
+}
 
 function git(args, input) {
   const result = spawnSync("git", args, {

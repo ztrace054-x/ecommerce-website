@@ -385,6 +385,34 @@ pushing, or merging. A submitted TrxID never proves payment.
 
 ## Progress
 
+### Phase 6 follow-up — 2026-11-02
+
+- **Done:** Dependency PR #5 merged after private-repository and green CI checks
+  (`279f2d8`); post-merge main passed 37 tests/build/audit. Normal merge into Phase 6
+  preserved its six commits. Transactional session rechecks, 2FA lock ordering,
+  TOTP boundary handling, strict admin Origin/404/header behavior and startup
+  validation now pass 57 tests, build and zero-vulnerability audit. Production
+  curl login/2FA/verify/deliver/reject/refund/logout and terminal bootstrap passed.
+- **Next:** Keep PR #4 unmerged. Complete independent browser/HTTPS and deployment
+  security checks; see docs/phase-6-admin.md for current evidence.
+- **Known issues:** Browser widget/secure-cookie/mobile checks, proxy trust,
+  replicas, key/backup operations and retention remain manual. In-flight actions
+  are serialized with revocation; already-authorized reads may finish. Earlier
+  progress entries below are historical.
+
+
+### Phase 6 review checkpoint — 2026-10-29
+
+- **Done:** local PostgreSQL restored; merged main passed all 37 tests/build/audit.
+  Phase 6 adds admin migration, Argon2id/TOTP/recovery authentication, hashed
+  sessions, CSRF, order/product/audit UI and APIs. 44 tests/build/audit and real
+  production login/TOTP HTTP smoke checks pass. See docs/phase-6-admin.md.
+- **Next:** review Phase 6 PR; do not merge or deploy automatically. Complete
+  independent security and real-browser checks before production.
+- **Known issues:** real-browser Turnstile/secure-cookie/XSS interaction pending;
+  deployment header/replica and key/backup operations need verification. Earlier
+  phase progress below is historical.
+
 ### Dependency maintenance — 2026-11-02
 
 - **Done:** On main's Phase 5 tree, resolved the minimatch advisory with ESLint

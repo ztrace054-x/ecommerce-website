@@ -15,6 +15,12 @@ export function proxy(request: NextRequest) {
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("Cache-Control", "private, no-store");
   if (["/track", "/api/orders/track"].includes(request.nextUrl.pathname)) response.headers.set("Referrer-Policy", "no-referrer");
+  const adminPrefix = process.env.ADMIN_PATH_PREFIX ?? "/manage-x7";
+  if (request.nextUrl.pathname === adminPrefix || request.nextUrl.pathname.startsWith(`${adminPrefix}/`)) {
+    response.headers.set("Referrer-Policy", "no-referrer");
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
   return response;
 }
 export const config = { matcher: ["/((?!_next/static|_next/image|fonts/|favicon.ico).*)"] };

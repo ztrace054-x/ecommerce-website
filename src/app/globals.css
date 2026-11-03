@@ -242,3 +242,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .tracking-result { margin-top: 2rem; overflow-wrap: anywhere; }
 .tracking-result ol { display: flex; flex-wrap: wrap; gap: 1rem 2rem; padding-inline-start: 1.5rem; }
 .tracking-result [aria-current="step"] { font-weight: 700; }
+
+.admin-panel { max-width: 64rem; margin: 2rem auto; padding: 1rem; overflow-wrap: anywhere; }
+.admin-panel form, .admin-panel label { display: grid; gap: .6rem; margin-block: 1rem; }
+.admin-panel nav { display: flex; flex-wrap: wrap; gap: .5rem; }
+.admin-panel article { border-block-end: 1px solid; padding: 1rem; }
