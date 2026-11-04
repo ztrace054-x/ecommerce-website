@@ -65,7 +65,7 @@ test("order API security against a real isolated PostgreSQL database", async t =
   const db = postgres(databaseUrl, { max: 2 });
   const store = createOrderStore(databaseUrl);
   const handler = createOrderHandler(config, store, async () => true);
-  async function reset() { await db`TRUNCATE audit_logs, orders, order_rate_events`; }
+  async function reset() { await db`TRUNCATE delivery_email_attempts, delivery_codes, audit_logs, orders, order_rate_events`; }
   try {
     await db`INSERT INTO products (id, slug, name, description, price_bdt, delivery_type, is_active) VALUES (${input.productId}, 'ai-setup', 'Local sample', 'Synthetic', 500, 'C', true) ON CONFLICT (id) DO UPDATE SET is_active = true, price_bdt = 500`;
     await t.test("valid order stores authoritative amount, normalized fields and atomic audit", async () => {
