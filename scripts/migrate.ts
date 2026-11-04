@@ -5,7 +5,7 @@ import postgres from "postgres";
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required.");
 const client = postgres(process.env.DATABASE_URL, { max: 1 });
 try {
-  for (const name of ["0001_orders", "0002_tracking", "0003_admin"]) {
+  for (const name of ["0001_orders", "0002_tracking", "0003_admin", "0004_delivery"]) {
   const migration = await readFile(new URL(`../src/db/migrations/${name}.sql`, import.meta.url), "utf8");
   const checksum = createHash("sha256").update(migration).digest("hex");
   await client.begin(async tx => {

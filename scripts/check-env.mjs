@@ -8,6 +8,9 @@ const expectedNames = new Set([
   "ADMIN_SECRET_KEY",
   "ADMIN_PATH_PREFIX",
   "ADMIN_IP_ALLOWLIST",
+  "DELIVERY_CODE_KEY",
+  "EMAIL_FROM",
+  "EMAIL_MODE",
   "DATABASE_URL",
   "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
   "TURNSTILE_SECRET_KEY",
@@ -27,6 +30,8 @@ const failures = [];
 if (process.env.NODE_ENV === "production") {
   if (!/^[A-Za-z0-9+/]{43}=$/.test(process.env.ADMIN_SECRET_KEY ?? "")) failures.push("ADMIN_SECRET_KEY is missing or invalid.");
   if (!/^\/[a-z][a-z0-9-]{5,63}$/.test(process.env.ADMIN_PATH_PREFIX ?? "")) failures.push("ADMIN_PATH_PREFIX is missing or invalid.");
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(process.env.DELIVERY_CODE_KEY ?? "")) failures.push("DELIVERY_CODE_KEY is missing or invalid.");
+  if (!process.env.EMAIL_FROM || /[\r\n]/.test(process.env.EMAIL_FROM)) failures.push("EMAIL_FROM is missing or invalid.");
 }
 
 function git(args, input) {
