@@ -395,7 +395,7 @@ pushing, or merging. A submitted TrxID never proves payment.
   destination masking are implemented. Main baseline passed 57 tests. Phase 7
   passed locked install, lint, type-check, 64 tests (zero failures/skips), production
   build, zero-vulnerability audit, synthetic production HTTP flow and a clean
-  gitleaks staged-diff scan. Three commits are pushed; PR #6 is open to main.
+  gitleaks staged-diff scan. The branch is pushed; PR #6 is open to main.
 - **Next:** Review PR #6 and CI; do not merge this phase. Recommended next task after
   review: private Vercel preview deployment.
 - **Known issues:** Real Resend domain authentication and production key backup/
