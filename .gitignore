@@ -26,3 +26,8 @@ test-results/
 .DS_Store
 Thumbs.db
 .idea/
+*.sql.gz
+*.sql.zip
+*.backup
+/dumps/
+/backups/
