@@ -2,12 +2,14 @@ import { loadAdminEnv } from '../../../../lib/admin/config';
 import { createAdminStore } from '../../../../lib/admin/store';
 import { createAdminHandler } from '../../../../lib/admin/handler';
 import { createOrderStore } from '../../../../lib/orders/store';
+import { createDeliveryStore } from '../../../../lib/delivery/store';
 let handler:ReturnType<typeof createAdminHandler>|undefined;
+let deliveryStore:ReturnType<typeof createDeliveryStore>|undefined;
 async function dispatch(request:Request,context:{params:Promise<{adminPrefix:string;path:string[]}>}){
  const {adminPrefix,path}=await context.params;
  if(`/${adminPrefix}`!==(process.env.ADMIN_PATH_PREFIX??'/manage-x7'))return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
  try{
-  if(!handler){const config=loadAdminEnv();handler=createAdminHandler(config,createAdminStore(config.DATABASE_URL,config.ADMIN_SECRET_KEY),createOrderStore(config.DATABASE_URL));}
+  if(!handler){const config=loadAdminEnv();deliveryStore=createDeliveryStore(config.DATABASE_URL,config.DELIVERY_CODE_KEY);handler=createAdminHandler(config,createAdminStore(config.DATABASE_URL,config.ADMIN_SECRET_KEY),createOrderStore(config.DATABASE_URL),undefined,deliveryStore);}
   return await handler(request,path.join('/'));
  }catch{return Response.json({error:{code:'UNAVAILABLE',message:'Service unavailable.'}},{status:503,headers:{'Cache-Control':'no-store'}});}
 }

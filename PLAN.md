@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-10-12. Current scope: **Phase 1 — customer frontend only**.
+Last updated: 2026-11-04. Current scope: **Phase 7 — delivery codes, email and WhatsApp**.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -384,6 +384,23 @@ pushing, or merging. A submitted TrxID never proves payment.
   before launch. No production database or real customer data was used.
 
 ## Progress
+
+### Phase 7 — delivery codes, email and WhatsApp — 2026-11-04
+
+- **Done:** PR #4 is merged into main by the owner (`b062fe0`); local main contains
+  the admin panel and migrations 0001–0003. PostgreSQL 17 on loopback port 55432
+  applied migration 0004. Main's ordered baseline passed 57 tests, build and zero
+  audit findings. Work is on `feat/phase-7-delivery`. Encrypted code inventory,
+  audit-backed assignment/reveal/void, limited email, WhatsApp handoff and tracking
+  destination masking are implemented. Main baseline passed 57 tests. Phase 7
+  passed locked install, lint, type-check, 64 tests (zero failures/skips), production
+  build, zero-vulnerability audit, synthetic production HTTP flow and a clean
+  gitleaks staged-diff scan. The branch is pushed; PR #6 is open to main.
+- **Next:** Review PR #6 and CI; do not merge this phase. Recommended next task after
+  review: private Vercel preview deployment.
+- **Known issues:** Real Resend domain authentication and production key backup/
+  rotation remain manual. Do not send real emails or use production voucher codes.
+  See docs/phase-7-delivery.md for verification evidence and remaining checks.
 
 ### Phase 6 follow-up — 2026-11-02
 

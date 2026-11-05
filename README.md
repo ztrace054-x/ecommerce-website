@@ -1,5 +1,12 @@
 # AI services e-commerce project
 
+## Current branch: Phase 7 delivery
+
+PR #4 (Phase 6 admin) was merged by the owner. This branch adds encrypted voucher
+inventory, audited assignment/reveal/void operations, delivery email and WhatsApp
+handoff, plus tracking destination masking. See [Phase 7 setup and verification](docs/phase-7-delivery.md).
+The Phase 7 branch is for review; do not merge or deploy it automatically.
+
 A Bangladesh-focused project for ordering permitted AI products and services,
 paying through bKash, and receiving delivery after an administrator manually
 checks the payment. [PLAN.md](PLAN.md) is the project source of truth.

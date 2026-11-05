@@ -5,19 +5,20 @@ import postgres from 'postgres';
 import { createAdminHandler } from '../src/lib/admin/handler.ts';
 import { createAdminStore, AdminSessionExpired } from '../src/lib/admin/store.ts';
 import { createOrderStore } from '../src/lib/orders/store.ts';
+import { createDeliveryStore } from '../src/lib/delivery/store.ts';
 import { digest, encrypt, hashPassword, newTotpSecret, opaque, totp } from '../src/lib/admin/crypto.ts';
 import type { AdminEnv } from '../src/lib/admin/config.ts';
 import { randomBytes } from 'node:crypto';
 
 const url='postgres://postgres@127.0.0.1:55432/ecommerce_test';
 const key=randomBytes(32).toString('base64');
-const config:AdminEnv={DATABASE_URL:url,IP_HASH_SECRET:opaque(),TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA',NEXT_PUBLIC_TURNSTILE_SITE_KEY:'1x00000000000000000000AA',SITE_ORIGIN:'https://localhost:3000',ALLOWED_ORIGINS:['https://localhost:3000'],TRUSTED_PROXY_MODE:'local',ADMIN_WHATSAPP_NUMBER:'8801000000000',BKASH_RECIPIENT_NUMBER:'01000000000',ADMIN_SECRET_KEY:key,ADMIN_PATH_PREFIX:'/manage-test',ADMIN_IP_ALLOWLIST:[]};
+const config:AdminEnv={DATABASE_URL:url,IP_HASH_SECRET:opaque(),TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA',NEXT_PUBLIC_TURNSTILE_SITE_KEY:'1x00000000000000000000AA',SITE_ORIGIN:'https://localhost:3000',ALLOWED_ORIGINS:['https://localhost:3000'],TRUSTED_PROXY_MODE:'local',ADMIN_WHATSAPP_NUMBER:'8801000000000',BKASH_RECIPIENT_NUMBER:'01000000000',ADMIN_SECRET_KEY:key,ADMIN_PATH_PREFIX:'/manage-test',ADMIN_IP_ALLOWLIST:[],DELIVERY_CODE_KEY:randomBytes(32).toString('base64'),EMAIL_FROM:'delivery@example.invalid',EMAIL_MODE:'log-safe' as const,RESEND_API_KEY:''};
 const agent='synthetic-review-agent';
 const req=(path:string,body?:unknown,token='',csrf='',headers:Record<string,string>={})=>new Request(`${config.SITE_ORIGIN}/manage-test/api/${path}`,{method:body===undefined?'GET':'POST',headers:{origin:config.SITE_ORIGIN,'content-type':'application/json','user-agent':agent,cookie:`__Host-admin=${token}`,'x-csrf-token':csrf,...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
 
 test('admin review regression tests against local PostgreSQL',async t=>{
- const db=postgres(url),store=createAdminStore(url,key),limiter=createOrderStore(url);
- const handler=createAdminHandler(config,store,limiter,async()=>true);
+ const db=postgres(url),store=createAdminStore(url,key),limiter=createOrderStore(url),delivery=createDeliveryStore(url,config.DELIVERY_CODE_KEY);
+ const handler=createAdminHandler(config,store,limiter,async()=>true,delivery);
  const email='review@example.invalid',password=opaque(),secret=newTotpSecret();
  let admin='',product='';
  const pending=async()=>{const s=await store.login(email,password,'synthetic-ip',digest(agent));assert.ok(s);return s;};
@@ -25,7 +26,7 @@ test('admin review regression tests against local PostgreSQL',async t=>{
  const clearLimits=async()=>{await db`TRUNCATE order_rate_events`;await db`UPDATE admin_users SET failed_login_count=0,locked_until=NULL WHERE id=${admin}`;};
  try{
   const [u]=await db`INSERT INTO admin_users(email,password_hash,totp_secret_encrypted) VALUES (${email},${await hashPassword(password)},${encrypt(secret,key)}) RETURNING id`;admin=u!.id;
-  const [p]=await db`INSERT INTO products(slug,name,description,price_bdt,delivery_type) VALUES ('admin-review','Review fixture','Synthetic only',500,'C') RETURNING id`;product=p!.id;
+  const [p]=await db`INSERT INTO products(slug,name,description,price_bdt,delivery_type) VALUES ('admin-review','Review fixture','Synthetic only',500,'B') RETURNING id`;product=p!.id;
   await db`INSERT INTO orders(order_code,product_id,customer_name,customer_email,sender_bkash_number,trx_id,amount_expected) VALUES ('ORD-REVIEWAB',${product},'Synthetic review','review@example.invalid','01700000000','REVIEW123',500)`;
 
   await t.test('unknown URLs return 404 before body parsing for every method',async()=>{
@@ -42,14 +43,14 @@ test('admin review regression tests against local PostgreSQL',async t=>{
    const response=await handler(req('login',{},'','',{'content-type':'text/plain'}),'login');assert.equal(response.status,415);assert.equal(response.headers.get('x-frame-options'),'DENY');
   });
   await t.test('Turnstile failure and IP allowlist fail closed',async()=>{
-   const blocked=createAdminHandler({...config,ADMIN_IP_ALLOWLIST:['192.0.2.10']},store,limiter,async()=>true);
+   const blocked=createAdminHandler({...config,ADMIN_IP_ALLOWLIST:['192.0.2.10']},store,limiter,async()=>true,delivery);
    assert.equal((await blocked(req('login',{email,password,turnstileToken:'synthetic'}),'login')).status,404);
-   const captcha=createAdminHandler(config,store,limiter,async()=>false);
+   const captcha=createAdminHandler(config,store,limiter,async()=>false,delivery);
    assert.equal((await captcha(req('login',{email,password,turnstileToken:'synthetic'}),'login')).status,403);
    await clearLimits();
   });
   await t.test('per-account limits survive IP changes; per-IP limits survive account changes',async()=>{
-   const h=createAdminHandler({...config,TRUSTED_PROXY_MODE:'vercel'},store,limiter,async()=>false);
+   const h=createAdminHandler({...config,TRUSTED_PROXY_MODE:'vercel'},store,limiter,async()=>false,delivery);
    for(const sameAccount of [true,false]){
     await clearLimits();
     for(let i=0;i<11;i++){
@@ -98,7 +99,7 @@ test('admin review regression tests against local PostgreSQL',async t=>{
       if(revocation==='logout')await store.logout(s.token,admin,'synthetic-ip');
       else assert.ok(await store.password(s.token,password,await hashPassword(password),admin,'synthetic-ip'));
       return result;
-     }},limiter,async()=>true);
+     }},limiter,async()=>true,delivery);
      const body=path==='action'?{orderCode:'ORD-REVIEWAB',action:'verified'}:{id:product,name:'Must not save',description:'Synthetic',priceBdt:900,isActive:true};
      assert.equal((await raced(req(path,body,s.token,s.csrf),path)).status,404);
     }
@@ -109,10 +110,10 @@ test('admin review regression tests against local PostgreSQL',async t=>{
   }
   await t.test('expired or disabled identities cannot mutate through a stale authorization',async()=>{
    const s=await full();await db`UPDATE admin_sessions SET expires_at=now()-interval '1 second' WHERE id=${digest(s.token)}`;
-   await assert.rejects(store.action('ORD-REVIEWAB','verified','','',admin,'synthetic-ip',s.token),AdminSessionExpired);
+   await assert.rejects(store.action('ORD-REVIEWAB','verified','','',admin,'synthetic-ip',s.token,''),AdminSessionExpired);
    const active=await full();await db`UPDATE admin_users SET totp_enabled=false WHERE id=${admin}`;
    assert.equal(await store.session(active.token,digest(agent)),null);
-   await assert.rejects(store.action('ORD-REVIEWAB','verified','','',admin,'synthetic-ip',active.token),AdminSessionExpired);
+   await assert.rejects(store.action('ORD-REVIEWAB','verified','','',admin,'synthetic-ip',active.token,''),AdminSessionExpired);
    await db`UPDATE admin_users SET totp_enabled=true WHERE id=${admin}`;
   });
  }finally{
@@ -121,7 +122,7 @@ test('admin review regression tests against local PostgreSQL',async t=>{
   await db`DELETE FROM products WHERE id=${product||null}`;
   await db`DELETE FROM admin_users WHERE id=${admin||null}`;
   await db`TRUNCATE order_rate_events`;
-  await store.close();await limiter.close();await db.end();
+  await store.close();await limiter.close();await delivery.close();await db.end();
  }
 });
 

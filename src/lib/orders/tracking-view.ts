@@ -6,4 +6,4 @@ export const statusMessages = {
   rejected: { bn: "পেমেন্ট দাবি গ্রহণ করা হয়নি, WhatsApp-এ যোগাযোগ করুন", en: "Payment claim rejected. Please contact us on WhatsApp." },
   refunded: { bn: "অর্থ ফেরত দেওয়া হয়েছে", en: "Refund completed." },
 } as const;
-export type TrackingView = { orderCode: string; status: keyof typeof statusMessages; productName: string; amountExpected: number; createdAt: string; message: { bn: string; en: string } };
+export type TrackingView = { orderCode: string; status: keyof typeof statusMessages; productName: string; amountExpected: number; createdAt: string; deliveryDestination?: string | null; message: { bn: string; en: string } };

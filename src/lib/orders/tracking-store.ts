@@ -11,7 +11,7 @@ export function createTrackingStore(db: PostgresJsDatabase) {
     const code = orderCodeSchema.parse(orderCode);
     const suffix = last4Schema.parse(last4);
     const rows = await executor.execute(sql`SELECT o.order_code, o.status, p.name AS product_name,
-      o.amount_expected, o.created_at, right(o.sender_bkash_number, 4) AS suffix
+      o.amount_expected, o.created_at, o.delivery_channel, o.delivery_sent_to, right(o.sender_bkash_number, 4) AS suffix
       FROM orders o JOIN products p ON p.id = o.product_id WHERE o.order_code = ${code}`);
     const row = rows[0];
     // Same fixed-size comparison for both missing orders and mismatched credentials.
@@ -20,7 +20,9 @@ export function createTrackingStore(db: PostgresJsDatabase) {
     if (!row || !match) return null;
     const status = String(row.status) as keyof typeof statusMessages;
     if (!Object.hasOwn(statusMessages, status)) throw new Error("Unsupported status.");
-    return { orderCode: String(row.order_code), status, productName: String(row.product_name), amountExpected: Number(row.amount_expected), createdAt: new Date(String(row.created_at)).toISOString(), message: statusMessages[status] };
+    const destination=String(row.delivery_sent_to??'');
+    const masked=String(row.delivery_channel)==='email'&&destination.includes('@')?destination.replace(/^(.).+(@.*)$/, '$1•••$2'):String(row.delivery_channel)==='whatsapp'&&destination.length>=4?`••••${destination.slice(-4)}`:null;
+    return { orderCode: String(row.order_code), status, productName: String(row.product_name), amountExpected: Number(row.amount_expected), createdAt: new Date(String(row.created_at)).toISOString(), ...(status==='delivered'?{deliveryDestination:masked}:{}), message: statusMessages[status] };
   }
   async function audit(codeHash: string | null, ipHash: string, result: string, executor: Executor = db) {
     await executor.execute(sql`INSERT INTO audit_logs (action, order_code, ip_hash) VALUES (${`track.${result}`}, ${codeHash}, ${ipHash})`);

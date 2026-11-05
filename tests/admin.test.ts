@@ -5,15 +5,16 @@ import postgres from 'postgres';
 import { createAdminStore } from '../src/lib/admin/store.ts';
 import { createAdminHandler } from '../src/lib/admin/handler.ts';
 import { createOrderStore } from '../src/lib/orders/store.ts';
+import { createDeliveryStore } from '../src/lib/delivery/store.ts';
 import { digest,encrypt,hashPassword,newTotpSecret,opaque,totp } from '../src/lib/admin/crypto.ts';
 import { randomBytes } from 'node:crypto';
 import type { AdminEnv } from '../src/lib/admin/config.ts';
 const url='postgres://postgres@127.0.0.1:55432/ecommerce_test';
 const key=randomBytes(32).toString('base64');
-const config:AdminEnv={DATABASE_URL:url,IP_HASH_SECRET:opaque(),TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA',NEXT_PUBLIC_TURNSTILE_SITE_KEY:'1x00000000000000000000AA',SITE_ORIGIN:'https://localhost:3000',ALLOWED_ORIGINS:['https://localhost:3000'],TRUSTED_PROXY_MODE:'local',ADMIN_WHATSAPP_NUMBER:'8801000000000',BKASH_RECIPIENT_NUMBER:'01000000000',ADMIN_SECRET_KEY:key,ADMIN_PATH_PREFIX:'/manage-test',ADMIN_IP_ALLOWLIST:[]};
+const config:AdminEnv={DATABASE_URL:url,IP_HASH_SECRET:opaque(),TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA',NEXT_PUBLIC_TURNSTILE_SITE_KEY:'1x00000000000000000000AA',SITE_ORIGIN:'https://localhost:3000',ALLOWED_ORIGINS:['https://localhost:3000'],TRUSTED_PROXY_MODE:'local',ADMIN_WHATSAPP_NUMBER:'8801000000000',BKASH_RECIPIENT_NUMBER:'01000000000',ADMIN_SECRET_KEY:key,ADMIN_PATH_PREFIX:'/manage-test',ADMIN_IP_ALLOWLIST:[],DELIVERY_CODE_KEY:randomBytes(32).toString('base64'),EMAIL_FROM:'delivery@example.invalid',EMAIL_MODE:'log-safe' as const,RESEND_API_KEY:''};
 test('admin authentication and transaction security with local PostgreSQL',async t=>{
- const db=postgres(url),store=createAdminStore(url,key),limiter=createOrderStore(url);
- const handler=createAdminHandler(config,store,limiter,async()=>true);
+ const db=postgres(url),store=createAdminStore(url,key),limiter=createOrderStore(url),delivery=createDeliveryStore(url,config.DELIVERY_CODE_KEY);
+ const handler=createAdminHandler(config,store,limiter,async()=>true,delivery);
  const secret=newTotpSecret(),password=opaque(),email='admin-test@example.invalid';
  const recovery=opaque();
  let admin='';
@@ -68,14 +69,16 @@ test('admin authentication and transaction security with local PostgreSQL',async
    for(const parameter of ['search','status']){
     const result=await handler(new Request(`https://localhost:3000/manage-test/api/orders?${parameter}=${encodeURIComponent("' OR 1=1 --")}`,{headers}),'orders');assert.equal(result.status,400);
    }
-   const [p]=await db`INSERT INTO products(slug,name,description,price_bdt,delivery_type) VALUES ('admin-test','Synthetic product','Synthetic description',500,'C') RETURNING id`;
+   const [p]=await db`INSERT INTO products(slug,name,description,price_bdt,delivery_type) VALUES ('admin-test','Synthetic product','Synthetic description',500,'B') RETURNING id`;
    const code='ORD-ADMINABC',attack='<img src=x onerror=alert(1)>';
    try{
     await db`INSERT INTO orders(order_code,product_id,customer_name,customer_email,sender_bkash_number,trx_id,amount_expected) VALUES (${code},${p!.id},${attack},'synthetic@example.invalid','01700000000','ADMIN123',500)`;
     await assert.rejects(db`UPDATE orders SET status='delivered' WHERE order_code=${code}`, {code:'23514'});
-    const act=(action:string)=>request('action',{orderCode:code,action,note:attack,reason:'Synthetic reason'},issued.token,issued.csrf);
+    const act=(action:string)=>request('action',{orderCode:code,action,deliveryChannel:'whatsapp',note:attack,reason:'Synthetic reason'},issued.token,issued.csrf);
     assert.equal((await act('delivered')).status,409);
     const concurrent=await Promise.all([act('verified'),act('verified')]);assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,409]);
+    await delivery.upload(['ADMIN-DELIVERY-CODE-XYZ'],p!.id,admin,'synthetic-ip',issued.token);
+    assert.equal((await delivery.assign(code,admin,'synthetic-ip',issued.token))?.assigned,true);
     const [count]=await db`SELECT count(*)::int AS n FROM audit_logs WHERE admin_id=${admin} AND action='admin.order.verified'`;assert.equal(count!.n,1);
     assert.equal((await request('products',{id:p!.id,name:'New name',description:'New description',priceBdt:900,isActive:true},issued.token,issued.csrf)).status,200);
     const detail=await store.detail(code);assert.equal(detail!.amount_expected,500);assert.equal(detail!.customer_name,attack);
@@ -86,7 +89,7 @@ test('admin authentication and transaction security with local PostgreSQL',async
     const passwordResult=await request('password',{oldPassword:password,newPassword:opaque()},issued.token,issued.csrf);assert.equal(passwordResult.status,200);
     assert.equal(await store.session(issued.token,digest('synthetic-agent')),null);
     await db`UPDATE admin_users SET password_hash=${await hashPassword(password)} WHERE id=${admin}`;
-   }finally{await db`DELETE FROM audit_logs WHERE order_id IN (SELECT id FROM orders WHERE order_code=${code})`;await db`DELETE FROM orders WHERE order_code=${code}`;await db`DELETE FROM products WHERE id=${p!.id}`;}
+   }finally{await db`DELETE FROM audit_logs WHERE order_id IN (SELECT id FROM orders WHERE order_code=${code})`;await db`DELETE FROM delivery_codes WHERE product_id=${p!.id}`;await db`DELETE FROM orders WHERE order_code=${code}`;await db`DELETE FROM products WHERE id=${p!.id}`;}
   });
   await t.test('absolute and idle expiry deny access',async()=>{
    await db`TRUNCATE order_rate_events`;
@@ -98,9 +101,11 @@ test('admin authentication and transaction security with local PostgreSQL',async
   });
  }finally{
   await db`DELETE FROM audit_logs WHERE admin_id=${admin || null}`;
+  await db`DELETE FROM delivery_codes WHERE order_id IN (SELECT id FROM orders WHERE verified_by=${admin || null})`;
+  await db`DELETE FROM orders WHERE verified_by=${admin || null}`;
   await db`DELETE FROM admin_users WHERE email=${email}`;
   await db`TRUNCATE order_rate_events`;
-  await store.close();await limiter.close();await db.end();
+  await store.close();await limiter.close();await delivery.close();await db.end();
  }
 });
 
