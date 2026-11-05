@@ -1,5 +1,14 @@
 # AI services e-commerce project
 
+## Current review: Phase 8 security hardening
+
+The owner merged Phase 7 (PR #6). Phase 8 fixes delivery races, admin abuse limits,
+JSON ambiguity and privacy issues, and adds an automated attack suite. See the
+[security review and evidence](docs/phase-8-security.md) and
+[owner protection checklist](docs/github-protection-checklist.md). This remains a
+private synthetic project; no deployment or automatic merge is authorized.
+Earlier phase notes below are historical.
+
 ## Current branch: Phase 7 delivery
 
 PR #4 (Phase 6 admin) was merged by the owner. This branch adds encrypted voucher
