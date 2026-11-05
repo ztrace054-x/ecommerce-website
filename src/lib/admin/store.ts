@@ -21,7 +21,7 @@ export function createAdminStore(url: string, key: string) {
         const [user] = await tx`SELECT * FROM admin_users WHERE email=${email} FOR UPDATE`;
         const valid = await verifyPassword(user?.password_hash ?? await dummy, password);
         if (!user || !valid || !user.totp_enabled || (user.locked_until && new Date(user.locked_until).getTime() > Date.now())) {
-          if (user) await tx`UPDATE admin_users SET failed_login_count=failed_login_count+1, locked_until=CASE WHEN failed_login_count+1>=5 THEN now()+make_interval(secs=>LEAST(3600,30*power(2,LEAST(failed_login_count-3,7)))::int) ELSE locked_until END WHERE id=${user.id}`;
+          if (user && !(user.locked_until && new Date(user.locked_until).getTime() > Date.now())) await tx`UPDATE admin_users SET failed_login_count=failed_login_count+1, locked_until=CASE WHEN failed_login_count+1>=5 THEN now()+make_interval(secs=>LEAST(3600,30*power(2,LEAST(failed_login_count-3,7)))::int) ELSE locked_until END WHERE id=${user.id}`;
           await audit(tx,user?.id ?? null,"admin.login.failed",ip);return null;
         }
         await audit(tx,user.id,"admin.login.password",ip);
