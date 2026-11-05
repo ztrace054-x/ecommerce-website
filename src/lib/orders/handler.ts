@@ -1,3 +1,4 @@
+import { parseRequestJson } from "./json.ts";
 import { readJsonRequest } from "./request.ts";
 import { errorResponse } from "./responses.ts";
 export { errorResponse } from "./responses.ts";
@@ -34,7 +35,7 @@ export function createOrderHandler(config: OrderEnv, store: OrderStore, captcha 
       const retry = await store.rateLimit(ipHash);
       if (retry) return errorResponse(429, "RATE_LIMIT", "Too many attempts. Try again later.", { "Retry-After": String(retry) });
       let body: unknown;
-      try { body = JSON.parse(Buffer.concat(chunks).toString("utf8")); }
+      try { body = parseRequestJson(chunks); }
       catch { return errorResponse(400, "VALIDATION", "Invalid JSON."); }
       // Extract only the bounded token before full field validation, per processing order.
       const token = z.object({ turnstileToken: z.string().min(1).max(2048) }).safeParse(body);

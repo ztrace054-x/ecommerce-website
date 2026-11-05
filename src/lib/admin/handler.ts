@@ -1,3 +1,4 @@
+import { parseRequestJson } from "../orders/json.ts";
 import "server-only";
 import { z } from "zod";
 import { readJsonRequest } from "../orders/request.ts";
@@ -27,7 +28,7 @@ export function createAdminHandler(config:AdminEnv,store:ReturnType<typeof creat
     const boundary=await readJsonRequest(request,config.ALLOWED_ORIGINS);if(boundary instanceof Response)return boundary;
     const postRetry=await limiter.rateLimit(hashIp(`admin-post-ip:${ipHash}`,config.IP_HASH_SECRET),{short:60,day:1000});
     if(postRetry)return errorResponse(429,'RATE_LIMIT','Try again later.',{'Retry-After':String(postRetry)});
-    try{body=JSON.parse(Buffer.concat(boundary.chunks).toString('utf8'));}catch{return fail(400,'VALIDATION','Invalid JSON.');}
+    try{body=parseRequestJson(boundary.chunks);}catch{return fail(400,'VALIDATION','Invalid JSON.');}
    }
    if(path==='login'&&request.method==='POST'){
     const parsed=login.safeParse(body);if(!parsed.success)return fail(400,'VALIDATION','Check the submitted fields.');

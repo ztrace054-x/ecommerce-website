@@ -1,3 +1,4 @@
+import { parseRequestJson } from "./json.ts";
 import "server-only";
 import { z } from "zod";
 import type { OrderEnv } from "../env/orders.ts";
@@ -18,7 +19,7 @@ export function createTrackingHandler(config: OrderEnv, store: OrderStore, captc
       const retry = await store.rateLimit(rateKey, { short: 10, day: Infinity });
       if (retry) { await store.tracking.audit(null, ipHash, "ip_limited"); return errorResponse(429, "RATE_LIMIT", "Too many attempts. Try again later.", { "Retry-After": String(retry) }); }
       let body: unknown;
-      try { body = JSON.parse(Buffer.concat(boundary.chunks).toString("utf8")); }
+      try { body = parseRequestJson(boundary.chunks); }
       catch { await store.tracking.audit(null, ipHash, "invalid"); return errorResponse(400, "VALIDATION", "Invalid JSON."); }
       const codeOnly = z.object({ orderCode: orderCodeSchema }).safeParse(body);
       const codeHash = codeOnly.success ? hashIp(`tracking-code:${codeOnly.data.orderCode}`, config.IP_HASH_SECRET) : null;
