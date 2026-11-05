@@ -2,7 +2,7 @@ import 'server-only';
 import postgres from 'postgres';
 import { decryptDeliveryCode, encryptDeliveryCode, fingerprintDeliveryCode, normalizeDeliveryCode } from './crypto.ts';
 import { lockAdminSession } from '../admin/session-guard.ts';
-import { renderDeliveryEmail, sendDeliveryEmail, type DeliveryEmail } from './email.ts';
+import { renderDeliveryEmail, sendDeliveryEmail } from './email.ts';
 export function createDeliveryStore(url:string,key:string){
  const db=postgres(url,{max:5,prepare:false});
  const audit=async(tx:postgres.TransactionSql,admin:string,action:string,ip:string,order:string|null=null)=>{await tx`INSERT INTO audit_logs(admin_id,action,ip_hash,order_id) VALUES (${admin},${action},${ip},${order})`;};
@@ -66,27 +66,28 @@ export function createDeliveryStore(url:string,key:string){
    });
   },
   async send(orderCode:string,admin:string,ip:string,token:string,settings:{from:string;apiKey:string;mode:'resend'|'log-safe';supportNumber:string},sender=sendDeliveryEmail){
-   const reservation=await db.begin(async tx=>{
+   // Keep the order/code locks until the bounded provider request finishes, so
+   // void/refund/deliver cannot invalidate the code between selection and send.
+   return db.begin(async tx=>{
     await lockAdminSession(tx,token,admin);
-    const [o]=await tx`SELECT o.id,o.order_code,o.status,o.customer_email,o.delivery_email_attempts,p.name,p.delivery_instructions,dc.code_encrypted FROM orders o JOIN products p ON p.id=o.product_id JOIN delivery_codes dc ON dc.order_id=o.id WHERE o.order_code=${orderCode} FOR UPDATE OF o,dc`;
-    if(!o||o.status!=='verified'||!o.code_encrypted)return null;if(Number(o.delivery_email_attempts)>=3)return {limited:true as const};
+    const [o]=await tx`SELECT o.id,o.order_code,o.status,o.customer_email,o.delivery_email_attempts,p.name,p.delivery_instructions,dc.code_encrypted,dc.status AS code_status FROM orders o JOIN products p ON p.id=o.product_id JOIN delivery_codes dc ON dc.order_id=o.id WHERE o.order_code=${orderCode} FOR UPDATE OF o,dc`;
+    if(!o||o.status!=='verified'||o.code_status!=='reserved')return {sent:false,limited:false};
+    if(Number(o.delivery_email_attempts)>=3)return {sent:false,limited:true};
     const [attempt]=await tx`INSERT INTO delivery_email_attempts(order_id,attempted_by) VALUES (${o.id},${admin}) RETURNING id`;
     await tx`UPDATE orders SET delivery_email_attempts=delivery_email_attempts+1 WHERE id=${o.id}`;
     await audit(tx,admin,'admin.delivery.email.requested',ip,o.id);
-    return {orderId:o.id,attemptId:attempt!.id,to:o.customer_email,orderCode:o.order_code,productName:o.name,instructions:o.delivery_instructions,code:decryptDeliveryCode(o.code_encrypted,key)};
-   });
-   if(!reservation)return {sent:false,limited:false};
-   if('limited' in reservation)return {sent:false,limited:true};
-   const masked:DeliveryEmail={to:'[REDACTED]',from:settings.from,orderCode:reservation.orderCode,productName:reservation.productName,deliveryCode:'[REDACTED]',instructions:reservation.instructions,supportUrl:`https://wa.me/${settings.supportNumber}`};
-   try{
-    if(!settings.apiKey||settings.mode==='log-safe')console.info(JSON.stringify({event:'admin.delivery.email.preview',...masked}));
-    else await sender(renderDeliveryEmail({to:reservation.to,from:settings.from,orderCode:reservation.orderCode,productName:reservation.productName,deliveryCode:reservation.code,instructions:reservation.instructions,supportUrl:`https://wa.me/${settings.supportNumber}`}),settings.apiKey);
-    await db.begin(async tx=>{await tx`UPDATE delivery_email_attempts SET succeeded=true WHERE id=${reservation.attemptId}`;await tx`UPDATE orders SET delivery_email_sent_at=now() WHERE id=${reservation.orderId}`;await audit(tx,admin,'admin.delivery.email.sent',ip,reservation.orderId);});
+    try{
+     if(!settings.apiKey||settings.mode==='log-safe')console.info(JSON.stringify({event:'admin.delivery.email.preview',content:'[REDACTED]'}));
+     else await sender(renderDeliveryEmail({to:o.customer_email,from:settings.from,orderCode:o.order_code,productName:o.name,deliveryCode:decryptDeliveryCode(o.code_encrypted,key),instructions:o.delivery_instructions,supportUrl:`https://wa.me/${settings.supportNumber}`}),settings.apiKey);
+    }catch{
+     await audit(tx,admin,'admin.delivery.email.failed',ip,o.id);
+     return {sent:false,limited:false};
+    }
+    await tx`UPDATE delivery_email_attempts SET succeeded=true WHERE id=${attempt!.id}`;
+    await tx`UPDATE orders SET delivery_email_sent_at=now() WHERE id=${o.id}`;
+    await audit(tx,admin,'admin.delivery.email.sent',ip,o.id);
     return {sent:true,limited:false};
-   }catch{
-    await db.begin(async tx=>{await audit(tx,admin,'admin.delivery.email.failed',ip,reservation.orderId);});
-    return {sent:false,limited:false};
-   }
+   });
   },
  };
 }

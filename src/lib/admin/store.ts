@@ -21,7 +21,7 @@ export function createAdminStore(url: string, key: string) {
         const [user] = await tx`SELECT * FROM admin_users WHERE email=${email} FOR UPDATE`;
         const valid = await verifyPassword(user?.password_hash ?? await dummy, password);
         if (!user || !valid || !user.totp_enabled || (user.locked_until && new Date(user.locked_until).getTime() > Date.now())) {
-          if (user) await tx`UPDATE admin_users SET failed_login_count=failed_login_count+1, locked_until=CASE WHEN failed_login_count+1>=5 THEN now()+make_interval(secs=>LEAST(3600,30*power(2,LEAST(failed_login_count-3,7)))::int) ELSE locked_until END WHERE id=${user.id}`;
+          if (user && !(user.locked_until && new Date(user.locked_until).getTime() > Date.now())) await tx`UPDATE admin_users SET failed_login_count=failed_login_count+1, locked_until=CASE WHEN failed_login_count+1>=5 THEN now()+make_interval(secs=>LEAST(3600,30*power(2,LEAST(failed_login_count-3,7)))::int) ELSE locked_until END WHERE id=${user.id}`;
           await audit(tx,user?.id ?? null,"admin.login.failed",ip);return null;
         }
         await audit(tx,user.id,"admin.login.password",ip);
@@ -80,6 +80,10 @@ export function createAdminStore(url: string, key: string) {
         const [o]=await tx`SELECT id,status FROM orders WHERE order_code=${code} FOR UPDATE`;
         const allowed:Record<string,string[]>={verified:["submitted"],rejected:["submitted"],delivered:["verified"],refunded:["rejected","verified"]};
         if(!o || !allowed[action]?.includes(o.status))return false;
+        if(action==='refunded'){
+          const retired=await tx`UPDATE delivery_codes SET status='void',order_id=NULL,void_reason='Order refunded' WHERE order_id=${o.id} AND status='reserved' RETURNING id`;
+          if(retired.length)await audit(tx,admin,'admin.delivery.code.voided.refund',ip,o.id);
+        }
         if(action==='delivered'){
           const codes=await tx`SELECT id FROM delivery_codes WHERE order_id=${o.id} AND status='reserved' FOR UPDATE`;
           if(codes.length!==1||!channel)return false;

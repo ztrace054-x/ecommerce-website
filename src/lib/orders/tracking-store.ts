@@ -21,7 +21,7 @@ export function createTrackingStore(db: PostgresJsDatabase) {
     const status = String(row.status) as keyof typeof statusMessages;
     if (!Object.hasOwn(statusMessages, status)) throw new Error("Unsupported status.");
     const destination=String(row.delivery_sent_to??'');
-    const masked=String(row.delivery_channel)==='email'&&destination.includes('@')?destination.replace(/^(.).+(@.*)$/, '$1•••$2'):String(row.delivery_channel)==='whatsapp'&&destination.length>=4?`••••${destination.slice(-4)}`:null;
+    const masked=String(row.delivery_channel)==='email'&&destination.includes('@')?destination.replace(/^(.).*(@.*)$/, '$1•••$2'):String(row.delivery_channel)==='whatsapp'&&destination.length>=4?`••••${destination.slice(-4)}`:null;
     return { orderCode: String(row.order_code), status, productName: String(row.product_name), amountExpected: Number(row.amount_expected), createdAt: new Date(String(row.created_at)).toISOString(), ...(status==='delivered'?{deliveryDestination:masked}:{}), message: statusMessages[status] };
   }
   async function audit(codeHash: string | null, ipHash: string, result: string, executor: Executor = db) {

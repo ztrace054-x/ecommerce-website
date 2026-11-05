@@ -1,3 +1,4 @@
+import { parseRequestJson } from "../orders/json.ts";
 import "server-only";
 import { z } from "zod";
 import { readJsonRequest } from "../orders/request.ts";
@@ -25,7 +26,9 @@ export function createAdminHandler(config:AdminEnv,store:ReturnType<typeof creat
    if(request.method==='POST'){
     if(!request.headers.get('origin'))return fail(403,'ORIGIN','Request not permitted.');
     const boundary=await readJsonRequest(request,config.ALLOWED_ORIGINS);if(boundary instanceof Response)return boundary;
-    try{body=JSON.parse(Buffer.concat(boundary.chunks).toString('utf8'));}catch{return fail(400,'VALIDATION','Invalid JSON.');}
+    const postRetry=await limiter.rateLimit(hashIp(`admin-post-ip:${ipHash}`,config.IP_HASH_SECRET),{short:60,day:1000});
+    if(postRetry)return errorResponse(429,'RATE_LIMIT','Try again later.',{'Retry-After':String(postRetry)});
+    try{body=parseRequestJson(boundary.chunks);}catch{return fail(400,'VALIDATION','Invalid JSON.');}
    }
    if(path==='login'&&request.method==='POST'){
     const parsed=login.safeParse(body);if(!parsed.success)return fail(400,'VALIDATION','Check the submitted fields.');
@@ -48,6 +51,10 @@ export function createAdminHandler(config:AdminEnv,store:ReturnType<typeof creat
     return result?json({authenticated:true,csrf:result.csrf},sessionCookie(result.token)):fail(401,'CREDENTIALS','Invalid credentials');
    }
    if(!session.authenticated)return fail(404,'NOT_FOUND','Not found.');
+   if(request.method==='POST'){
+    const retry=await limiter.rateLimit(hashIp(`admin-post-account:${session.admin_id}`,config.IP_HASH_SECRET),{short:60,day:1000});
+    if(retry)return errorResponse(429,'RATE_LIMIT','Try again later.',{'Retry-After':String(retry)});
+   }
    if(path==='password'&&request.method==='POST'){
     const retry=await limiter.rateLimit(hashIp(`admin-password:${session.admin_id}`,config.IP_HASH_SECRET),{short:5,day:20});if(retry)return errorResponse(429,'RATE_LIMIT','Try again later.',{'Retry-After':String(retry)});
     const parsed=z.object({oldPassword:z.string().max(256),newPassword:z.string().refine(validPassword)}).strict().safeParse(body);

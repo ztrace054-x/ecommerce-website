@@ -1,6 +1,6 @@
 # Project plan — source of truth
 
-Last updated: 2026-11-04. Current scope: **Phase 7 — delivery codes, email and WhatsApp**.
+Last updated: 2026-11-05. Current scope: **Phase 8 — security hardening and audit**.
 
 This plan records the owner's requirements and the preparation needed to build
 them safely. Requirements marked **planned** are not implemented security
@@ -384,6 +384,25 @@ pushing, or merging. A submitted TrxID never proves payment.
   before launch. No production database or real customer data was used.
 
 ## Progress
+
+### Phase 8 — security hardening and audit — 2026-11-05
+
+- **Done:** owner-merged PR #6 verified on private main (`97537a6`); all four local
+  migrations and the 64-test baseline passed. Eight findings reported before fixes.
+  Delivery email locking/refund retirement, shared admin POST budgets, fixed lockout
+  deadlines, minimized preview logs, strict JSON and destination masking implemented.
+  Fifteen security tests added; all 79 tests pass with no failures or skips.
+  Pinned Argon2 script review, strict install-script policy, Dependabot, SECURITY.md,
+  retention guidance and manual repository protection checklist added.
+  Ordered locked install/lint/types/79 tests/build/audit passed (zero vulnerabilities),
+  production curl scan passed 72 assertions, development home returned HTTP 200,
+  and environment-file guard passed.
+- **Next:** owner review of the Phase 8 PR and manual protected-preview checks.
+  No automatic merge or deployment. Final secret-scan evidence is recorded in the PR.
+- **Known issues:** browser HTTPS/Turnstile, Vercel ingress spoof resistance,
+  replica checks, provider uncertainty/reconciliation, key operations and retention
+  scheduling remain manual. See docs/phase-8-security.md; lockout availability and
+  distributed email uncertainty are explicitly documented.
 
 ### Phase 7 — delivery codes, email and WhatsApp — 2026-11-04
 

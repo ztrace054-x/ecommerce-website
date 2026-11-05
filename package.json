@@ -12,7 +12,7 @@
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --conditions=react-server --test --test-concurrency=1 tests/*.test.ts",
+    "test": "node --conditions=react-server --test --test-concurrency=1 tests/*.test.ts tests/security/*.test.ts",
     "check:env": "node scripts/check-env.mjs",
     "audit:dependencies": "npm audit --audit-level=moderate",
     "check": "npm run check:env && npm run lint && npm run typecheck && npm test && npm run build",
@@ -50,5 +50,8 @@
     "@typescript-eslint/typescript-estree": {
       "minimatch": "11.0.1"
     }
+  },
+  "allowScripts": {
+    "argon2@0.45.1": true
   }
 }
