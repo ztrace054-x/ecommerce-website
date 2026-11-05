@@ -11,7 +11,7 @@ const url='postgres://postgres@127.0.0.1:55432/ecommerce_test';
 test('email holds its order lock across provider I/O and logs no free text',async()=>{
  const db=postgres(url,{max:6}),key=randomBytes(32).toString('base64');
  const store=createAdminStore(url,key),delivery=createDeliveryStore(url,key);
- const admins:string[]=[],tokens=[opaque(),opaque()];let product='',order='';
+ const admins:string[]=[],tokens=[opaque(),opaque()];let product='';
  const settings={from:'synthetic@example.invalid',apiKey:'synthetic',mode:'resend' as const,supportNumber:'8801000000000'};
  try{
   for(const token of tokens){
@@ -19,7 +19,7 @@ test('email holds its order lock across provider I/O and logs no free text',asyn
    await db`INSERT INTO admin_sessions(id,admin_id,csrf_hash,authenticated,expires_at,ip_hash,user_agent_hash) VALUES (${digest(token)},${u!.id},${digest(opaque())},true,now()+interval '8 hours','synthetic','synthetic')`;
   }
   const [p]=await db`INSERT INTO products(slug,name,description,price_bdt,delivery_type,delivery_instructions) VALUES (${opaque()},'PRIVATE-SYNTHETIC-NAME','Synthetic',500,'B','PRIVATE-SYNTHETIC-INSTRUCTIONS') RETURNING id`;product=p!.id;
-  order=generateOrderCode();await db`INSERT INTO orders(order_code,product_id,customer_name,customer_email,sender_bkash_number,trx_id,amount_expected,status) VALUES (${order},${product},'Synthetic','synthetic@example.invalid','01700000000',${randomBytes(6).toString('hex').toUpperCase()},500,'verified')`;
+  const order=generateOrderCode();await db`INSERT INTO orders(order_code,product_id,customer_name,customer_email,sender_bkash_number,trx_id,amount_expected,status) VALUES (${order},${product},'Synthetic','synthetic@example.invalid','01700000000',${randomBytes(6).toString('hex').toUpperCase()},500,'verified')`;
   await delivery.upload(['SYNTHETIC-RACE-123456'],product,admins[0]!,'synthetic',tokens[0]!);
   await delivery.assign(order,admins[0]!,'synthetic',tokens[0]!);
   const [code]=await db`SELECT id FROM delivery_codes WHERE product_id=${product}`;
