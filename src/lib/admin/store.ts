@@ -80,6 +80,10 @@ export function createAdminStore(url: string, key: string) {
         const [o]=await tx`SELECT id,status FROM orders WHERE order_code=${code} FOR UPDATE`;
         const allowed:Record<string,string[]>={verified:["submitted"],rejected:["submitted"],delivered:["verified"],refunded:["rejected","verified"]};
         if(!o || !allowed[action]?.includes(o.status))return false;
+        if(action==='refunded'){
+          const retired=await tx`UPDATE delivery_codes SET status='void',order_id=NULL,void_reason='Order refunded' WHERE order_id=${o.id} AND status='reserved' RETURNING id`;
+          if(retired.length)await audit(tx,admin,'admin.delivery.code.voided.refund',ip,o.id);
+        }
         if(action==='delivered'){
           const codes=await tx`SELECT id FROM delivery_codes WHERE order_id=${o.id} AND status='reserved' FOR UPDATE`;
           if(codes.length!==1||!channel)return false;
