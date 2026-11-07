@@ -1115,3 +1115,47 @@ body {
   font-size: 0.78rem;
   line-height: 1.8;
 }
+
+
+/* Keep visual indicators small while preserving 44px touch targets. */
+.vexora-slide-indicators button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--vexora-radius-pill);
+  background: transparent;
+}
+.vexora-slide-indicators button::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(222, 243, 248, 0.52);
+  border-radius: var(--vexora-radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+  transition: height 180ms ease, width 180ms ease, background-color 180ms ease;
+}
+.vexora-slide-indicators button[aria-pressed="true"] {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+}
+.vexora-slide-indicators button[aria-pressed="true"]::before {
+  height: 30px;
+  border-color: var(--vexora-teal);
+  background: var(--vexora-teal);
+}
+.vexora-plan-chips button {
+  min-height: 44px;
+}
+@media (max-width: 560px) {
+  .vexora-slide-indicators button[aria-pressed="true"]::before {
+    width: 30px;
+    height: 12px;
+  }
+}
