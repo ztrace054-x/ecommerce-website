@@ -30,18 +30,23 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const product = typeof slug === "string" ? getMockProduct(slug) : undefined;
   if (!product) notFound();
 
-  const { config, store } = orderRuntime();
-  const liveProduct = await store.productBySlug(product.slug);
-  const nonce = (await headers()).get("x-nonce") ?? "";
-  if (liveProduct) return (
-    <div className="container page-space checkout-page">
-      <h1>চেকআউট</h1>
-      <div className="checkout-grid">
-        <OrderForm key={liveProduct.id} productId={liveProduct.id} siteKey={config.NEXT_PUBLIC_TURNSTILE_SITE_KEY} nonce={nonce} />
-        <aside className="summary-card"><h2>{liveProduct.name}</h2><p>সার্ভার নির্ধারিত মূল্য: ৳{liveProduct.priceBdt}</p><p>bKash প্রাপক: {config.BKASH_RECIPIENT_NUMBER}</p><p>এই মূল্য দেখে bKash-এ পেমেন্ট করে TrxID জমা দিন। পেমেন্ট ম্যানুয়ালি যাচাই হবে।</p></aside>
-      </div>
-    </div>
-  );
+  // Preview checkouts are visual samples only; never initialize order services there.
+  if (process.env.VERCEL_ENV !== "preview") {
+    const { config, store } = orderRuntime();
+    const liveProduct = await store.productBySlug(product.slug);
+    if (liveProduct) {
+      const nonce = (await headers()).get("x-nonce") ?? "";
+      return (
+        <div className="container page-space checkout-page">
+          <h1>চেকআউট</h1>
+          <div className="checkout-grid">
+            <OrderForm key={liveProduct.id} productId={liveProduct.id} siteKey={config.NEXT_PUBLIC_TURNSTILE_SITE_KEY} nonce={nonce} />
+            <aside className="summary-card"><h2>{liveProduct.name}</h2><p>সার্ভার নির্ধারিত মূল্য: ৳{liveProduct.priceBdt}</p><p>bKash প্রাপক: {config.BKASH_RECIPIENT_NUMBER}</p><p>এই মূল্য দেখে bKash-এ পেমেন্ট করে TrxID জমা দিন। পেমেন্ট ম্যানুয়ালি যাচাই হবে।</p></aside>
+          </div>
+        </div>
+      );
+    }
+  }
   return (
     <div className="container page-space checkout-page">
       <Link className="back-link" href={`/products/${product.slug}`}><ArrowIcon /> প্ল্যানে ফিরুন</Link>
