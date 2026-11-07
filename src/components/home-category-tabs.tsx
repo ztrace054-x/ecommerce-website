@@ -46,6 +46,7 @@ export function HomeCategoryTabs({
           role="tab"
           aria-selected={category === "ai"}
           aria-controls="vexora-category-panel"
+          tabIndex={category === "ai" ? 0 : -1}
           onClick={() => setCategory("ai")}
           onKeyDown={handleCategoryKeyDown}
         >
@@ -57,6 +58,7 @@ export function HomeCategoryTabs({
           role="tab"
           aria-selected={category === "fashion"}
           aria-controls="vexora-category-panel"
+          tabIndex={category === "fashion" ? 0 : -1}
           onClick={() => setCategory("fashion")}
           onKeyDown={handleCategoryKeyDown}
         >
@@ -103,7 +105,7 @@ export function HomeCategoryTabs({
         ) : (
           <>
             {products.length > 1 && (
-              <div className="vexora-plan-selector" aria-label="প্ল্যান নির্বাচন">
+              <div className="vexora-plan-selector" role="group" aria-label="প্ল্যান নির্বাচন">
                 <span className="vexora-plan-selector-label">SELECT A PLAN</span>
                 <div className="vexora-plan-chips">
                   {products.map((product) => (
