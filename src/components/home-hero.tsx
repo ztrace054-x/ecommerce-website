@@ -150,7 +150,7 @@ export function HomeHero() {
         </div>
       </div>
 
-      <div className="vexora-slide-indicators" role="group" aria-label="Hero slides">
+      <div className="vexora-slide-indicators" role="group" aria-label="Choose a hero slide">
         {slides.map((item, index) => (
           <button
             key={item.eyebrow}
