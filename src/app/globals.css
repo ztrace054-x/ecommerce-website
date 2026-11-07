@@ -782,9 +782,17 @@ body {
 .vexora-product-grid .price-caption,
 .vexora-product-grid .price-unit { color: var(--vexora-muted); }
 .vexora-product-grid .card-price strong {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 44px;
+  align-items: center;
+  padding: 4px 14px;
+  border: 1px solid rgba(245, 197, 66, 0.32);
+  border-radius: var(--vexora-radius-pill);
+  background: rgba(245, 197, 66, 0.1);
   color: var(--vexora-amber);
   font-family: var(--vexora-font-display);
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
   font-weight: 700;
 }
 .vexora-product-grid .card-link {
