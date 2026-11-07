@@ -26,7 +26,7 @@ const slides = [
 
 export function HomeHero() {
   const [activeSlide, setActiveSlide] = useState(0);
-  const slide = slides[activeSlide];
+  const slide = slides[activeSlide]!;
 
   function handleIndicatorKeyDown(
     event: KeyboardEvent<HTMLButtonElement>,
