@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 const slides = [
   {
@@ -29,7 +29,7 @@ export function HomeHero() {
   const slide = slides[activeSlide];
 
   function handleIndicatorKeyDown(
-    event: React.KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLButtonElement>,
     index: number,
   ) {
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
