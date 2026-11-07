@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/domain";
 
@@ -29,24 +29,36 @@ export function HomeCategoryTabs({
   const selectedProduct =
     products.find((product) => product.slug === selectedSlug) ?? products[0];
 
+  function handleCategoryKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const nextCategory = category === "ai" ? "fashion" : "ai";
+    setCategory(nextCategory);
+    document.getElementById("vexora-tab-" + nextCategory)?.focus();
+  }
+
   return (
     <div className="vexora-category-experience">
       <div className="vexora-category-tabs" role="tablist" aria-label="পণ্যের বিভাগ">
         <button
+          id="vexora-tab-ai"
           type="button"
           role="tab"
           aria-selected={category === "ai"}
           aria-controls="vexora-category-panel"
           onClick={() => setCategory("ai")}
+          onKeyDown={handleCategoryKeyDown}
         >
           AI Tools
         </button>
         <button
+          id="vexora-tab-fashion"
           type="button"
           role="tab"
           aria-selected={category === "fashion"}
           aria-controls="vexora-category-panel"
           onClick={() => setCategory("fashion")}
+          onKeyDown={handleCategoryKeyDown}
         >
           Fashion <span>শীঘ্রই আসছে</span>
         </button>
@@ -56,6 +68,7 @@ export function HomeCategoryTabs({
         id="vexora-category-panel"
         className="vexora-category-panel"
         role="tabpanel"
+        aria-labelledby={category === "ai" ? "vexora-tab-ai" : "vexora-tab-fashion"}
         aria-live="polite"
       >
         {category === "fashion" ? (
