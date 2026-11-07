@@ -1,0 +1,55 @@
+:root {
+  /* VEXORA brand palette */
+  --vexora-bg: #0b0f14;
+  --vexora-bg-raised: #101820;
+  --vexora-surface: #121d26;
+  --vexora-surface-soft: #17232c;
+  --vexora-text: #f4f8fa;
+  --vexora-text-soft: #c4d0d5;
+  --vexora-muted: #9aabb3;
+  --vexora-line: rgba(205, 231, 237, 0.14);
+  --vexora-line-strong: rgba(205, 231, 237, 0.24);
+  --vexora-teal: #22d3ee;
+  --vexora-teal-deep: #14b8a6;
+  --vexora-copper: #c2763f;
+  --vexora-copper-light: #e8a87c;
+  --vexora-amber: #f5c542;
+  --vexora-ink: #071116;
+
+  /* Spacing scale */
+  --vexora-space-1: 4px;
+  --vexora-space-2: 8px;
+  --vexora-space-3: 12px;
+  --vexora-space-4: 16px;
+  --vexora-space-5: 20px;
+  --vexora-space-6: 24px;
+  --vexora-space-8: 32px;
+  --vexora-space-10: 40px;
+  --vexora-space-12: 48px;
+  --vexora-space-16: 64px;
+  --vexora-space-20: 80px;
+
+  /* Radius scale */
+  --vexora-radius-sm: 10px;
+  --vexora-radius-md: 16px;
+  --vexora-radius-lg: 24px;
+  --vexora-radius-xl: 32px;
+  --vexora-radius-pill: 999px;
+
+  /* Shadows and restrained glows */
+  --vexora-shadow-card: 0 20px 55px rgba(0, 0, 0, 0.28);
+  --vexora-shadow-teal: 0 0 34px rgba(34, 211, 238, 0.16);
+  --vexora-shadow-copper: 0 0 30px rgba(194, 118, 63, 0.14);
+  --vexora-glow-teal: rgba(34, 211, 238, 0.14);
+  --vexora-glow-copper: rgba(194, 118, 63, 0.13);
+
+  /* Type scale */
+  --vexora-font-display: var(--font-display, "Space Grotesk", system-ui, sans-serif);
+  --vexora-font-body: var(--font-bengali, "Noto Sans Bengali", system-ui, sans-serif);
+  --vexora-type-xs: 0.75rem;
+  --vexora-type-sm: 0.875rem;
+  --vexora-type-md: 1rem;
+  --vexora-type-lg: 1.25rem;
+  --vexora-type-xl: clamp(1.75rem, 3vw, 2.5rem);
+  --vexora-type-display: clamp(2.8rem, 6.5vw, 5.6rem);
+}

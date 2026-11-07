@@ -1,15 +1,35 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import localFont from "next/font/local";
+import { Space_Grotesk } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 
+import "./design-tokens.css";
 import "./globals.css";
 
+const bengali = localFont({
+  src: "../../public/fonts/noto-sans-bengali.woff2",
+  display: "swap",
+  weight: "100 900",
+  variable: "--font-bengali",
+});
+
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  variable: "--font-display",
+});
+
 export const metadata: Metadata = {
-  title: { default: "AI সেবা — সহজভাবে শুরু করুন", template: "%s | AI সেবা" },
+  title: {
+    default: "VEXORA — নিরাপদ ও সহজ ডিজিটাল পণ্য",
+    template: "%s | VEXORA",
+  },
   description:
-    "বাংলাদেশের জন্য AI সেবার মার্কেটপ্লেস। সেবা ও মূল্য জানুন, bKash পেমেন্টের তথ্য জমা দিন এবং অর্ডার ট্র্যাক করুন।",
+    "ডলার কার্ড ছাড়াই ডিজিটাল পণ্য কিনুন। বিকাশে পেমেন্ট করুন, TrxID দিন, আমরা যাচাই করে পণ্য পৌঁছে দেব।",
   robots: { index: false, follow: false },
 };
 
@@ -18,7 +38,7 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="bn">
-      <body>
+      <body className={bengali.variable + " " + display.variable}>
         <SiteHeader />
         <main id="main-content" tabIndex={-1}>
           {children}

@@ -1,29 +1,52 @@
 import Link from "next/link";
 import { checkoutSettings } from "@/lib/config";
+import { supportDetails } from "@/lib/support";
 
 export function SiteFooter() {
   const { ordersOpen } = checkoutSettings();
+  const { whatsapp } = supportDetails();
+
   return (
-    <footer className="site-footer">
-      <div className="container footer-inner">
-        <div>
-          <Link className="footer-brand" href="/">
-            AI সেবা
+    <footer className="vexora-footer">
+      <div className="vexora-container vexora-footer-inner">
+        <div className="vexora-footer-brand-block">
+          <Link className="vexora-footer-brand" href="/">
+            VEXORA<span>.</span>
           </Link>
-          <p>আপনার নিজের অ্যাকাউন্ট। নিরাপদ ব্যবহারের সহায়তা।</p>
+          <p>নিরাপদ ও সহজ ডিজিটাল পণ্য, বিকাশে পেমেন্ট।</p>
+          {whatsapp ? (
+            <a
+              className="vexora-footer-contact"
+              href={"https://wa.me/" + whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp: +{whatsapp}
+            </a>
+          ) : (
+            <Link className="vexora-footer-contact" href="/contact#whatsapp">
+              WhatsApp support
+            </Link>
+          )}
         </div>
-        <nav className="footer-links" aria-label="নীতি ও যোগাযোগ">
-          <Link href="/refund">অর্থ ফেরত নীতি</Link>
-          <Link href="/privacy">গোপনীয়তা</Link>
-          <Link href="/terms">শর্তাবলি</Link>
+
+        <nav className="vexora-footer-links" aria-label="নীতি ও সহায়তা">
+          <Link href="/#about">আমরা কারা</Link>
+          <Link href="/refund">Refund Policy</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/faq">FAQ</Link>
           <Link href="/contact">যোগাযোগ</Link>
-          <Link href="/admin/login">অ্যাডমিন</Link>
         </nav>
       </div>
-      <div className="container footer-bottom">
-        {ordersOpen
-          ? "নিরাপদ ব্যবহার · ম্যানুয়াল যাচাইয়ের পরে সেবা"
-          : "প্রিভিউ · অর্ডার এখন বন্ধ · নমুনা মূল্য চূড়ান্ত অফার নয়"}
+
+      <div className="vexora-container vexora-footer-bottom">
+        <span>© {new Date().getFullYear()} VEXORA. All rights reserved.</span>
+        <span>
+          {ordersOpen
+            ? "Manual payment verification · Bangladesh"
+            : "Preview mode · Orders are currently closed"}
+        </span>
       </div>
     </footer>
   );

@@ -1,208 +1,246 @@
 import Link from "next/link";
-import { ArrowIcon, CheckIcon, ServiceIcon } from "@/components/icons";
-import { ProductCard } from "@/components/product-card";
+import { HomeCategoryTabs } from "@/components/home-category-tabs";
+import { HomeHero } from "@/components/home-hero";
 import { catalog } from "@/lib/catalog";
+
 export const dynamic = "force-dynamic";
 
 const steps = [
   {
     number: "০১",
-    title: "সেবা বেছে নিন",
-    text: "কী পাবেন ও কত লাগবে, আগে দেখে নিন।",
+    title: "প্ল্যান বেছে নিন",
+    text: "আপনার প্রয়োজন অনুযায়ী AI Tools থেকে পছন্দের প্ল্যান নির্বাচন করুন এবং অর্ডার ফর্ম পূরণ করুন।",
   },
   {
     number: "০২",
-    title: "পেমেন্ট যাচাই",
-    text: "প্রতিটি bKash পেমেন্ট দাবি হাতে যাচাই করা হবে।",
+    title: "নির্দিষ্ট টাকা পাঠান",
+    text: "অর্ডার ফর্মে দেখানো সঠিক পরিমাণ টাকা আমাদের বিকাশ নম্বরে পাঠান।",
   },
   {
     number: "০৩",
-    title: "সেবা গ্রহণ করুন",
-    text: "যাচাইয়ের পরে নির্বাচিত সেবা দেওয়া হবে।",
+    title: "TrxID জমা দিন",
+    text: "বিকাশের SMS বা অ্যাপ থেকে TrxID নিয়ে অর্ডার ফর্মে লিখুন।",
+  },
+  {
+    number: "০৪",
+    title: "আমরা পেমেন্ট যাচাই করি",
+    text: "আমরা নিজেরাই বিকাশ অ্যাপে লেনদেনের তথ্য মিলিয়ে দেখব।",
+  },
+  {
+    number: "০৫",
+    title: "পণ্য গ্রহণ করুন",
+    text: "পেমেন্ট যাচাই হলে ইমেইল বা WhatsApp-এ আপনার পণ্য পৌঁছে দেওয়া হবে।",
+  },
+  {
+    number: "০৬",
+    title: "অর্ডার ট্র্যাক করুন",
+    text: "আপনার অর্ডার কোড দিয়ে যেকোনো সময় ডেলিভারির অবস্থা দেখুন।",
   },
 ];
 
-const benefits = [
-  { icon: "prompt", title: "বাংলায় সহজ সহায়তা", text: "AI টুলের ব্যবহার ও কাজের নিয়ম নিজের ভাষায় বুঝে নিন।" },
-  { icon: "setup", title: "স্থানীয় পেমেন্ট", text: "সেবা চালু হলে আন্তর্জাতিক কার্ড ছাড়াই bKash দিয়ে পেমেন্ট করা যাবে।" },
-  { icon: "website", title: "আগেই পরিষ্কার শর্ত", text: "সেবায় কী পাবেন, সময় ও ডেলিভারির ধরন প্ল্যানেই দেখে নিন।" },
-  { icon: "chatbot", title: "অর্ডারের খবর জানুন", text: "ব্যক্তিগত অ্যাক্সেস কী দিয়ে পেমেন্ট যাচাই ও ডেলিভারির অবস্থা দেখুন।" },
-] as const;
+const trustItems = [
+  {
+    number: "01",
+    title: "পাসওয়ার্ড কখনো নয়",
+    text: "আপনার কোনো অ্যাকাউন্ট বা ইমেইলের পাসওয়ার্ড আমরা চাই না।",
+  },
+  {
+    number: "02",
+    title: "ম্যানুয়াল পেমেন্ট যাচাই",
+    text: "প্রতিটি পেমেন্টের তথ্য আমরা নিজেরা বিকাশ অ্যাপে মিলিয়ে দেখি।",
+  },
+  {
+    number: "03",
+    title: "প্রয়োজনীয় তথ্যই শুধু",
+    text: "আপনার তথ্য অর্ডার সম্পন্ন করা ও সাপোর্ট দেওয়ার কাজেই ব্যবহার হয়।",
+  },
+  {
+    number: "04",
+    title: "স্পষ্ট রিফান্ড নীতি",
+    text: "রিফান্ডের শর্ত ও যোগাযোগের নিয়ম আমাদের নীতিমালায় দেওয়া আছে।",
+  },
+  {
+    number: "05",
+    title: "সরাসরি সাপোর্ট",
+    text: "অর্ডার বা পেমেন্ট নিয়ে প্রশ্ন থাকলে আমাদের সাপোর্ট টিমের সঙ্গে যোগাযোগ করুন।",
+  },
+];
 
 export default async function HomePage() {
   const { products, sample } = await catalog();
+
   return (
-    <>
-      <section className="hero">
-        <div className="container hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span className="small-dot" /> সহজ শুরু, নিরাপদ ব্যবহার
-            </p>
-            <h1>
-              AI সেবা নিন,
-              <br />
-              <span>সহজভাবে।</span>
-            </h1>
-            <p className="hero-description">
-              সেটআপ থেকে নিজের ওয়েবসাইট—আপনার প্রয়োজনের AI সেবাটি বেছে নিন।
-              স্থানীয় bKash পেমেন্ট, পরিষ্কার সেবার শর্ত ও যাচাইয়ের পরে
-              ডেলিভারি।
-            </p>
-            <div className="hero-actions">
-              <Link href="/products" className="button button-primary">
-                সেবা ও প্ল্যান দেখুন <ArrowIcon />
-              </Link>
-              <Link href="/faq" className="text-link">
-                কীভাবে কাজ করবে?
-              </Link>
+    <div className="vexora-home">
+      <HomeHero />
+
+      <section
+        id="plans"
+        className="vexora-section vexora-products-section"
+        aria-labelledby="vexora-products-heading"
+      >
+        <div className="vexora-container">
+          <div className="vexora-section-heading">
+            <div>
+              <p className="vexora-eyebrow">YOUR DIGITAL TOOLKIT</p>
+              <h2 id="vexora-products-heading">আপনার AI Tools, এক জায়গায়</h2>
+              <p className="vexora-section-intro">
+                প্ল্যানের সুবিধা ও মূল্য দেখে আপনার প্রয়োজনেরটি বেছে নিন।
+              </p>
             </div>
-            <p className="hero-safety">
-              <CheckIcon /> কোনো অ্যাকাউন্টের পাসওয়ার্ড দিতে হবে না
-            </p>
+            <span className="vexora-section-index">01 / PRODUCTS</span>
           </div>
-          <div className="journey-card">
-            <div className="journey-heading">
-              <span className="service-icon">
-                <ServiceIcon kind="prompt" />
-              </span>
-              <div>
-                <span className="eyebrow">তিনটি সহজ ধাপ</span>
-                <h2>শুরু থেকে সেবা পাওয়া</h2>
-              </div>
-            </div>
-            <ol className="journey-steps">
-              {steps.map((step) => (
-                <li key={step.number}>
-                  <span className="step-number">{step.number}</span>
-                  <div>
-                    <h3>{step.title}</h3>
-                    <p>{step.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <p className="journey-note">
-              TrxID জমা দিলেই পেমেন্ট নিশ্চিত হয় না। প্রতিটি দাবি হাতে যাচাই করা
-              হবে।
-            </p>
-          </div>
+          <HomeCategoryTabs products={products} sample={sample} />
         </div>
       </section>
 
       <section
-        className="container section-space"
-        aria-labelledby="services-heading"
+        id="how-it-works"
+        className="vexora-section vexora-process-section"
+        aria-labelledby="vexora-process-heading"
       >
-        <div className="section-heading">
+        <div className="vexora-container">
+          <div className="vexora-section-heading">
+            <div>
+              <p className="vexora-eyebrow">SIMPLE BY DESIGN</p>
+              <h2 id="vexora-process-heading">কীভাবে কাজ করে</h2>
+              <p className="vexora-section-intro">
+                প্ল্যান নির্বাচন থেকে ডেলিভারি—প্রতিটি ধাপ সহজ ও পরিষ্কার।
+              </p>
+            </div>
+            <span className="vexora-section-index">02 / PROCESS</span>
+          </div>
+
+          <ol className="vexora-steps">
+            {steps.map((step) => (
+              <li className="vexora-step-card" key={step.number}>
+                <span className="vexora-step-number">{step.number}</span>
+                <div>
+                  <h3>{step.title}</h3>
+                  <p>{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section
+        className="vexora-section vexora-trust-section"
+        aria-labelledby="vexora-trust-heading"
+      >
+        <div className="vexora-container">
+          <div className="vexora-section-heading">
+            <div>
+              <p className="vexora-eyebrow">YOUR TRUST MATTERS</p>
+              <h2 id="vexora-trust-heading">কেন VEXORA-কে বিশ্বাস করবেন</h2>
+              <p className="vexora-section-intro">
+                নিরাপদ পেমেন্ট, স্বচ্ছ নিয়ম এবং আপনার ব্যক্তিগত তথ্যের প্রতি সম্মান।
+              </p>
+            </div>
+            <span className="vexora-section-index">03 / TRUST</span>
+          </div>
+
+          <div className="vexora-trust-grid">
+            {trustItems.map((item) => (
+              <article className="vexora-trust-card" key={item.number}>
+                <span className="vexora-trust-number">{item.number}</span>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="about" className="vexora-section vexora-about-section">
+        <div className="vexora-container vexora-about-card">
           <div>
-            <p className="eyebrow">আপনার প্রয়োজন অনুযায়ী</p>
-            <h2 id="services-heading">সেবা ও প্ল্যান</h2>
+            <p className="vexora-eyebrow">A SMALL BANGLADESHI INITIATIVE</p>
+            <h2>আমরা কারা</h2>
           </div>
-          <span className="sample-pill">
-            {sample ? "নমুনা সেবা · নমুনা মূল্য" : "সেবা ও মূল্য"}
-          </span>
-        </div>
-        <div className="product-grid">
-          {products.map((product) => (
-            <ProductCard key={product.slug} product={product} sample={sample} />
-          ))}
-        </div>
-        {products.length === 0 && (
-          <p className="notice">নতুন সেবা শিগগিরই যুক্ত হবে।</p>
-        )}
-      </section>
-
-      <section className="container section-space" aria-labelledby="benefits-heading">
-        <div className="section-heading">
-          <div><p className="eyebrow">বাংলাদেশের ব্যবহারকারীদের জন্য</p><h2 id="benefits-heading">আপনার কাজ, আপনার সুবিধা</h2></div>
-        </div>
-        <div className="benefit-grid">
-          {benefits.map((benefit) => (
-            <article className="benefit-card" key={benefit.title}>
-              <span className="service-icon"><ServiceIcon kind={benefit.icon} /></span>
-              <h3>{benefit.title}</h3><p>{benefit.text}</p>
-            </article>
-          ))}
+          <div className="vexora-about-copy">
+            <p>
+              VEXORA একটি ছোট বাংলাদেশি উদ্যোগ। অনেকের ডলার কার্ড নেই বলে
+              আন্তর্জাতিক ডিজিটাল পণ্য কেনা কঠিন। আমরা বিকাশে পেমেন্ট নিয়ে,
+              নিজে যাচাই করে পণ্য পৌঁছে দেওয়ার অভিজ্ঞতাকে সহজ করতে কাজ করছি।
+            </p>
+            <p>
+              আমরা ছোট আকারে শুরু করেছি এবং প্রতিটি অর্ডার গুরুত্ব দিয়ে দেখি।
+              আপনার নিরাপত্তা, পরিষ্কার তথ্য এবং নির্ভরযোগ্য সাপোর্ট আমাদের
+              অগ্রাধিকার।
+            </p>
+          </div>
         </div>
       </section>
 
       <section
-        className="container safety-strip"
-        aria-label="নিরাপদ সেবার নিয়ম"
+        id="faq-preview"
+        className="vexora-section vexora-faq-section"
+        aria-labelledby="vexora-faq-heading"
       >
-        <div>
-          <CheckIcon />
-          <p>
-            <strong>নিজের অ্যাকাউন্ট</strong>
-            <span>শেয়ার করা লগইন নয়</span>
-          </p>
-        </div>
-        <div>
-          <CheckIcon />
-          <p>
-            <strong>পাসওয়ার্ড প্রয়োজন নেই</strong>
-            <span>ব্যক্তিগত তথ্য নিরাপদ রাখুন</span>
-          </p>
-        </div>
-        <div>
-          <CheckIcon />
-          <p>
-            <strong>যাচাইয়ের পর ডেলিভারি</strong>
-            <span>ম্যানুয়াল পেমেন্ট যাচাই</span>
-          </p>
+        <div className="vexora-container">
+          <div className="vexora-section-heading">
+            <div>
+              <p className="vexora-eyebrow">GOOD TO KNOW</p>
+              <h2 id="vexora-faq-heading">সাধারণ কিছু প্রশ্ন</h2>
+            </div>
+            <Link className="vexora-inline-link" href="/faq">
+              সব প্রশ্ন দেখুন <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+
+          <div className="vexora-faq-list">
+            <details>
+              <summary>
+                আমি কীভাবে অর্ডার করব?
+                <span aria-hidden="true">+</span>
+              </summary>
+              <p>
+                পছন্দের প্ল্যান বেছে অর্ডার ফর্ম পূরণ করুন। দেখানো নম্বরে
+                বিকাশে টাকা পাঠিয়ে TrxID জমা দিন।
+              </p>
+            </details>
+            <details>
+              <summary>
+                কত টাকা পাঠাতে হবে?
+                <span aria-hidden="true">+</span>
+              </summary>
+              <p>
+                অর্ডার ফর্মে যে সঠিক পরিমাণ দেখাবে, ঠিক সেই পরিমাণই পাঠান।
+                কম বা বেশি পাঠালে যাচাই আটকে যেতে পারে।
+              </p>
+            </details>
+            <details>
+              <summary>
+                আপনারা কি আমার পাসওয়ার্ড চাইবেন?
+                <span aria-hidden="true">+</span>
+              </summary>
+              <p>
+                না, কখনোই না। কেউ VEXORA-র নাম ব্যবহার করে পাসওয়ার্ড চাইলে
+                দেবেন না এবং আমাদের জানান।
+              </p>
+            </details>
+          </div>
         </div>
       </section>
 
-      <section className="container faq-callout">
-        <div>
-          <h2>কোনো প্রশ্ন আছে?</h2>
-          <p>সেবা, পেমেন্ট ও নিরাপদ ব্যবহার সম্পর্কে সহজ উত্তর দেখুন।</p>
-        </div>
-        <Link href="/faq" className="button button-secondary">
-          প্রশ্নোত্তর দেখুন <ArrowIcon />
-        </Link>
-      </section>
-      <section
-        className="container section-space"
-        aria-labelledby="home-faq-heading"
-      >
-        <div className="section-heading">
-          <h2 id="home-faq-heading">শুরু করার আগে</h2>
-          <Link href="/track-order" className="text-link">
-            অর্ডার ট্র্যাক করুন
-          </Link>
-        </div>
-        <div className="faq-list">
-          <details>
-            <summary>
-              পেমেন্টের পরে কী হবে?<span aria-hidden="true">+</span>
-            </summary>
-            <p>
-              লেনদেনের তথ্য জমা দিন। অ্যাডমিন নিজের bKash অ্যাপে পেমেন্ট মিলিয়ে
-              দেখে নিশ্চিত করবেন। তারপর নির্বাচিত সেবা দেওয়া হবে।
-            </p>
-          </details>
-          <details>
-            <summary>
-              অর্ডার ট্র্যাক করতে কি পাসওয়ার্ড লাগবে?
-              <span aria-hidden="true">+</span>
-            </summary>
-            <p>
-              নতুন অ্যাকাউন্ট খুলতে হবে না। অর্ডার কোড, আপনার ইমেইল ও অর্ডারের
-              ব্যক্তিগত অ্যাক্সেস কী দিয়ে অবস্থা দেখা যাবে।
-            </p>
-          </details>
+      <section className="vexora-bottom-cta">
+        <div className="vexora-container vexora-bottom-cta-inner">
+          <div>
+            <p className="vexora-eyebrow">READY WHEN YOU ARE</p>
+            <h2>আপনার ডিজিটাল অভিজ্ঞতা শুরু হোক</h2>
+            <p>প্ল্যান দেখুন, অর্ডারের অবস্থা জানুন—সবকিছু এক জায়গায়।</p>
+          </div>
+          <div className="vexora-bottom-actions">
+            <Link href="#plans" className="vexora-button vexora-button-primary">
+              প্ল্যান বেছে নিন <span aria-hidden="true">↗</span>
+            </Link>
+            <Link href="/track-order" className="vexora-button vexora-button-secondary">
+              Track order
+            </Link>
+          </div>
         </div>
       </section>
-      <section className="container home-cta" aria-labelledby="home-cta-heading">
-        <div>
-          <p className="eyebrow">আপনার প্রয়োজন থেকেই শুরু</p>
-          <h2 id="home-cta-heading">কোন AI সেবাটি আপনার কাজে লাগবে?</h2>
-          <p>প্রতিটি প্ল্যানের কাজ, সময় ও ডেলিভারির তথ্য তুলনা করে দেখুন। শুরু করার আগে সেবার শর্ত ও নীতিগুলো পড়ে নিন।</p>
-        </div>
-        <Link href="/products" className="button button-primary">সব সেবা দেখুন <ArrowIcon /></Link>
-      </section>
-    </>
+    </div>
   );
 }
