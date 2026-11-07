@@ -2,6 +2,7 @@ import { createOrderHandler, errorResponse } from "../../../lib/orders/handler.t
 import { orderRuntime } from "../../../lib/orders/runtime.ts";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
+  if (process.env.VERCEL_ENV === "preview") return errorResponse(503, "PREVIEW_DISABLED", "Orders are disabled in preview.");
   try {
     const { config, store } = orderRuntime();
     return await createOrderHandler(config, store)(request);

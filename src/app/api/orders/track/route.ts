@@ -3,6 +3,7 @@ import { createTrackingHandler } from "../../../../lib/orders/tracking-handler.t
 import { errorResponse } from "../../../../lib/orders/responses.ts";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
+  if (process.env.VERCEL_ENV === "preview") return errorResponse(503, "PREVIEW_DISABLED", "Order tracking is disabled in preview.");
   try { const { config, store } = orderRuntime(); return await createTrackingHandler(config, store)(request); }
   catch { return errorResponse(500, "INTERNAL", "Order service unavailable."); }
 }

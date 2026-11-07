@@ -7,6 +7,7 @@ let handler:ReturnType<typeof createAdminHandler>|undefined;
 let deliveryStore:ReturnType<typeof createDeliveryStore>|undefined;
 async function dispatch(request:Request,context:{params:Promise<{adminPrefix:string;path:string[]}>}){
  const {adminPrefix,path}=await context.params;
+ if(process.env.VERCEL_ENV==='preview')return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
  if(`/${adminPrefix}`!==(process.env.ADMIN_PATH_PREFIX??'/manage-x7'))return new Response(null,{status:404,headers:{'Cache-Control':'no-store'}});
  try{
   if(!handler){const config=loadAdminEnv();deliveryStore=createDeliveryStore(config.DATABASE_URL,config.DELIVERY_CODE_KEY);handler=createAdminHandler(config,createAdminStore(config.DATABASE_URL,config.ADMIN_SECRET_KEY),createOrderStore(config.DATABASE_URL),undefined,deliveryStore);}
